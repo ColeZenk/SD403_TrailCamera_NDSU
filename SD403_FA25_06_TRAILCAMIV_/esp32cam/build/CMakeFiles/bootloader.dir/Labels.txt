@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+/home/cole-zenk/esp/SD403_FA25_06_TRAILCAMIV_/esp32cam/build/CMakeFiles/bootloader
+/home/cole-zenk/esp/SD403_FA25_06_TRAILCAMIV_/esp32cam/build/CMakeFiles/bootloader.rule
+/home/cole-zenk/esp/SD403_FA25_06_TRAILCAMIV_/esp32cam/build/CMakeFiles/bootloader-complete.rule
+/home/cole-zenk/esp/SD403_FA25_06_TRAILCAMIV_/esp32cam/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+/home/cole-zenk/esp/SD403_FA25_06_TRAILCAMIV_/esp32cam/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+/home/cole-zenk/esp/SD403_FA25_06_TRAILCAMIV_/esp32cam/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+/home/cole-zenk/esp/SD403_FA25_06_TRAILCAMIV_/esp32cam/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+/home/cole-zenk/esp/SD403_FA25_06_TRAILCAMIV_/esp32cam/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+/home/cole-zenk/esp/SD403_FA25_06_TRAILCAMIV_/esp32cam/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+/home/cole-zenk/esp/SD403_FA25_06_TRAILCAMIV_/esp32cam/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule
