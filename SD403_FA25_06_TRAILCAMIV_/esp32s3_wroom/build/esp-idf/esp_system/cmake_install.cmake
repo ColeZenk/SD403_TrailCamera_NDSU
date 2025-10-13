@@ -39,6 +39,6 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/cole-zenk/esp/SD403_FA25_06_TRAILCAMIV_/esp32s3_wroom/build/esp-idf/esp_system/port/cmake_install.cmake")
+  include("/home/cole-zenk/esp/SD403_TrailCamera_NDSU/SD403_FA25_06_TRAILCAMIV_/esp32s3_wroom/build/esp-idf/esp_system/port/cmake_install.cmake")
 endif()
 

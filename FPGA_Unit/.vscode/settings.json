@@ -1,0 +1,32 @@
+{
+    "files.associations": {
+        "*.vhd": "vhdl",
+        "*.vhdl": "vhdl",
+        "*.vhf": "vhdl",
+        "*.vho": "vhdl"
+    },
+
+    "[vhdl]": {
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "puorc.awesome-vhdl",
+        "editor.rulers": [80],
+        "editor.quickSuggestions": {
+            "other": true,
+            "comments": false,
+            "strings": false
+        }
+    },
+
+    "files.exclude": {
+        "**/*.vcd": true,
+        "**/ghdl-**": true
+    }
+        ,
+        "workbench.iconTheme": "material-icon-theme",
+        "material-icon-theme.files.associations": {
+            "*.vhd": "vhdl",
+            "*.vhdl": "vhdl"
+        }
+}

@@ -1,4 +1,4 @@
-/* * Data converted from /home/cole-zenk/esp/SD403_FA25_06_TRAILCAMIV_/esp32s3_wroom/build/esp-idf/mbedtls/x509_crt_bundle
+/* * Data converted from /home/cole-zenk/esp/SD403_TrailCamera_NDSU/SD403_FA25_06_TRAILCAMIV_/esp32s3_wroom/build/esp-idf/mbedtls/x509_crt_bundle
  */
 .data
 #if !defined (__APPLE__) && !defined (__linux__)

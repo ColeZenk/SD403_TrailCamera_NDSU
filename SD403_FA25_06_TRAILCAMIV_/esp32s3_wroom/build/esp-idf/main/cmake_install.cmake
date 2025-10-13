@@ -1,4 +1,4 @@
-# Install script for directory: /home/cole-zenk/esp/SD403_FA25_06_TRAILCAMIV_/esp32s3_wroom/main
+# Install script for directory: /home/cole-zenk/esp/SD403_TrailCamera_NDSU/SD403_FA25_06_TRAILCAMIV_/esp32s3_wroom/main
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

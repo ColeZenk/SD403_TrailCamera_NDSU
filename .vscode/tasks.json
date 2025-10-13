@@ -1,0 +1,119 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "ESP32: Build (esp32cam)",
+            "type": "shell",
+            "command": "idf.py",
+            "args": ["build"],
+            "options": {
+                "cwd": "${workspaceFolder}/esp32cam"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "ESP32: Flash (esp32cam)",
+            "type": "shell",
+            "command": "idf.py",
+            "args": ["flash"],
+            "options": {
+                "cwd": "${workspaceFolder}/esp32cam"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "ESP32: Monitor (esp32cam)",
+            "type": "shell",
+            "command": "idf.py",
+            "args": ["monitor"],
+            "options": {
+                "cwd": "${workspaceFolder}/esp32cam"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "ESP32: Build+Flash+Monitor (esp32cam)",
+            "type": "shell",
+            "command": "idf.py",
+            "args": ["build", "flash", "monitor"],
+            "options": {
+                "cwd": "${workspaceFolder}/esp32cam"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "ESP32S3: Build (esp32s3_wroom)",
+            "type": "shell",
+            "command": "idf.py",
+            "args": ["build"],
+            "options": {
+                "cwd": "${workspaceFolder}/esp32s3_wroom"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "ESP32S3: Flash (esp32s3_wroom)",
+            "type": "shell",
+            "command": "idf.py",
+            "args": ["flash"],
+            "options": {
+                "cwd": "${workspaceFolder}/esp32s3_wroom"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "ESP32S3: Monitor (esp32s3_wroom)",
+            "type": "shell",
+            "command": "idf.py",
+            "args": ["monitor"],
+            "options": {
+                "cwd": "${workspaceFolder}/esp32s3_wroom"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "ESP32S3: Build+Flash+Monitor",
+            "type": "shell",
+            "command": "idf.py",
+            "args": ["build", "flash", "monitor"],
+            "options": {
+                "cwd": "${workspaceFolder}/esp32s3_wroom"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "FPGA: Synthesize",
+            "type": "shell",
+            "command": "gw_sh",
+            "args": ["build.tcl"],
+            "options": {
+                "cwd": "${workspaceFolder}/FPGA_Unit"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "FPGA: Program",
+            "type": "shell",
+            "command": "openFPGALoader",
+            "args": ["-b", "tangnano9k", "impl/pnr/project.fs"],
+            "options": {
+                "cwd": "${workspaceFolder}/FPGA_Unit"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "FPGA: Build+Program",
+            "dependsOn": ["FPGA: Synthesize", "FPGA: Program"],
+            "dependsOrder": "sequence",
+            "group": "build"
+        }
+    ]
+}

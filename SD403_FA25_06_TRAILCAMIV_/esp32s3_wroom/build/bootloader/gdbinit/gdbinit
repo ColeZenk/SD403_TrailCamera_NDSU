@@ -1,2 +1,2 @@
-source /home/cole-zenk/esp/SD403_FA25_06_TRAILCAMIV_/esp32s3_wroom/build/bootloader/gdbinit/symbols
-source /home/cole-zenk/esp/SD403_FA25_06_TRAILCAMIV_/esp32s3_wroom/build/bootloader/gdbinit/connect
+source /home/cole-zenk/esp/SD403_TrailCamera_NDSU/SD403_FA25_06_TRAILCAMIV_/esp32s3_wroom/build/bootloader/gdbinit/symbols
+source /home/cole-zenk/esp/SD403_TrailCamera_NDSU/SD403_FA25_06_TRAILCAMIV_/esp32s3_wroom/build/bootloader/gdbinit/connect

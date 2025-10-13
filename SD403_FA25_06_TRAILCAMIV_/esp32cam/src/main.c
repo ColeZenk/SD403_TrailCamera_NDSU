@@ -7,10 +7,10 @@ static const char *TAG = "ESP32CAM_SLAVE";
 
 void app_main(void)
 {
-    ESP_LOGI(TAG, "ESP32-CAM Slave Starting");
-    
-    while(1) {
-        ESP_LOGI(TAG, "Camera running...");
-        vTaskDelay(pdMS_TO_TICKS(2000));
+    ESP_LOGI(TAG, "Hello, ESP32-CAM!");
+    while (1) {
+        vTaskDelay(1000 / portTICK_PERIOD_MS); // Delay for a second
+        ESP_LOGI(TAG, "Running...");
     }
 }
+
