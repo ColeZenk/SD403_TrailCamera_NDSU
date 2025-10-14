@@ -13,7 +13,7 @@ static const char *TAG = "CAM_CONTROL";
 
 void esp32cam_control_init(void) {
     gpio_config_t io_conf = {
-        .pin_bit_mask = (1ULL << CAM_IO0_PIN) | (1ULL << CAM_RESET_PIN),
+        .pin_bit_mask = (1ULL << CAM_IO0_PIN) | (1ULL << CAM_RESET_PIN) | (1ULL << FPGA_PROG_MODE_PIN),
         .mode = GPIO_MODE_OUTPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
@@ -22,11 +22,12 @@ void esp32cam_control_init(void) {
     gpio_config(&io_conf);
     
     // Initialize to normal operating state
-    gpio_set_level(CAM_IO0_PIN, 1);     // IO0 HIGH = normal boot
-    gpio_set_level(CAM_RESET_PIN, 1);   // EN HIGH = running
+    gpio_set_level(CAM_IO0_PIN, 1);         // IO0 HIGH = normal boot
+    gpio_set_level(CAM_RESET_PIN, 1);       // EN HIGH = running
+    gpio_set_level(FPGA_PROG_MODE_PIN, 0);  // FPGA passthrough OFF by default
     
-    ESP_LOGI(TAG, "Control pins initialized (IO0=%d, RESET=%d)", 
-             CAM_IO0_PIN, CAM_RESET_PIN);
+    ESP_LOGI(TAG, "Control pins initialized (IO0=%d, RESET=%d, FPGA_MODE=%d)", 
+             CAM_IO0_PIN, CAM_RESET_PIN, FPGA_PROG_MODE_PIN);
 }
 
 void esp32cam_enter_programming_mode(void) {
@@ -85,4 +86,15 @@ void esp32cam_set_boot_mode(bool bootloader_mode) {
         gpio_set_level(CAM_IO0_PIN, 1);
         ESP_LOGI(TAG, "Boot mode: NORMAL (IO0 HIGH)");
     }
+}
+
+void esp32cam_enable_fpga_passthrough(void) {
+    gpio_set_level(FPGA_PROG_MODE_PIN, 1);
+    ESP_LOGI(TAG, "FPGA UART passthrough ENABLED (GPIO %d HIGH)", FPGA_PROG_MODE_PIN);
+    ESP_LOGI(TAG, "FPGA now routing ESP32-S3 UART1 <-> ESP32-CAM UART");
+}
+
+void esp32cam_disable_fpga_passthrough(void) {
+    gpio_set_level(FPGA_PROG_MODE_PIN, 0);
+    ESP_LOGI(TAG, "FPGA UART passthrough DISABLED (GPIO %d LOW)", FPGA_PROG_MODE_PIN);
 }

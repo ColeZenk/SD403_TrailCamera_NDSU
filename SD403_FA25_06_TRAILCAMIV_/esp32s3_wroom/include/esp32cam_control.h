@@ -8,9 +8,10 @@
 
 #include "driver/gpio.h"
 
-// Control Pin Definitions
-#define CAM_IO0_PIN         GPIO_NUM_1      // Controls IO0 on ESP32-CAM (boot mode)
-#define CAM_RESET_PIN       GPIO_NUM_2      // Controls EN/Reset on ESP32-CAM
+// Control Pin Definitions (via Tang Nano 9K FPGA)
+#define CAM_IO0_PIN         GPIO_NUM_1      // Controls IO0 on ESP32-CAM (boot mode) - via FPGA
+#define CAM_RESET_PIN       GPIO_NUM_2      // Controls EN/Reset on ESP32-CAM - via FPGA
+#define FPGA_PROG_MODE_PIN  GPIO_NUM_21     // Tells FPGA to switch UART to CAM for programming
 
 /**
  * Initialize control pins for ESP32-CAM
@@ -41,5 +42,17 @@ void esp32cam_hard_reset(void);
  * @param bootloader_mode true for bootloader mode, false for normal mode
  */
 void esp32cam_set_boot_mode(bool bootloader_mode);
+
+/**
+ * Enable FPGA UART passthrough mode
+ * Sets FPGA_PROG_MODE_PIN high to tell FPGA to route UART1 to ESP32-CAM
+ */
+void esp32cam_enable_fpga_passthrough(void);
+
+/**
+ * Disable FPGA UART passthrough mode  
+ * Sets FPGA_PROG_MODE_PIN low to tell FPGA to disconnect UART routing
+ */
+void esp32cam_disable_fpga_passthrough(void);
 
 #endif // ESP32CAM_CONTROL_H

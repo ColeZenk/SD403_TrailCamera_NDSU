@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "esp32s3_master",
-    "project_version":    "8de3a38-dirty",
+    "project_version":    "a4a604a-dirty",
     "project_path":       "/home/cole-zenk/esp/SD403_TrailCamera_NDSU/SD403_FA25_06_TRAILCAMIV_/esp32s3_wroom",
     "idf_path":           "/home/cole-zenk/esp/esp-idf",
     "build_dir":          "/home/cole-zenk/esp/SD403_TrailCamera_NDSU/SD403_FA25_06_TRAILCAMIV_/esp32s3_wroom/build",
@@ -700,7 +700,7 @@
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "file": "/home/cole-zenk/esp/SD403_TrailCamera_NDSU/SD403_FA25_06_TRAILCAMIV_/esp32s3_wroom/build/esp-idf/esp_driver_usb_serial_jtag/libesp_driver_usb_serial_jtag.a",
-            "sources": [ "/home/cole-zenk/esp/esp-idf/components/esp_driver_usb_serial_jtag/src/usb_serial_jtag.c", "/home/cole-zenk/esp/esp-idf/components/esp_driver_usb_serial_jtag/src/usb_serial_jtag_connection_monitor.c", "/home/cole-zenk/esp/esp-idf/components/esp_driver_usb_serial_jtag/src/usb_serial_jtag_vfs.c" ],
+            "sources": [ "/home/cole-zenk/esp/esp-idf/components/esp_driver_usb_serial_jtag/src/usb_serial_jtag.c", "/home/cole-zenk/esp/esp-idf/components/esp_driver_usb_serial_jtag/src/usb_serial_jtag_connection_monitor.c" ],
             "include_dirs": [ "include" ]
         },
         "esp_eth": {

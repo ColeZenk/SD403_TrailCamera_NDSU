@@ -11,9 +11,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
-// UART Pin Definitions
-#define UART_TX_PIN         GPIO_NUM_43     // TX pin for UART communication
-#define UART_RX_PIN         GPIO_NUM_44     // RX pin for UART communication
+// UART Pin Definitions for UART1 (to CAM)
+// Note: GPIO 43/44 are used by UART0 (USB console), so we use different pins
+#define UART_TX_PIN         GPIO_NUM_17     // TX pin for UART1 to CAM
+#define UART_RX_PIN         GPIO_NUM_18     // RX pin for UART1 to CAM
 
 // UART Configuration
 #define UART_PORT_NUM       UART_NUM_1      // Using UART1 for CAM communication
@@ -52,5 +53,17 @@ int uart_write_to_cam(const char *data, size_t len);
  * @return Number of bytes read
  */
 int uart_read_from_cam(uint8_t *data, size_t max_len, uint32_t timeout_ms);
+
+/**
+ * Handle user commands from console
+ * @param cmd Command character received
+ */
+void handle_command(uint8_t cmd);
+
+/**
+ * Print banner/menu to console
+ * @param Tag Logging tag to use
+ */
+void print_banner(const char *Tag);
 
 #endif // UART_INTERFACE_H

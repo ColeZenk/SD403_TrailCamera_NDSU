@@ -17,8 +17,8 @@
 #include "freertos/task.h"
 #include "driver/uart.h"
 #include "esp_log.h"
-#include "uart_interface.h"
 #include "esp32cam_control.h"
+#include "uart_interface.h"  // Includes print_banner() and handle_command()
 
 static const char *TAG = "MAIN";
 
@@ -28,75 +28,28 @@ static const char *TAG = "MAIN";
 static void initialize_system(void) {
     esp32cam_control_init();
     uart_interface_init();
-    uart_start_passthrough_task();
-}
-
-/**
- * Handle user commands
- */
-static void handle_command(uint8_t cmd) {
-    switch (cmd) {
-        case 'p':
-        case 'P':
-            esp32cam_enter_programming_mode();
-            break;
-            
-        case 'r':
-        case 'R':
-            esp32cam_reset_to_normal_mode();
-            break;
-            
-        case 't':
-        case 'T':
-            uart_test_connection();
-            break;
-            
-        case 'h':
-        case 'H':
-            esp32cam_hard_reset();
-            break;
-            
-        case '\n':
-        case '\r':
-            // Ignore newline characters
-            break;
-            
-        default:
-            // Ignore other characters
-            break;
-    }
-}
-
-/**
- * Print startup banner and command help
- */
-static void print_banner(void) {
-    ESP_LOGI(TAG, "========================================");
-    ESP_LOGI(TAG, "ESP32-S3 UART Programmer - Master");
-    ESP_LOGI(TAG, "========================================");
-    ESP_LOGI(TAG, "");
-    ESP_LOGI(TAG, "=== Available Commands ===");
-    ESP_LOGI(TAG, "  'p' - Enter programming mode");
-    ESP_LOGI(TAG, "  'r' - Reset to normal mode");
-    ESP_LOGI(TAG, "  't' - Test UART connection");
-    ESP_LOGI(TAG, "  'h' - Hard reset");
-    ESP_LOGI(TAG, "==========================");
-    ESP_LOGI(TAG, "");
+    // Don't auto-start passthrough - wait for 'p' command
 }
 
 void app_main(void) {
-    print_banner();
+    // Give USB Serial/JTAG time to enumerate and stabilize
+    vTaskDelay(pdMS_TO_TICKS(2000));
+    
+    printf("\n\n");  // Force output
+    fflush(stdout);
+    
+    print_banner(TAG);
     initialize_system();
     
-    // Main command loop
-    uint8_t cmd;
+    ESP_LOGI(TAG, "Ready - press 'h' for help");
+    fflush(stdout);
+    
+    // Main command loop - use getchar which works with the default console
     while (1) {
-        int len = uart_read_bytes(UART_NUM_0, &cmd, 1, pdMS_TO_TICKS(100));
-        
-        if (len > 0) {
-            handle_command(cmd);
+        int c = getchar();
+        if (c != EOF && c != 0xFF) {
+            handle_command((uint8_t)c);
         }
-        
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
