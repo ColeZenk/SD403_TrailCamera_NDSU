@@ -21,7 +21,7 @@
         }
       },
       "cells": {
-        "$specify$1128": {
+        "$specify$1057": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -254,7 +254,7 @@
         }
       },
       "cells": {
-        "$specify$1128": {
+        "$specify$1057": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -1118,7 +1118,7 @@
     "DFFC": {
       "attributes": {
         "blackbox": "00000000000000000000000000000001",
-        "abc9_bypass": "00000000000000000000000000000001",
+        "cells_not_processed": "00000000000000000000000000000001",
         "src": "/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:318.1-334.10"
       },
       "parameter_default_values": {
@@ -7863,7 +7863,7 @@
         }
       },
       "cells": {
-        "$specify$123": {
+        "$specify$121": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -9023,7 +9023,6 @@
     "IOBUF": {
       "attributes": {
         "blackbox": "00000000000000000000000000000001",
-        "cells_not_processed": "00000000000000000000000000000001",
         "src": "/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:577.1-583.10"
       },
       "ports": {
@@ -9633,7 +9632,7 @@
         }
       },
       "cells": {
-        "$specify$6": {
+        "$specify$4": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -9707,7 +9706,7 @@
         }
       },
       "cells": {
-        "$specify$7": {
+        "$specify$5": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -9738,7 +9737,7 @@
             "SRC": [ 3 ]
           }
         },
-        "$specify$8": {
+        "$specify$6": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -9823,7 +9822,38 @@
         }
       },
       "cells": {
-        "$specify$10": {
+        "$specify$7": {
+          "hide_name": 1,
+          "type": "$specify2",
+          "parameters": {
+            "DST_WIDTH": "00000000000000000000000000000001",
+            "FULL": "0",
+            "SRC_DST_PEN": "0",
+            "SRC_DST_POL": "0",
+            "SRC_WIDTH": "00000000000000000000000000000001",
+            "T_FALL_MAX": "00000000000000000000010111001110",
+            "T_FALL_MIN": "00000000000000000000010111001110",
+            "T_FALL_TYP": "00000000000000000000010111001110",
+            "T_RISE_MAX": "00000000000000000000010000011110",
+            "T_RISE_MIN": "00000000000000000000010000011110",
+            "T_RISE_TYP": "00000000000000000000010000011110"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:25.3-25.28"
+          },
+          "port_directions": {
+            "DST": "input",
+            "EN": "input",
+            "SRC": "input"
+          },
+          "connections": {
+            "DST": [ 2 ],
+            "EN": [ "1" ],
+            "SRC": [ 3 ]
+          }
+        },
+        "$specify$8": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -9854,7 +9884,7 @@
             "SRC": [ 4 ]
           }
         },
-        "$specify$11": {
+        "$specify$9": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -9883,37 +9913,6 @@
             "DST": [ 2 ],
             "EN": [ "1" ],
             "SRC": [ 5 ]
-          }
-        },
-        "$specify$9": {
-          "hide_name": 1,
-          "type": "$specify2",
-          "parameters": {
-            "DST_WIDTH": "00000000000000000000000000000001",
-            "FULL": "0",
-            "SRC_DST_PEN": "0",
-            "SRC_DST_POL": "0",
-            "SRC_WIDTH": "00000000000000000000000000000001",
-            "T_FALL_MAX": "00000000000000000000010111001110",
-            "T_FALL_MIN": "00000000000000000000010111001110",
-            "T_FALL_TYP": "00000000000000000000010111001110",
-            "T_RISE_MAX": "00000000000000000000010000011110",
-            "T_RISE_MIN": "00000000000000000000010000011110",
-            "T_RISE_TYP": "00000000000000000000010000011110"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:25.3-25.28"
-          },
-          "port_directions": {
-            "DST": "input",
-            "EN": "input",
-            "SRC": "input"
-          },
-          "connections": {
-            "DST": [ 2 ],
-            "EN": [ "1" ],
-            "SRC": [ 3 ]
           }
         }
       },
@@ -9981,7 +9980,7 @@
         }
       },
       "cells": {
-        "$specify$12": {
+        "$specify$10": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -10012,7 +10011,7 @@
             "SRC": [ 3 ]
           }
         },
-        "$specify$13": {
+        "$specify$11": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -10043,7 +10042,7 @@
             "SRC": [ 4 ]
           }
         },
-        "$specify$14": {
+        "$specify$12": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -10074,7 +10073,7 @@
             "SRC": [ 5 ]
           }
         },
-        "$specify$15": {
+        "$specify$13": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -13179,7 +13178,7 @@
         }
       },
       "cells": {
-        "$specify$42": {
+        "$specify$40": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -13210,7 +13209,7 @@
             "SRC": [ 3 ]
           }
         },
-        "$specify$43": {
+        "$specify$41": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -13241,7 +13240,7 @@
             "SRC": [ 4 ]
           }
         },
-        "$specify$44": {
+        "$specify$42": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -13329,7 +13328,7 @@
         }
       },
       "cells": {
-        "$specify$45": {
+        "$specify$43": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -13360,7 +13359,7 @@
             "SRC": [ 3 ]
           }
         },
-        "$specify$46": {
+        "$specify$44": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -13391,7 +13390,7 @@
             "SRC": [ 4 ]
           }
         },
-        "$specify$47": {
+        "$specify$45": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -13479,7 +13478,7 @@
         }
       },
       "cells": {
-        "$specify$48": {
+        "$specify$46": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -13510,7 +13509,7 @@
             "SRC": [ 3 ]
           }
         },
-        "$specify$49": {
+        "$specify$47": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -13541,7 +13540,7 @@
             "SRC": [ 4 ]
           }
         },
-        "$specify$50": {
+        "$specify$48": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -13629,7 +13628,7 @@
         }
       },
       "cells": {
-        "$specify$51": {
+        "$specify$49": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -13660,7 +13659,7 @@
             "SRC": [ 3 ]
           }
         },
-        "$specify$52": {
+        "$specify$50": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -13691,7 +13690,7 @@
             "SRC": [ 4 ]
           }
         },
-        "$specify$53": {
+        "$specify$51": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -13779,7 +13778,7 @@
         }
       },
       "cells": {
-        "$specify$54": {
+        "$specify$52": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -13810,7 +13809,7 @@
             "SRC": [ 3 ]
           }
         },
-        "$specify$55": {
+        "$specify$53": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -13841,7 +13840,7 @@
             "SRC": [ 4 ]
           }
         },
-        "$specify$56": {
+        "$specify$54": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -14757,7 +14756,7 @@
         }
       },
       "cells": {
-        "$specify$124": {
+        "$specify$122": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -17587,7 +17586,7 @@
         }
       },
       "cells": {
-        "$specify$148": {
+        "$specify$146": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -17618,7 +17617,7 @@
             "SRC": [ 8, 9, 10, 11 ]
           }
         },
-        "$specify$149": {
+        "$specify$147": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -17653,7 +17652,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$150": {
+        "$specify$148": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -17688,7 +17687,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$151": {
+        "$specify$149": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -17723,7 +17722,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$152": {
+        "$specify$150": {
           "hide_name": 1,
           "type": "$specify3",
           "parameters": {
@@ -17843,7 +17842,7 @@
         }
       },
       "cells": {
-        "$specify$153": {
+        "$specify$151": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -17874,7 +17873,7 @@
             "SRC": [ 10, 11, 12, 13 ]
           }
         },
-        "$specify$154": {
+        "$specify$152": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -17909,7 +17908,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$155": {
+        "$specify$153": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -17944,7 +17943,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$156": {
+        "$specify$154": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -17979,7 +17978,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$157": {
+        "$specify$155": {
           "hide_name": 1,
           "type": "$specify3",
           "parameters": {
@@ -18101,7 +18100,7 @@
         }
       },
       "cells": {
-        "$specify$158": {
+        "$specify$156": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -18132,7 +18131,7 @@
             "SRC": [ 14, 15, 16, 17 ]
           }
         },
-        "$specify$159": {
+        "$specify$157": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -18167,7 +18166,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$160": {
+        "$specify$158": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -18202,7 +18201,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$161": {
+        "$specify$159": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -18237,7 +18236,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$162": {
+        "$specify$160": {
           "hide_name": 1,
           "type": "$specify3",
           "parameters": {
@@ -18836,7 +18835,7 @@
         }
       },
       "cells": {
-        "$specify$163": {
+        "$specify$161": {
           "hide_name": 1,
           "type": "$specify3",
           "parameters": {
@@ -18873,7 +18872,7 @@
             "SRC": [ 100 ]
           }
         },
-        "$specify$164": {
+        "$specify$162": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -18908,7 +18907,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$165": {
+        "$specify$163": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -18943,7 +18942,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$166": {
+        "$specify$164": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -18978,7 +18977,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$167": {
+        "$specify$165": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -19013,7 +19012,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$168": {
+        "$specify$166": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -19048,7 +19047,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$169": {
+        "$specify$167": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -19083,7 +19082,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$170": {
+        "$specify$168": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -19118,7 +19117,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$171": {
+        "$specify$169": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -19153,7 +19152,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$172": {
+        "$specify$170": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -19188,7 +19187,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$173": {
+        "$specify$171": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -19223,7 +19222,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$174": {
+        "$specify$172": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -19258,7 +19257,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$175": {
+        "$specify$173": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -19759,7 +19758,7 @@
         }
       },
       "cells": {
-        "$specify$176": {
+        "$specify$174": {
           "hide_name": 1,
           "type": "$specify3",
           "parameters": {
@@ -19796,7 +19795,7 @@
             "SRC": [ 108 ]
           }
         },
-        "$specify$177": {
+        "$specify$175": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -19831,7 +19830,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$178": {
+        "$specify$176": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -19866,7 +19865,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$179": {
+        "$specify$177": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -19901,7 +19900,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$180": {
+        "$specify$178": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -19936,7 +19935,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$181": {
+        "$specify$179": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -19971,7 +19970,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$182": {
+        "$specify$180": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -20006,7 +20005,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$183": {
+        "$specify$181": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -20041,7 +20040,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$184": {
+        "$specify$182": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -20076,7 +20075,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$185": {
+        "$specify$183": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -20111,7 +20110,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$186": {
+        "$specify$184": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -20146,7 +20145,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$187": {
+        "$specify$185": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -20181,7 +20180,7 @@
             "SRC_EN": [ "1" ]
           }
         },
-        "$specify$188": {
+        "$specify$186": {
           "hide_name": 1,
           "type": "$specrule",
           "parameters": {
@@ -22170,7 +22169,7 @@
         }
       },
       "cells": {
-        "$specify$16": {
+        "$specify$14": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -22201,7 +22200,7 @@
             "SRC": [ 3 ]
           }
         },
-        "$specify$17": {
+        "$specify$15": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -22232,7 +22231,7 @@
             "SRC": [ 4 ]
           }
         },
-        "$specify$18": {
+        "$specify$16": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -22263,7 +22262,7 @@
             "SRC": [ 5 ]
           }
         },
-        "$specify$19": {
+        "$specify$17": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -22294,7 +22293,7 @@
             "SRC": [ 6 ]
           }
         },
-        "$specify$20": {
+        "$specify$18": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -22409,7 +22408,7 @@
         }
       },
       "cells": {
-        "$specify$21": {
+        "$specify$19": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -22440,7 +22439,7 @@
             "SRC": [ 3 ]
           }
         },
-        "$specify$22": {
+        "$specify$20": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -22471,7 +22470,7 @@
             "SRC": [ 4 ]
           }
         },
-        "$specify$23": {
+        "$specify$21": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -22502,7 +22501,7 @@
             "SRC": [ 5 ]
           }
         },
-        "$specify$24": {
+        "$specify$22": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -22533,7 +22532,7 @@
             "SRC": [ 6 ]
           }
         },
-        "$specify$25": {
+        "$specify$23": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -22564,7 +22563,7 @@
             "SRC": [ 7 ]
           }
         },
-        "$specify$26": {
+        "$specify$24": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -22690,7 +22689,7 @@
         }
       },
       "cells": {
-        "$specify$27": {
+        "$specify$25": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -22721,7 +22720,7 @@
             "SRC": [ 3 ]
           }
         },
-        "$specify$28": {
+        "$specify$26": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -22752,7 +22751,7 @@
             "SRC": [ 4 ]
           }
         },
-        "$specify$29": {
+        "$specify$27": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -22783,7 +22782,7 @@
             "SRC": [ 5 ]
           }
         },
-        "$specify$30": {
+        "$specify$28": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -22814,7 +22813,7 @@
             "SRC": [ 6 ]
           }
         },
-        "$specify$31": {
+        "$specify$29": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -22845,7 +22844,7 @@
             "SRC": [ 7 ]
           }
         },
-        "$specify$32": {
+        "$specify$30": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -22876,7 +22875,7 @@
             "SRC": [ 8 ]
           }
         },
-        "$specify$33": {
+        "$specify$31": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -23013,7 +23012,7 @@
         }
       },
       "cells": {
-        "$specify$34": {
+        "$specify$32": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -23044,7 +23043,7 @@
             "SRC": [ 3 ]
           }
         },
-        "$specify$35": {
+        "$specify$33": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -23075,7 +23074,7 @@
             "SRC": [ 4 ]
           }
         },
-        "$specify$36": {
+        "$specify$34": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -23106,7 +23105,7 @@
             "SRC": [ 5 ]
           }
         },
-        "$specify$37": {
+        "$specify$35": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -23137,7 +23136,7 @@
             "SRC": [ 6 ]
           }
         },
-        "$specify$38": {
+        "$specify$36": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -23168,7 +23167,7 @@
             "SRC": [ 7 ]
           }
         },
-        "$specify$39": {
+        "$specify$37": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -23199,7 +23198,7 @@
             "SRC": [ 8 ]
           }
         },
-        "$specify$40": {
+        "$specify$38": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -23230,7 +23229,7 @@
             "SRC": [ 9 ]
           }
         },
-        "$specify$41": {
+        "$specify$39": {
           "hide_name": 1,
           "type": "$specify2",
           "parameters": {
@@ -24581,7 +24580,7 @@
     "top": {
       "attributes": {
         "top": "00000000000000000000000000000001",
-        "src": "top.v:1.1-20.10"
+        "src": "top.v:1.1-39.10"
       },
       "ports": {
         "clk": {
@@ -24592,13 +24591,131 @@
           "direction": "input",
           "bits": [ 3 ]
         },
+        "mode_select": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
         "led": {
           "direction": "output",
-          "bits": [ 4, 5, 6, 7, 8, 9 ]
+          "bits": [ 5, 6, 7, 8, 9, 10 ]
+        },
+        "data_bus": {
+          "direction": "inout",
+          "bits": [ 11, 12, 13, 14, 15, 16, 17, 18 ]
+        },
+        "cam_pclk": {
+          "direction": "input",
+          "bits": [ 19 ]
+        },
+        "cam_href": {
+          "direction": "input",
+          "bits": [ 20 ]
+        },
+        "cam_vsync": {
+          "direction": "input",
+          "bits": [ 21 ]
+        },
+        "cam_enable": {
+          "direction": "output",
+          "bits": [ 22 ]
+        },
+        "uart_usb_rx": {
+          "direction": "input",
+          "bits": [ 23 ]
+        },
+        "uart_usb_tx": {
+          "direction": "output",
+          "bits": [ 24 ]
+        },
+        "prog_enable": {
+          "direction": "output",
+          "bits": [ 25 ]
         }
       },
       "cells": {
-        "clk_IBUF_I": {
+        "cam_enable_OBUF_O": {
+          "hide_name": 0,
+          "type": "OBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "keep": "00000000000000000000000000000001"
+          },
+          "port_directions": {
+            "I": "input",
+            "O": "output"
+          },
+          "connections": {
+            "I": [ 26 ],
+            "O": [ 22 ]
+          }
+        },
+        "cam_prog.cam_enable_GND_G": {
+          "hide_name": 0,
+          "type": "GND",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "G": "output"
+          },
+          "connections": {
+            "G": [ 26 ]
+          }
+        },
+        "cam_prog.cam_href_IBUF_O": {
+          "hide_name": 0,
+          "type": "IBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "keep": "00000000000000000000000000000001"
+          },
+          "port_directions": {
+            "I": "input",
+            "O": "output"
+          },
+          "connections": {
+            "I": [ 20 ],
+            "O": [ 27 ]
+          }
+        },
+        "cam_prog.cam_pclk_IBUF_O": {
+          "hide_name": 0,
+          "type": "IBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "keep": "00000000000000000000000000000001"
+          },
+          "port_directions": {
+            "I": "input",
+            "O": "output"
+          },
+          "connections": {
+            "I": [ 19 ],
+            "O": [ 28 ]
+          }
+        },
+        "cam_prog.cam_vsync_IBUF_O": {
+          "hide_name": 0,
+          "type": "IBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "keep": "00000000000000000000000000000001"
+          },
+          "port_directions": {
+            "I": "input",
+            "O": "output"
+          },
+          "connections": {
+            "I": [ 21 ],
+            "O": [ 29 ]
+          }
+        },
+        "cam_prog.clk_IBUF_O": {
           "hide_name": 0,
           "type": "IBUF",
           "parameters": {
@@ -24612,7 +24729,1646 @@
           },
           "connections": {
             "I": [ 2 ],
-            "O": [ 10 ]
+            "O": [ 30 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 31 ],
+            "Q": [ 32 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_1": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 33 ],
+            "Q": [ 34 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_10": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 35 ],
+            "Q": [ 36 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_10_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 37 ],
+            "COUT": [ 38 ],
+            "I0": [ 26 ],
+            "I1": [ 36 ],
+            "I3": [ 39 ],
+            "SUM": [ 35 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_11": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 40 ],
+            "Q": [ 41 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_11_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 42 ],
+            "COUT": [ 37 ],
+            "I0": [ 26 ],
+            "I1": [ 41 ],
+            "I3": [ 39 ],
+            "SUM": [ 40 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_12": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 43 ],
+            "Q": [ 44 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_12_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 45 ],
+            "COUT": [ 42 ],
+            "I0": [ 26 ],
+            "I1": [ 44 ],
+            "I3": [ 39 ],
+            "SUM": [ 43 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_13": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 46 ],
+            "Q": [ 47 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_13_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 48 ],
+            "COUT": [ 45 ],
+            "I0": [ 26 ],
+            "I1": [ 47 ],
+            "I3": [ 39 ],
+            "SUM": [ 46 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_14": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 49 ],
+            "Q": [ 50 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_14_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 51 ],
+            "COUT": [ 48 ],
+            "I0": [ 26 ],
+            "I1": [ 50 ],
+            "I3": [ 39 ],
+            "SUM": [ 49 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_15": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 52 ],
+            "Q": [ 53 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_15_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 54 ],
+            "COUT": [ 51 ],
+            "I0": [ 26 ],
+            "I1": [ 53 ],
+            "I3": [ 39 ],
+            "SUM": [ 52 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_16": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 55 ],
+            "Q": [ 56 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_16_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 57 ],
+            "COUT": [ 54 ],
+            "I0": [ 26 ],
+            "I1": [ 56 ],
+            "I3": [ 39 ],
+            "SUM": [ 55 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_17": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 58 ],
+            "Q": [ 59 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_17_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 60 ],
+            "COUT": [ 57 ],
+            "I0": [ 26 ],
+            "I1": [ 59 ],
+            "I3": [ 39 ],
+            "SUM": [ 58 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_18": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 61 ],
+            "Q": [ 62 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_18_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 63 ],
+            "COUT": [ 60 ],
+            "I0": [ 26 ],
+            "I1": [ 62 ],
+            "I3": [ 39 ],
+            "SUM": [ 61 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_19": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 64 ],
+            "Q": [ 65 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_19_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 66 ],
+            "COUT": [ 63 ],
+            "I0": [ 26 ],
+            "I1": [ 65 ],
+            "I3": [ 39 ],
+            "SUM": [ 64 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_1_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 67 ],
+            "COUT": [ 68 ],
+            "I0": [ 26 ],
+            "I1": [ 34 ],
+            "I3": [ 39 ],
+            "SUM": [ 33 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_2": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 69 ],
+            "Q": [ 70 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_20": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 71 ],
+            "Q": [ 72 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_20_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 73 ],
+            "COUT": [ 66 ],
+            "I0": [ 26 ],
+            "I1": [ 72 ],
+            "I3": [ 39 ],
+            "SUM": [ 71 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_21": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 74 ],
+            "Q": [ 75 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_21_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 76 ],
+            "COUT": [ 73 ],
+            "I0": [ 26 ],
+            "I1": [ 75 ],
+            "I3": [ 39 ],
+            "SUM": [ 74 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_22": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 77 ],
+            "Q": [ 78 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_22_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 79 ],
+            "COUT": [ 76 ],
+            "I0": [ 26 ],
+            "I1": [ 78 ],
+            "I3": [ 39 ],
+            "SUM": [ 77 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_23": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 80 ],
+            "Q": [ 81 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_23_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 82 ],
+            "COUT": [ 79 ],
+            "I0": [ 26 ],
+            "I1": [ 81 ],
+            "I3": [ 39 ],
+            "SUM": [ 80 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_24": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 83 ],
+            "Q": [ 84 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_24_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 85 ],
+            "COUT": [ 82 ],
+            "I0": [ 26 ],
+            "I1": [ 84 ],
+            "I3": [ 39 ],
+            "SUM": [ 83 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_25": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 86 ],
+            "Q": [ 87 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_25_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 88 ],
+            "COUT": [ 85 ],
+            "I0": [ 26 ],
+            "I1": [ 87 ],
+            "I3": [ 39 ],
+            "SUM": [ 86 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_25_D_ALU_SUM_CIN_ALU_COUT": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 26 ],
+            "COUT": [ 88 ],
+            "I0": [ 39 ],
+            "I1": [ 89 ],
+            "I3": [ 39 ],
+            "SUM": [ 90 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_26": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 91 ],
+            "Q": [ 89 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_26_D_LUT1_F": {
+          "hide_name": 0,
+          "type": "LUT1",
+          "parameters": {
+            "INIT": "01"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:135.23-136.15"
+          },
+          "port_directions": {
+            "F": "output",
+            "I0": "input"
+          },
+          "connections": {
+            "F": [ 91 ],
+            "I0": [ 89 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_2_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 92 ],
+            "COUT": [ 67 ],
+            "I0": [ 26 ],
+            "I1": [ 70 ],
+            "I3": [ 39 ],
+            "SUM": [ 69 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_3": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 93 ],
+            "Q": [ 94 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_3_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 95 ],
+            "COUT": [ 92 ],
+            "I0": [ 26 ],
+            "I1": [ 94 ],
+            "I3": [ 39 ],
+            "SUM": [ 93 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_4": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 96 ],
+            "Q": [ 97 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_4_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 98 ],
+            "COUT": [ 95 ],
+            "I0": [ 26 ],
+            "I1": [ 97 ],
+            "I3": [ 39 ],
+            "SUM": [ 96 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_5": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 99 ],
+            "Q": [ 100 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_5_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 101 ],
+            "COUT": [ 98 ],
+            "I0": [ 26 ],
+            "I1": [ 100 ],
+            "I3": [ 39 ],
+            "SUM": [ 99 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_6": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 102 ],
+            "Q": [ 103 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_6_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 104 ],
+            "COUT": [ 101 ],
+            "I0": [ 26 ],
+            "I1": [ 103 ],
+            "I3": [ 39 ],
+            "SUM": [ 102 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_7": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 105 ],
+            "Q": [ 106 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_7_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 107 ],
+            "COUT": [ 104 ],
+            "I0": [ 26 ],
+            "I1": [ 106 ],
+            "I3": [ 39 ],
+            "SUM": [ 105 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_8": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 108 ],
+            "Q": [ 109 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_8_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 110 ],
+            "COUT": [ 107 ],
+            "I0": [ 26 ],
+            "I1": [ 109 ],
+            "I3": [ 39 ],
+            "SUM": [ 108 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_9": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 111 ],
+            "Q": [ 112 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_9_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 38 ],
+            "COUT": [ 110 ],
+            "I0": [ 26 ],
+            "I1": [ 112 ],
+            "I3": [ 39 ],
+            "SUM": [ 111 ]
+          }
+        },
+        "cam_prog.counter_DFF_Q_D_ALU_SUM": {
+          "hide_name": 0,
+          "type": "ALU",
+          "parameters": {
+            "ALU_MODE": "00000000000000000000000000000010"
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
+          },
+          "port_directions": {
+            "CIN": "input",
+            "COUT": "output",
+            "I0": "input",
+            "I1": "input",
+            "I3": "input",
+            "SUM": "output"
+          },
+          "connections": {
+            "CIN": [ 68 ],
+            "COUT": [ 113 ],
+            "I0": [ 26 ],
+            "I1": [ 32 ],
+            "I3": [ 39 ],
+            "SUM": [ 31 ]
+          }
+        },
+        "cam_prog.led_DFF_Q": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 32 ],
+            "Q": [ 114 ]
+          }
+        },
+        "cam_prog.led_DFF_Q_1": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 34 ],
+            "Q": [ 115 ]
+          }
+        },
+        "cam_prog.led_DFF_Q_2": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 70 ],
+            "Q": [ 116 ]
+          }
+        },
+        "cam_prog.led_DFF_Q_3": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 94 ],
+            "Q": [ 117 ]
+          }
+        },
+        "cam_prog.led_DFF_Q_4": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 97 ],
+            "Q": [ 118 ]
+          }
+        },
+        "cam_prog.led_DFF_Q_5": {
+          "hide_name": 0,
+          "type": "DFF",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:18.5-23.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
+          },
+          "port_directions": {
+            "CLK": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "CLK": [ 30 ],
+            "D": [ 100 ],
+            "Q": [ 119 ]
+          }
+        },
+        "cam_prog.mode_select_IBUF_O": {
+          "hide_name": 0,
+          "type": "IBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "keep": "00000000000000000000000000000001"
+          },
+          "port_directions": {
+            "I": "input",
+            "O": "output"
+          },
+          "connections": {
+            "I": [ 4 ],
+            "O": [ 120 ]
+          }
+        },
+        "cam_prog.prog_enable_VCC_V": {
+          "hide_name": 0,
+          "type": "VCC",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "V": "output"
+          },
+          "connections": {
+            "V": [ 39 ]
+          }
+        },
+        "cam_prog.rst_n_IBUF_O": {
+          "hide_name": 0,
+          "type": "IBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "keep": "00000000000000000000000000000001"
+          },
+          "port_directions": {
+            "I": "input",
+            "O": "output"
+          },
+          "connections": {
+            "I": [ 3 ],
+            "O": [ 121 ]
+          }
+        },
+        "cam_prog.uart_usb_rx_IBUF_O": {
+          "hide_name": 0,
+          "type": "IBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "keep": "00000000000000000000000000000001"
+          },
+          "port_directions": {
+            "I": "input",
+            "O": "output"
+          },
+          "connections": {
+            "I": [ 23 ],
+            "O": [ 122 ]
+          }
+        },
+        "data_bus_IOBUF_IO": {
+          "hide_name": 0,
+          "type": "IOBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "keep": "00000000000000000000000000000001"
+          },
+          "port_directions": {
+            "I": "input",
+            "IO": "inout",
+            "O": "output",
+            "OEN": "input"
+          },
+          "connections": {
+            "I": [ 26 ],
+            "IO": [ 18 ],
+            "O": [ 123 ],
+            "OEN": [ 39 ]
+          }
+        },
+        "data_bus_IOBUF_IO_1": {
+          "hide_name": 0,
+          "type": "IOBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "keep": "00000000000000000000000000000001"
+          },
+          "port_directions": {
+            "I": "input",
+            "IO": "inout",
+            "O": "output",
+            "OEN": "input"
+          },
+          "connections": {
+            "I": [ 26 ],
+            "IO": [ 17 ],
+            "O": [ 124 ],
+            "OEN": [ 39 ]
+          }
+        },
+        "data_bus_IOBUF_IO_2": {
+          "hide_name": 0,
+          "type": "IOBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "keep": "00000000000000000000000000000001"
+          },
+          "port_directions": {
+            "I": "input",
+            "IO": "inout",
+            "O": "output",
+            "OEN": "input"
+          },
+          "connections": {
+            "I": [ 26 ],
+            "IO": [ 16 ],
+            "O": [ 125 ],
+            "OEN": [ 39 ]
+          }
+        },
+        "data_bus_IOBUF_IO_3": {
+          "hide_name": 0,
+          "type": "IOBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "keep": "00000000000000000000000000000001"
+          },
+          "port_directions": {
+            "I": "input",
+            "IO": "inout",
+            "O": "output",
+            "OEN": "input"
+          },
+          "connections": {
+            "I": [ 26 ],
+            "IO": [ 15 ],
+            "O": [ 126 ],
+            "OEN": [ 39 ]
+          }
+        },
+        "data_bus_IOBUF_IO_4": {
+          "hide_name": 0,
+          "type": "IOBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "keep": "00000000000000000000000000000001"
+          },
+          "port_directions": {
+            "I": "input",
+            "IO": "inout",
+            "O": "output",
+            "OEN": "input"
+          },
+          "connections": {
+            "I": [ 26 ],
+            "IO": [ 14 ],
+            "O": [ 127 ],
+            "OEN": [ 39 ]
+          }
+        },
+        "data_bus_IOBUF_IO_5": {
+          "hide_name": 0,
+          "type": "IOBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "keep": "00000000000000000000000000000001"
+          },
+          "port_directions": {
+            "I": "input",
+            "IO": "inout",
+            "O": "output",
+            "OEN": "input"
+          },
+          "connections": {
+            "I": [ 26 ],
+            "IO": [ 13 ],
+            "O": [ 128 ],
+            "OEN": [ 39 ]
+          }
+        },
+        "data_bus_IOBUF_IO_6": {
+          "hide_name": 0,
+          "type": "IOBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "keep": "00000000000000000000000000000001"
+          },
+          "port_directions": {
+            "I": "input",
+            "IO": "inout",
+            "OEN": "input"
+          },
+          "connections": {
+            "I": [ 122 ],
+            "IO": [ 12 ],
+            "OEN": [ 26 ]
+          }
+        },
+        "data_bus_IOBUF_IO_7": {
+          "hide_name": 0,
+          "type": "IOBUF",
+          "parameters": {
+          },
+          "attributes": {
+            "keep": "00000000000000000000000000000001"
+          },
+          "port_directions": {
+            "I": "input",
+            "IO": "inout",
+            "O": "output",
+            "OEN": "input"
+          },
+          "connections": {
+            "I": [ 26 ],
+            "IO": [ 11 ],
+            "O": [ 129 ],
+            "OEN": [ 39 ]
           }
         },
         "led_OBUF_O": {
@@ -24628,8 +26384,8 @@
             "O": "output"
           },
           "connections": {
-            "I": [ 11 ],
-            "O": [ 9 ]
+            "I": [ 114 ],
+            "O": [ 10 ]
           }
         },
         "led_OBUF_O_1": {
@@ -24645,8 +26401,8 @@
             "O": "output"
           },
           "connections": {
-            "I": [ 12 ],
-            "O": [ 8 ]
+            "I": [ 115 ],
+            "O": [ 9 ]
           }
         },
         "led_OBUF_O_2": {
@@ -24662,8 +26418,8 @@
             "O": "output"
           },
           "connections": {
-            "I": [ 13 ],
-            "O": [ 7 ]
+            "I": [ 116 ],
+            "O": [ 8 ]
           }
         },
         "led_OBUF_O_3": {
@@ -24679,8 +26435,8 @@
             "O": "output"
           },
           "connections": {
-            "I": [ 14 ],
-            "O": [ 6 ]
+            "I": [ 117 ],
+            "O": [ 7 ]
           }
         },
         "led_OBUF_O_4": {
@@ -24696,8 +26452,8 @@
             "O": "output"
           },
           "connections": {
-            "I": [ 15 ],
-            "O": [ 5 ]
+            "I": [ 118 ],
+            "O": [ 6 ]
           }
         },
         "led_OBUF_O_5": {
@@ -24713,1503 +26469,13 @@
             "O": "output"
           },
           "connections": {
-            "I": [ 16 ],
-            "O": [ 4 ]
+            "I": [ 119 ],
+            "O": [ 5 ]
           }
         },
-        "led_OBUF_O_I_DFF_Q": {
+        "prog_enable_OBUF_O": {
           "hide_name": 0,
-          "type": "DFF",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:16.5-18.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
-          },
-          "port_directions": {
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLK": [ 10 ],
-            "D": [ 17 ],
-            "Q": [ 11 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_1": {
-          "hide_name": 0,
-          "type": "DFF",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:16.5-18.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
-          },
-          "port_directions": {
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLK": [ 10 ],
-            "D": [ 18 ],
-            "Q": [ 12 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_1_D_ALU_I1": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 19 ],
-            "COUT": [ 20 ],
-            "I0": [ 21 ],
-            "I1": [ 18 ],
-            "I3": [ 22 ],
-            "SUM": [ 23 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_1_D_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 23 ],
-            "Q": [ 18 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_2": {
-          "hide_name": 0,
-          "type": "DFF",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:16.5-18.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
-          },
-          "port_directions": {
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLK": [ 10 ],
-            "D": [ 25 ],
-            "Q": [ 13 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_2_D_ALU_I1": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 26 ],
-            "COUT": [ 19 ],
-            "I0": [ 21 ],
-            "I1": [ 25 ],
-            "I3": [ 22 ],
-            "SUM": [ 27 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_2_D_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 27 ],
-            "Q": [ 25 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_3": {
-          "hide_name": 0,
-          "type": "DFF",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:16.5-18.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
-          },
-          "port_directions": {
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLK": [ 10 ],
-            "D": [ 28 ],
-            "Q": [ 14 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_3_D_ALU_I1": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 29 ],
-            "COUT": [ 26 ],
-            "I0": [ 21 ],
-            "I1": [ 28 ],
-            "I3": [ 22 ],
-            "SUM": [ 30 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_3_D_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 30 ],
-            "Q": [ 28 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_4": {
-          "hide_name": 0,
-          "type": "DFF",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:16.5-18.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
-          },
-          "port_directions": {
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLK": [ 10 ],
-            "D": [ 31 ],
-            "Q": [ 15 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_4_D_ALU_I1": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 32 ],
-            "COUT": [ 29 ],
-            "I0": [ 21 ],
-            "I1": [ 31 ],
-            "I3": [ 22 ],
-            "SUM": [ 33 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_4_D_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 33 ],
-            "Q": [ 31 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_5": {
-          "hide_name": 0,
-          "type": "DFF",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:16.5-18.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:13.6-13.47"
-          },
-          "port_directions": {
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLK": [ 10 ],
-            "D": [ 34 ],
-            "Q": [ 16 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_5_D_ALU_I1": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 35 ],
-            "COUT": [ 32 ],
-            "I0": [ 21 ],
-            "I1": [ 34 ],
-            "I3": [ 22 ],
-            "SUM": [ 36 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_5_D_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 36 ],
-            "Q": [ 34 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 20 ],
-            "COUT": [ 37 ],
-            "I0": [ 21 ],
-            "I1": [ 17 ],
-            "I3": [ 22 ],
-            "SUM": [ 38 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_I0_GND_G": {
-          "hide_name": 0,
-          "type": "GND",
-          "parameters": {
-          },
-          "attributes": {
-          },
-          "port_directions": {
-            "G": "output"
-          },
-          "connections": {
-            "G": [ 21 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_I3_VCC_V": {
-          "hide_name": 0,
-          "type": "VCC",
-          "parameters": {
-          },
-          "attributes": {
-          },
-          "port_directions": {
-            "V": "output"
-          },
-          "connections": {
-            "V": [ 22 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 39 ],
-            "COUT": [ 40 ],
-            "I0": [ 21 ],
-            "I1": [ 41 ],
-            "I3": [ 22 ],
-            "SUM": [ 42 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_1": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 43 ],
-            "COUT": [ 39 ],
-            "I0": [ 21 ],
-            "I1": [ 44 ],
-            "I3": [ 22 ],
-            "SUM": [ 45 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_10": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 46 ],
-            "COUT": [ 47 ],
-            "I0": [ 21 ],
-            "I1": [ 48 ],
-            "I3": [ 22 ],
-            "SUM": [ 49 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_10_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 49 ],
-            "Q": [ 48 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_11": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 50 ],
-            "COUT": [ 46 ],
-            "I0": [ 21 ],
-            "I1": [ 51 ],
-            "I3": [ 22 ],
-            "SUM": [ 52 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_11_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 52 ],
-            "Q": [ 51 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_12": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 53 ],
-            "COUT": [ 50 ],
-            "I0": [ 21 ],
-            "I1": [ 54 ],
-            "I3": [ 22 ],
-            "SUM": [ 55 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_12_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 55 ],
-            "Q": [ 54 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_13": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 56 ],
-            "COUT": [ 53 ],
-            "I0": [ 21 ],
-            "I1": [ 57 ],
-            "I3": [ 22 ],
-            "SUM": [ 58 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_13_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 58 ],
-            "Q": [ 57 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_14": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 59 ],
-            "COUT": [ 56 ],
-            "I0": [ 21 ],
-            "I1": [ 60 ],
-            "I3": [ 22 ],
-            "SUM": [ 61 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_14_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 61 ],
-            "Q": [ 60 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_15": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 62 ],
-            "COUT": [ 59 ],
-            "I0": [ 21 ],
-            "I1": [ 63 ],
-            "I3": [ 22 ],
-            "SUM": [ 64 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_15_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 64 ],
-            "Q": [ 63 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_16": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 65 ],
-            "COUT": [ 62 ],
-            "I0": [ 21 ],
-            "I1": [ 66 ],
-            "I3": [ 22 ],
-            "SUM": [ 67 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_16_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 67 ],
-            "Q": [ 66 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_17": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 68 ],
-            "COUT": [ 65 ],
-            "I0": [ 21 ],
-            "I1": [ 69 ],
-            "I3": [ 22 ],
-            "SUM": [ 70 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_17_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 70 ],
-            "Q": [ 69 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_18": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 71 ],
-            "COUT": [ 68 ],
-            "I0": [ 21 ],
-            "I1": [ 72 ],
-            "I3": [ 22 ],
-            "SUM": [ 73 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_18_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 73 ],
-            "Q": [ 72 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_19": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 40 ],
-            "COUT": [ 71 ],
-            "I0": [ 21 ],
-            "I1": [ 74 ],
-            "I3": [ 22 ],
-            "SUM": [ 75 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_19_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 75 ],
-            "Q": [ 74 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_1_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 45 ],
-            "Q": [ 44 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_2": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 76 ],
-            "COUT": [ 43 ],
-            "I0": [ 21 ],
-            "I1": [ 77 ],
-            "I3": [ 22 ],
-            "SUM": [ 78 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_2_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 78 ],
-            "Q": [ 77 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_3": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 79 ],
-            "COUT": [ 76 ],
-            "I0": [ 21 ],
-            "I1": [ 80 ],
-            "I3": [ 22 ],
-            "SUM": [ 81 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_3_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 81 ],
-            "Q": [ 80 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_4": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 82 ],
-            "COUT": [ 79 ],
-            "I0": [ 21 ],
-            "I1": [ 83 ],
-            "I3": [ 22 ],
-            "SUM": [ 84 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_4_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 84 ],
-            "Q": [ 83 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_5": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 85 ],
-            "COUT": [ 82 ],
-            "I0": [ 21 ],
-            "I1": [ 86 ],
-            "I3": [ 22 ],
-            "SUM": [ 87 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_5_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 87 ],
-            "Q": [ 86 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_6": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 88 ],
-            "COUT": [ 85 ],
-            "I0": [ 21 ],
-            "I1": [ 89 ],
-            "I3": [ 22 ],
-            "SUM": [ 90 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_6_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 90 ],
-            "Q": [ 89 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_7": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 91 ],
-            "COUT": [ 88 ],
-            "I0": [ 21 ],
-            "I1": [ 92 ],
-            "I3": [ 22 ],
-            "SUM": [ 93 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_7_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 93 ],
-            "Q": [ 92 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_8": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 47 ],
-            "COUT": [ 35 ],
-            "I0": [ 21 ],
-            "I1": [ 94 ],
-            "I3": [ 22 ],
-            "SUM": [ 95 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_8_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 95 ],
-            "Q": [ 94 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_9": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 96 ],
-            "COUT": [ 91 ],
-            "I0": [ 21 ],
-            "I1": [ 97 ],
-            "I3": [ 22 ],
-            "SUM": [ 98 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_9_CIN_ALU_COUT": {
-          "hide_name": 0,
-          "type": "ALU",
-          "parameters": {
-            "ALU_MODE": "00000000000000000000000000000010"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5"
-          },
-          "port_directions": {
-            "CIN": "input",
-            "COUT": "output",
-            "I0": "input",
-            "I1": "input",
-            "I3": "input",
-            "SUM": "output"
-          },
-          "connections": {
-            "CIN": [ 21 ],
-            "COUT": [ 96 ],
-            "I0": [ 22 ],
-            "I1": [ 99 ],
-            "I3": [ 22 ],
-            "SUM": [ 100 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_9_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 98 ],
-            "Q": [ 97 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_I1_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 42 ],
-            "Q": [ 41 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_LUT1_F": {
-          "hide_name": 0,
-          "type": "LUT1",
-          "parameters": {
-            "INIT": "01"
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:135.23-136.15"
-          },
-          "port_directions": {
-            "F": "output",
-            "I0": "input"
-          },
-          "connections": {
-            "F": [ 101 ],
-            "I0": [ 99 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_LUT1_F_I0_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 101 ],
-            "Q": [ 99 ]
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_DFFC_Q": {
-          "hide_name": 0,
-          "type": "DFFC",
-          "parameters": {
-          },
-          "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "top.v:9.5-14.8|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:91.7-91.59"
-          },
-          "port_directions": {
-            "CLEAR": "input",
-            "CLK": "input",
-            "D": "input",
-            "Q": "output"
-          },
-          "connections": {
-            "CLEAR": [ 24 ],
-            "CLK": [ 10 ],
-            "D": [ 38 ],
-            "Q": [ 17 ]
-          }
-        },
-        "rst_n_IBUF_I": {
-          "hide_name": 0,
-          "type": "IBUF",
+          "type": "OBUF",
           "parameters": {
           },
           "attributes": {
@@ -26220,31 +26486,552 @@
             "O": "output"
           },
           "connections": {
-            "I": [ 3 ],
-            "O": [ 102 ]
+            "I": [ 39 ],
+            "O": [ 25 ]
           }
         },
-        "rst_n_IBUF_I_O_LUT1_I0": {
+        "uart_usb_tx_OBUF_O": {
           "hide_name": 0,
-          "type": "LUT1",
+          "type": "OBUF",
           "parameters": {
-            "INIT": "01"
           },
           "attributes": {
-            "module_not_derived": "00000000000000000000000000000001",
-            "src": "/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:135.23-136.15"
+            "keep": "00000000000000000000000000000001"
           },
           "port_directions": {
-            "F": "output",
-            "I0": "input"
+            "I": "input",
+            "O": "output"
           },
           "connections": {
-            "F": [ 24 ],
-            "I0": [ 102 ]
+            "I": [ 129 ],
+            "O": [ 24 ]
           }
         }
       },
       "netnames": {
+        "cam_enable": {
+          "hide_name": 0,
+          "bits": [ 22 ],
+          "attributes": {
+            "src": "top.v:14.17-14.27"
+          }
+        },
+        "cam_href": {
+          "hide_name": 0,
+          "bits": [ 20 ],
+          "attributes": {
+            "src": "top.v:12.16-12.24"
+          }
+        },
+        "cam_pclk": {
+          "hide_name": 0,
+          "bits": [ 19 ],
+          "attributes": {
+            "src": "top.v:11.16-11.24"
+          }
+        },
+        "cam_prog.cam_enable": {
+          "hide_name": 0,
+          "bits": [ 26 ],
+          "attributes": {
+            "hdlname": "cam_prog cam_enable",
+            "src": "camera_programmer.v:9.16-9.26"
+          }
+        },
+        "cam_prog.cam_href": {
+          "hide_name": 0,
+          "bits": [ 27 ],
+          "attributes": {
+            "hdlname": "cam_prog cam_href",
+            "src": "camera_programmer.v:7.16-7.24",
+            "unused_bits": "0 "
+          }
+        },
+        "cam_prog.cam_pclk": {
+          "hide_name": 0,
+          "bits": [ 28 ],
+          "attributes": {
+            "hdlname": "cam_prog cam_pclk",
+            "src": "camera_programmer.v:6.16-6.24",
+            "unused_bits": "0 "
+          }
+        },
+        "cam_prog.cam_vsync": {
+          "hide_name": 0,
+          "bits": [ 29 ],
+          "attributes": {
+            "hdlname": "cam_prog cam_vsync",
+            "src": "camera_programmer.v:8.16-8.25",
+            "unused_bits": "0 "
+          }
+        },
+        "cam_prog.clk": {
+          "hide_name": 0,
+          "bits": [ 30 ],
+          "attributes": {
+            "hdlname": "cam_prog clk",
+            "src": "camera_programmer.v:2.16-2.19"
+          }
+        },
+        "cam_prog.counter": {
+          "hide_name": 0,
+          "bits": [ 89, 87, 84, 81, 78, 75, 72, 65, 62, 59, 56, 53, 50, 47, 44, 41, 36, 112, 109, 106, 103, 100, 97, 94, 70, 34, 32 ],
+          "attributes": {
+            "hdlname": "cam_prog counter",
+            "src": "camera_programmer.v:17.16-17.23"
+          }
+        },
+        "cam_prog.counter_DFF_Q_10_D": {
+          "hide_name": 0,
+          "bits": [ 35 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_10_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 38 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_11_D": {
+          "hide_name": 0,
+          "bits": [ 40 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_11_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 37 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_12_D": {
+          "hide_name": 0,
+          "bits": [ 43 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_12_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 42 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_13_D": {
+          "hide_name": 0,
+          "bits": [ 46 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_13_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 45 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_14_D": {
+          "hide_name": 0,
+          "bits": [ 49 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_14_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 48 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_15_D": {
+          "hide_name": 0,
+          "bits": [ 52 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_15_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 51 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_16_D": {
+          "hide_name": 0,
+          "bits": [ 55 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_16_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 54 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_17_D": {
+          "hide_name": 0,
+          "bits": [ 58 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_17_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 57 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_18_D": {
+          "hide_name": 0,
+          "bits": [ 61 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_18_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 60 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_19_D": {
+          "hide_name": 0,
+          "bits": [ 64 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_19_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 63 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_1_D": {
+          "hide_name": 0,
+          "bits": [ 33 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_1_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 68 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_20_D": {
+          "hide_name": 0,
+          "bits": [ 71 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_20_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 66 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_21_D": {
+          "hide_name": 0,
+          "bits": [ 74 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_21_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 73 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_22_D": {
+          "hide_name": 0,
+          "bits": [ 77 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_22_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 76 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_23_D": {
+          "hide_name": 0,
+          "bits": [ 80 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_23_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 79 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_24_D": {
+          "hide_name": 0,
+          "bits": [ 83 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_24_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 82 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_25_D": {
+          "hide_name": 0,
+          "bits": [ 86 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_25_D_ALU_SUM_CIN": {
+          "hide_name": 0,
+          "bits": [ 88 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_25_D_ALU_SUM_CIN_ALU_COUT_SUM": {
+          "hide_name": 0,
+          "bits": [ 90 ],
+          "attributes": {
+            "unused_bits": "0 "
+          }
+        },
+        "cam_prog.counter_DFF_Q_25_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 85 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_26_D": {
+          "hide_name": 0,
+          "bits": [ 91 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_2_D": {
+          "hide_name": 0,
+          "bits": [ 69 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_2_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 67 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_3_D": {
+          "hide_name": 0,
+          "bits": [ 93 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_3_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 92 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_4_D": {
+          "hide_name": 0,
+          "bits": [ 96 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_4_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 95 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_5_D": {
+          "hide_name": 0,
+          "bits": [ 99 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_5_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 98 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_6_D": {
+          "hide_name": 0,
+          "bits": [ 102 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_6_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 101 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_7_D": {
+          "hide_name": 0,
+          "bits": [ 105 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_7_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 104 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_8_D": {
+          "hide_name": 0,
+          "bits": [ 108 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_8_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 107 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_9_D": {
+          "hide_name": 0,
+          "bits": [ 111 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_9_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 110 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
+          }
+        },
+        "cam_prog.counter_DFF_Q_D": {
+          "hide_name": 0,
+          "bits": [ 31 ],
+          "attributes": {
+          }
+        },
+        "cam_prog.counter_DFF_Q_D_ALU_SUM_COUT": {
+          "hide_name": 0,
+          "bits": [ 113 ],
+          "attributes": {
+            "abc9_carry": "00000000000000000000000000000001",
+            "src": "camera_programmer.v:19.20-19.31|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29",
+            "unused_bits": "0 "
+          }
+        },
+        "cam_prog.data_bus": {
+          "hide_name": 0,
+          "bits": [ 129, 122, 26, 26, 26, 26, 26, 26 ],
+          "attributes": {
+            "hdlname": "cam_prog data_bus",
+            "src": "camera_programmer.v:5.22-5.30"
+          }
+        },
+        "cam_prog.led": {
+          "hide_name": 0,
+          "bits": [ 119, 118, 117, 116, 115, 114 ],
+          "attributes": {
+            "hdlname": "cam_prog led",
+            "src": "camera_programmer.v:13.22-13.25"
+          }
+        },
+        "cam_prog.mode_select": {
+          "hide_name": 0,
+          "bits": [ 120 ],
+          "attributes": {
+            "hdlname": "cam_prog mode_select",
+            "src": "camera_programmer.v:4.16-4.27",
+            "unused_bits": "0 "
+          }
+        },
+        "cam_prog.prog_enable": {
+          "hide_name": 0,
+          "bits": [ 39 ],
+          "attributes": {
+            "hdlname": "cam_prog prog_enable",
+            "src": "camera_programmer.v:12.16-12.27"
+          }
+        },
+        "cam_prog.rst_n": {
+          "hide_name": 0,
+          "bits": [ 121 ],
+          "attributes": {
+            "hdlname": "cam_prog rst_n",
+            "src": "camera_programmer.v:3.16-3.21",
+            "unused_bits": "0 "
+          }
+        },
+        "cam_prog.uart_usb_rx": {
+          "hide_name": 0,
+          "bits": [ 122 ],
+          "attributes": {
+            "hdlname": "cam_prog uart_usb_rx",
+            "src": "camera_programmer.v:10.17-10.28"
+          }
+        },
+        "cam_prog.uart_usb_tx": {
+          "hide_name": 0,
+          "bits": [ 129 ],
+          "attributes": {
+            "hdlname": "cam_prog uart_usb_tx",
+            "src": "camera_programmer.v:11.17-11.28"
+          }
+        },
+        "cam_vsync": {
+          "hide_name": 0,
+          "bits": [ 21 ],
+          "attributes": {
+            "src": "top.v:13.16-13.25"
+          }
+        },
         "clk": {
           "hide_name": 0,
           "bits": [ 2 ],
@@ -26252,431 +27039,39 @@
             "src": "top.v:2.16-2.19"
           }
         },
-        "clk_IBUF_I_O": {
+        "data_bus": {
           "hide_name": 0,
-          "bits": [ 10 ],
+          "bits": [ 11, 12, 13, 14, 15, 16, 17, 18 ],
           "attributes": {
+            "src": "top.v:8.22-8.30"
+          }
+        },
+        "data_bus_IOBUF_IO_O": {
+          "hide_name": 0,
+          "bits": [ 129, 122, 128, 127, 126, 125, 124, 123 ],
+          "attributes": {
+            "unused_bits": "2 3 4 5 6 7"
           }
         },
         "led": {
           "hide_name": 0,
-          "bits": [ 4, 5, 6, 7, 8, 9 ],
+          "bits": [ 5, 6, 7, 8, 9, 10 ],
           "attributes": {
-            "src": "top.v:4.22-4.25"
+            "src": "top.v:5.23-5.26"
           }
         },
-        "led_OBUF_O_I": {
+        "mode_select": {
           "hide_name": 0,
-          "bits": [ 16, 15, 14, 13, 12, 11 ],
+          "bits": [ 4 ],
           "attributes": {
+            "src": "top.v:4.16-4.27"
           }
         },
-        "led_OBUF_O_I_DFF_Q_1_D": {
-          "hide_name": 0,
-          "bits": [ 18 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_1_D_ALU_I1_COUT": {
-          "hide_name": 0,
-          "bits": [ 20 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_2_D": {
+        "prog_enable": {
           "hide_name": 0,
           "bits": [ 25 ],
           "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_2_D_ALU_I1_COUT": {
-          "hide_name": 0,
-          "bits": [ 19 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_3_D": {
-          "hide_name": 0,
-          "bits": [ 28 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_3_D_ALU_I1_COUT": {
-          "hide_name": 0,
-          "bits": [ 26 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_4_D": {
-          "hide_name": 0,
-          "bits": [ 31 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_4_D_ALU_I1_COUT": {
-          "hide_name": 0,
-          "bits": [ 29 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_5_D": {
-          "hide_name": 0,
-          "bits": [ 34 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_5_D_ALU_I1_COUT": {
-          "hide_name": 0,
-          "bits": [ 32 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D": {
-          "hide_name": 0,
-          "bits": [ 17 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_COUT": {
-          "hide_name": 0,
-          "bits": [ 37 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29",
-            "unused_bits": "0 "
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_I0": {
-          "hide_name": 0,
-          "bits": [ 21 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_I3": {
-          "hide_name": 0,
-          "bits": [ 22 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM": {
-          "hide_name": 0,
-          "bits": [ 101, 98, 93, 90, 87, 84, 81, 78, 45, 42, 75, 73, 70, 67, 64, 61, 58, 55, 52, 49, 95, 36, 33, 30, 27, 23, 38 ],
-          "attributes": {
-            "force_downto": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:34.28-34.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_10_COUT": {
-          "hide_name": 0,
-          "bits": [ 47 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_10_I1": {
-          "hide_name": 0,
-          "bits": [ 48 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_11_COUT": {
-          "hide_name": 0,
-          "bits": [ 46 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_11_I1": {
-          "hide_name": 0,
-          "bits": [ 51 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_12_COUT": {
-          "hide_name": 0,
-          "bits": [ 50 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_12_I1": {
-          "hide_name": 0,
-          "bits": [ 54 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_13_COUT": {
-          "hide_name": 0,
-          "bits": [ 53 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_13_I1": {
-          "hide_name": 0,
-          "bits": [ 57 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_14_COUT": {
-          "hide_name": 0,
-          "bits": [ 56 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_14_I1": {
-          "hide_name": 0,
-          "bits": [ 60 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_15_COUT": {
-          "hide_name": 0,
-          "bits": [ 59 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_15_I1": {
-          "hide_name": 0,
-          "bits": [ 63 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_16_COUT": {
-          "hide_name": 0,
-          "bits": [ 62 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_16_I1": {
-          "hide_name": 0,
-          "bits": [ 66 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_17_COUT": {
-          "hide_name": 0,
-          "bits": [ 65 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_17_I1": {
-          "hide_name": 0,
-          "bits": [ 69 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_18_COUT": {
-          "hide_name": 0,
-          "bits": [ 68 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_18_I1": {
-          "hide_name": 0,
-          "bits": [ 72 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_19_COUT": {
-          "hide_name": 0,
-          "bits": [ 71 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_19_I1": {
-          "hide_name": 0,
-          "bits": [ 74 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_1_COUT": {
-          "hide_name": 0,
-          "bits": [ 39 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_1_I1": {
-          "hide_name": 0,
-          "bits": [ 44 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_2_COUT": {
-          "hide_name": 0,
-          "bits": [ 43 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_2_I1": {
-          "hide_name": 0,
-          "bits": [ 77 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_3_COUT": {
-          "hide_name": 0,
-          "bits": [ 76 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_3_I1": {
-          "hide_name": 0,
-          "bits": [ 80 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_4_COUT": {
-          "hide_name": 0,
-          "bits": [ 79 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_4_I1": {
-          "hide_name": 0,
-          "bits": [ 83 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_5_COUT": {
-          "hide_name": 0,
-          "bits": [ 82 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_5_I1": {
-          "hide_name": 0,
-          "bits": [ 86 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_6_COUT": {
-          "hide_name": 0,
-          "bits": [ 85 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_6_I1": {
-          "hide_name": 0,
-          "bits": [ 89 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_7_COUT": {
-          "hide_name": 0,
-          "bits": [ 88 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_7_I1": {
-          "hide_name": 0,
-          "bits": [ 92 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_8_COUT": {
-          "hide_name": 0,
-          "bits": [ 35 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_8_I1": {
-          "hide_name": 0,
-          "bits": [ 94 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_9_CIN": {
-          "hide_name": 0,
-          "bits": [ 96 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_9_CIN_ALU_COUT_SUM": {
-          "hide_name": 0,
-          "bits": [ 100 ],
-          "attributes": {
-            "unused_bits": "0 "
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_9_COUT": {
-          "hide_name": 0,
-          "bits": [ 91 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_9_I1": {
-          "hide_name": 0,
-          "bits": [ 97 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_COUT": {
-          "hide_name": 0,
-          "bits": [ 40 ],
-          "attributes": {
-            "abc9_carry": "00000000000000000000000000000001",
-            "src": "top.v:13.24-13.35|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/arith_map.v:57.7-63.5|/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_sim.v:938.25-938.29"
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_ALU_SUM_I1": {
-          "hide_name": 0,
-          "bits": [ 41 ],
-          "attributes": {
-          }
-        },
-        "led_OBUF_O_I_DFF_Q_D_ALU_I1_SUM_LUT1_F_I0": {
-          "hide_name": 0,
-          "bits": [ 99 ],
-          "attributes": {
-            "force_downto": "00000000000000000000000000000001",
-            "src": "/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:130.20-130.21"
+            "src": "top.v:21.17-21.28"
           }
         },
         "rst_n": {
@@ -26686,18 +27081,18 @@
             "src": "top.v:3.16-3.21"
           }
         },
-        "rst_n_IBUF_I_O": {
+        "uart_usb_rx": {
           "hide_name": 0,
-          "bits": [ 102 ],
+          "bits": [ 23 ],
           "attributes": {
-            "force_downto": "00000000000000000000000000000001",
-            "src": "/home/cole-zenk/oss-cad-suite/lib/../share/yosys/gowin/cells_map.v:130.20-130.21"
+            "src": "top.v:17.16-17.27"
           }
         },
-        "rst_n_IBUF_I_O_LUT1_I0_F": {
+        "uart_usb_tx": {
           "hide_name": 0,
           "bits": [ 24 ],
           "attributes": {
+            "src": "top.v:18.17-18.28"
           }
         }
       }

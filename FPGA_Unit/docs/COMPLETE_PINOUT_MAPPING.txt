@@ -1,0 +1,91 @@
+================================================================================
+COMPLETE PIN MAPPING - TANG NANO 9K to ESP32-CAM
+================================================================================
+
+TANG NANO 9K - LEFT SIDE (Image 1)
+================================================================================
+Pin# | IOT Name  | Alt Function     | Connected To
+-----|-----------|------------------|------------------
+ 25  | TF_CS     | IOB31B           | NOT USED (SD Card)
+ 26  | TF_MOSI   | IOB31A           | NOT USED (SD Card)
+ 27  | TF_CLK    | IOB29B           | NOT USED (SD Card)
+ 28  | TF_MISO   | IOB33A           | NOT USED (SD Card)
+ 29  |           | IOB8A            | NOT USED
+ 30  |           | IOB8B            | NOT USED
+ 31  |           | IOB11B           | NOT USED
+ 32  |           | IOB11A           | NOT USED
+ 33  |           | IOB13B           | NOT USED
+ 34  | GCLK_4    | RGB_DE           | IOB23A | NOT USED (LCD)
+ 35  |           | RGB_VSYNC        | IOB23B | NOT USED (LCD)
+ 36  | GCLK_3    | RGB_HS           | IOB17B | NOT USED (LCD)
+ 37  |           | RGB_CK           | IOB29A | NOT USED (LCD)
+ 38  |           | RGB_B7           | IOB41A | NOT USED (LCD)
+ 39  |           | RGB_B6           | IOB41B | NOT USED (LCD)
+ 40  |           | RGB_B4           | IOB15B | NOT USED (LCD)
+ 41  |           | RGB_B3           | IOB15A | NOT USED (LCD)
+ 42  |           | RGB_G7           | IOB14B | NOT USED (LCD)
+ 43  |           | RGB_G6           | IOB14A | NOT USED (LCD)
+ 44  |           | RGB_G5           | IOB13A | NOT USED (LCD)
+ 45  |           | RGB_G4           | IOB12B | NOT USED (LCD)
+ 46  |           | HDMI_CK0         | RGB_G3  | IOB42B | NOT USED (LCD)
+ 47  |           |                  |        | NOT USED
+
+
+TANG NANO 9K - RIGHT SIDE (Image 1)
+================================================================================
+Pin# | IOT Name  | Alt Function     | Connected To ESP32-CAM
+-----|-----------|------------------|---------------------------
+ 48  |           | IOT24B           | SPILCD_CS  | NOT USED
+ 49  |           | IOT22A           | SPILCD_RS  | NOT USED
+ 50  |           | IOT15A           | RGB_INIT   | NOT USED
+ 51  |           | IOT15B           | RGB_INIT   | NOT USED
+ 52  | GCLK_2    | ---              | 27MHz CLK (onboard)
+ 53  |           | IOB5A            | CR_P       | NOT USED
+ 54  |           | IOB5B            | ---        | NOT USED
+ 55  |           | IOT8BB           | RGB_INIT   | NOT USED
+ 56  |           | IOT8B            | RGB_INIT   | ESP32 GPIO1 (U0TXD)*
+ 57  |           | IOT8A            | ---        | ESP32 GPIO3 (U0RXD)*
+ 70  |           | IOT41B           | RGB_G2     | ESP32 GPIO12 (HS2_DATA2)
+ 71  |           | IOT41A           | RGB_R7     | ESP32 GPIO13 (HS2_DATA3)
+ 72  |           | IOT39B           | RGB_R6     | HDMI_D0N   | PROG_ENABLE signal
+ 73  |           | IOT39A           | RGB_R5     | HDMI_D0    | ESP32 GPIO15 (HS2_CMD)
+ 74  |           | IOT38B           | RGB_R4     | HDMI_D2N   | ESP32 GPIO14 (HS2_CLK)
+ 75  |           | IOT38A           | ---        | HDMI_D2    | ESP32 GPIO2 (HS2_DATA0)
+ 76  |           | IOT37B           | SPILCD_CK  |            | ESP32 GPIO4 (HS2_DATA1)
+ 77  |           | IOT37A           | HDMI_D0    |            | CAM_ENABLE
+ 78  |           | IOT8BB           | ---        | NOT USED
+ 79  |           | IOT12B           | ---        | CAM_VSYNC (assign)
+ 80  |           | IOT11A           | ---        | CAM_HREF (assign)
+ 81  |           | IOT7B            | ---        | ESP32 GPIO16 (U2RXD)
+ 82  |           | IOT7A            | ---        | ESP32 GPIO0 (CSI_MCLK/XCLK)
+ 83  |           | IOT6A            | CR_P       | NOT USED
+ 84  |           | IOT10A           | ---        | NOT USED
+ 85  |           | IOT10B           | ---        | NOT USED
+ 86  |           | IOT11A           | ---        | NOT USED
+
+
+ESP32-CAM AI-THINKER (Image 2)
+================================================================================
+ESP32 Pin    | Function      | Tang Nano Pin | Tang IOT Name
+-------------|---------------|---------------|---------------
+GPIO4        | HS2_DATA1     | Pin 76        | IOT37B
+GPIO2        | HS2_DATA0     | Pin 75        | IOT38A
+GPIO14       | HS2_CLK       | Pin 74        | IOT38B
+GPIO15       | HS2_CMD       | Pin 73        | IOT39A
+GPIO13       | HS2_DATA3     | Pin 71        | IOT41A
+GPIO12       | HS2_DATA2     | Pin 70        | IOT41B
+GND          | Ground        | GND           | GND
+5V           | Power         | 3V3 or 5V     | Power Rail
+---          | ---           | ---           | ---
+GPIO1        | U0TXD (TX)    | Pin 56        | IOT8B*
+GPIO3        | U0RXD (RX)    | Pin 57        | IOT8A*
+GPIO0        | CSI_MCLK      | Pin 82        | IOT7A
+GPIO16       | U2RXD         | Pin 81        | IOT7B
+GND          | Ground        | GND           | GND
+3.3V/5V      | Power         | 3V3 or 5V     | Power Rail
+
+*Used for UART passthrough in programming mode
+
+
+UPDATED CONSTRAINTS FILE
+================================================================================

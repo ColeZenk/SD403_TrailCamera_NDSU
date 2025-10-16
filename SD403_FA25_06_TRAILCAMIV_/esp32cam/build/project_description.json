@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "esp32cam_slave",
-    "project_version":    "a4a604a-dirty",
+    "project_version":    "87e2524-dirty",
     "project_path":       "/home/cole-zenk/esp/SD403_TrailCamera_NDSU/SD403_FA25_06_TRAILCAMIV_/esp32cam",
     "idf_path":           "/home/cole-zenk/esp/esp-idf",
     "build_dir":          "/home/cole-zenk/esp/SD403_TrailCamera_NDSU/SD403_FA25_06_TRAILCAMIV_/esp32cam/build",

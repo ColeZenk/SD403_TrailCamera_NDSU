@@ -1,62 +1,102 @@
+//{
+//    "version": "2.0.0",
+//    "tasks": [
+//        {
+//            "label": "GHDL: Analyze",
+//            "type": "shell",
+//            "command": "ghdl -a *.vhd",
+//            "options": {
+//                "cwd": "${workspaceFolder}/FPGA_Unit"
+//            },
+//            "group": "build",
+//            "presentation": {
+//                "reveal": "always",
+//                "panel": "shared"
+//            },
+//            "problemMatcher": []
+//        },
+//        {
+//            "label": "GHDL: Elaborate",
+//            "type": "shell",
+//            "command": "ghdl -e ${input:entityName}",
+//            "options": {
+//                "cwd": "${workspaceFolder}/FPGA_Unit"
+//            },
+//            "dependsOn": ["GHDL: Analyze"],
+//            "presentation": {
+//                "reveal": "always",
+//                "panel": "shared"
+//            },
+//            "problemMatcher": []
+//        },
+//        {
+//            "label": "GHDL: Run",
+//            "type": "shell",
+//            "command": "ghdl -r ${input:entityName} --vcd=${input:outputVcd}",
+//            "options": {
+//                "cwd": "${workspaceFolder}/FPGA_Unit"
+//            },
+//            "dependsOn": ["GHDL: Elaborate"],
+//            "group": "test",
+//            "presentation": {
+//                "reveal": "always",
+//                "panel": "shared"
+//            },
+//            "problemMatcher": []
+//        }
+//    ],
+//    "inputs": [
+//        {
+//            "id": "entityName",
+//            "type": "promptString",
+//            "description": "Top-level entity to elaborate",
+//            "default": "top"
+//        },
+//        {
+//            "id": "outputVcd",
+//            "type": "promptString",
+//            "description": "VCD output filename",
+//            "default": "wave.vcd"
+//        }
+//    ]
+//}
+//
 {
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "GHDL: Analyze",
+            "label": "Build FPGA",
             "type": "shell",
-            "command": "ghdl -a *.vhd",
-            "options": {
-                "cwd": "${workspaceFolder}/FPGA_Unit"
-            },
-            "group": "build",
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared"
+            "command": "make build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
             },
             "problemMatcher": []
         },
         {
-            "label": "GHDL: Elaborate",
+            "label": "Program FPGA",
             "type": "shell",
-            "command": "ghdl -e ${input:entityName}",
-            "options": {
-                "cwd": "${workspaceFolder}/FPGA_Unit"
-            },
-            "dependsOn": ["GHDL: Analyze"],
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared"
-            },
+            "command": "make program",
             "problemMatcher": []
         },
         {
-            "label": "GHDL: Run",
+            "label": "Simulate",
             "type": "shell",
-            "command": "ghdl -r ${input:entityName} --vcd=${input:outputVcd}",
-            "options": {
-                "cwd": "${workspaceFolder}/FPGA_Unit"
-            },
-            "dependsOn": ["GHDL: Elaborate"],
-            "group": "test",
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared"
-            },
+            "command": "make simulate",
             "problemMatcher": []
-        }
-    ],
-    "inputs": [
-        {
-            "id": "entityName",
-            "type": "promptString",
-            "description": "Top-level entity to elaborate",
-            "default": "top"
         },
         {
-            "id": "outputVcd",
-            "type": "promptString",
-            "description": "VCD output filename",
-            "default": "wave.vcd"
+            "label": "Clean",
+            "type": "shell",
+            "command": "make clean",
+            "problemMatcher": []
+        },
+        {
+            "label": "View Schematic",
+            "type": "shell",
+            "command": "make schematic",
+            "problemMatcher": []
         }
     ]
 }

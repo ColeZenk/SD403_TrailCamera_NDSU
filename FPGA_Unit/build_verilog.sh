@@ -1,22 +1,25 @@
 #!/bin/bash
 PROJECT="fpga_out"
 
+# Use OSS CAD Suite tools explicitly
+YOSYS="$HOME/oss-cad-suite/bin/yosys"
+NEXTPNR="$HOME/oss-cad-suite/bin/nextpnr-himbaechel"
+PACK="$HOME/oss-cad-suite/bin/gowin_pack"
+
 echo "==> Synthesizing Verilog with Yosys..."
-yosys -p "read_verilog top.v; synth_gowin -top top -json ${PROJECT}.json" 2>&1 | tee synth.log
+$YOSYS -p "read_verilog camera_programmer.v; read_verilog top.v; synth_gowin -top top -json ${PROJECT}.json" 2>&1 | tee synth.log
 
 if [ ${PIPESTATUS[0]} -ne 0 ]; then
     echo "ERROR: Synthesis failed"
     exit 1
 fi
 
-echo "==> Place and Route with nextpnr-gowin..."
-nextpnr-gowin \
-    --json ${PROJECT}.json \
+echo "==> Place and Route with nextpnr-himbaechel..."
+$NEXTPNR --json ${PROJECT}.json \
     --write ${PROJECT}_pnr.json \
-    --freq 27 \
     --device GW1NR-LV9QN88PC6/I5 \
-    --family GW1N-9C \
-    --cst tang_nano_9k.cst 2>&1 | tee pnr.log
+    --vopt family=GW1N-9C \
+    --vopt cst=tang_nano_9k.cst 2>&1 | tee pnr.log
 
 if [ ${PIPESTATUS[0]} -ne 0 ]; then
     echo "ERROR: Place and route failed"
@@ -24,10 +27,7 @@ if [ ${PIPESTATUS[0]} -ne 0 ]; then
 fi
 
 echo "==> Generating bitstream..."
-# Try the Python module directly with compatibility mode
-python3 -m apycula.gowin_pack -d GW1N-9C -o ${PROJECT}.fs ${PROJECT}_pnr.json 2>&1 || \
-    # Fallback: use nextpnr's built-in packer
-    nextpnr-gowin --json ${PROJECT}.json --device GW1NR-LV9QN88PC6/I5 --family GW1N-9C --write ${PROJECT}_pnr.json --pack-only --bitstream ${PROJECT}.fs
+$PACK -d GW1N-9C -o ${PROJECT}.fs ${PROJECT}_pnr.json
 
 if [ $? -ne 0 ]; then
     echo "ERROR: Bitstream generation failed"

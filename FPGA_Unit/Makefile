@@ -1,70 +1,55 @@
-cat > Makefile << 'EOF'
-# Makefile for Tang Nano 9K with Open-Source Toolchain (apicula)
+# ESP32-CAM FPGA Programmer Makefile
 
-PROJECT = fpga_out
-DEVICE = GW1NR-9C
-FAMILY = GW1N-9C
-TOP = top
+.PHONY: all build test clean program simulate help
 
-# Source files
-VHDL_SRC = top.vhd
-CST_FILE = tang_nano_9k.cst
+# Default target
+all: build
 
-# Tools
-YOSYS = yosys
-NEXTPNR = nextpnr-gowin
-PACK = gowin_pack
-PROGRAMMER = openFPGALoader
+# Build main project
+build:
+	@./scripts/build.sh
 
-.PHONY: all synth pnr bitstream program program-flash clean
+# Test builds
+test-blink:
+	@./scripts/test_blink.sh
 
-all: bitstream
+test-loopback:
+	@./scripts/test_loopback.sh
 
-synth: $(PROJECT).json
+# Simulate
+sim simulate:
+	@./scripts/simulate.sh
 
-$(PROJECT).json: $(VHDL_SRC)
-	@echo "==> Running synthesis..."
-	$(YOSYS) -p "read_vhdl -vhdl2008 $(VHDL_SRC); synth_gowin -top $(TOP) -json $(PROJECT).json"
+# Program FPGA
+program: build
+	openFPGALoader -b tangnano9k build/esp32_programmer.fs
 
-pnr: $(PROJECT)_pnr.json
+# Program ESP32
+esp32:
+	@./scripts/program_esp32.sh
 
-$(PROJECT)_pnr.json: $(PROJECT).json $(CST_FILE)
-	@echo "==> Running place and route..."
-	$(NEXTPNR) --json $(PROJECT).json \
-		--write $(PROJECT)_pnr.json \
-		--device $(DEVICE) \
-		--family $(FAMILY) \
-		--cst $(CST_FILE)
-
-bitstream: $(PROJECT).fs
-
-$(PROJECT).fs: $(PROJECT)_pnr.json
-	@echo "==> Generating bitstream..."
-	$(PACK) -d $(FAMILY) -o $(PROJECT).fs $(PROJECT)_pnr.json
-	@echo ""
-	@echo "✓ Build complete: $(PROJECT).fs"
-
-program: bitstream
-	@echo "==> Programming Tang Nano 9K (SRAM)..."
-	$(PROGRAMMER) -b tangnano9k $(PROJECT).fs
-
-program-flash: bitstream
-	@echo "==> Programming Tang Nano 9K (Flash)..."
-	$(PROGRAMMER) -b tangnano9k -f $(PROJECT).fs
-
+# Clean build files
 clean:
-	@echo "==> Cleaning build files..."
-	rm -f $(PROJECT).json $(PROJECT)_pnr.json $(PROJECT).fs
-	rm -f synth.log pnr.log
+	rm -rf build/
+	rm -f *.vcd *.json *.fs
 
+# Show schematic
+schematic: build
+	yosys -p "read_verilog src/top.v src/uart_passthrough.v; \
+	          hierarchy -top top; \
+	          synth_gowin; \
+	          show"
+
+# Help
 help:
-	@echo "Tang Nano 9K Build System (Open-Source Toolchain)"
+	@echo "ESP32-CAM FPGA Programmer - Make targets:"
 	@echo ""
-	@echo "Targets:"
-	@echo "  all            - Build bitstream (default)"
-	@echo "  synth          - Run synthesis only"
-	@echo "  pnr            - Run place and route only"
-	@echo "  program        - Program SRAM (temporary)"
-	@echo "  program-flash  - Program flash (persistent)"
-	@echo "  clean          - Remove build files"
-EOF
+	@echo "  make build        - Build the main UART passthrough"
+	@echo "  make program      - Build and program FPGA"
+	@echo "  make test-blink   - Build and run LED blink test"
+	@echo "  make test-loopback - Build and run UART loopback test"
+	@echo "  make simulate     - Run Verilog simulation"
+	@echo "  make schematic    - View design schematic"
+	@echo "  make esp32        - Program ESP32 through FPGA"
+	@echo "  make clean        - Remove build files"
+	@echo ""
