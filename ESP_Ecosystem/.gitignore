@@ -1,0 +1,24 @@
+# ESP-IDF build artifacts
+# ESP-IDF build artifacts
+build/
+*.bin
+*.elf
+*.map
+sdkconfig
+sdkconfig.old
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# Editor
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store

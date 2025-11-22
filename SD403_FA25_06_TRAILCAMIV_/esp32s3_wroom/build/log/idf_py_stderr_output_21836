@@ -1,1 +1,0 @@
-Command: cmake -G Ninja -DPYTHON_DEPS_CHECKED=1 -DPYTHON=/home/cole-zenk/.espressif/python_env/idf6.0_py3.12_env/bin/python -DESP_PLATFORM=1 -DCCACHE_ENABLE=0 /home/cole-zenk/esp/SD403_TrailCamera_NDSU/SD403_FA25_06_TRAILCAMIV_/esp32s3_wroom
