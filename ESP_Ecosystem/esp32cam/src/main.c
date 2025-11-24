@@ -26,7 +26,7 @@
 #define PIN_NUM_CLK        14
 #define PIN_NUM_CS         15
 
-#define SPI_CLOCK_SPEED    (1 * 1000 * 1000)  // 20 MHz - adjust based on your needs
+#define SPI_CLOCK_SPEED    (20 * 1000 * 1000)  // 20 MHz - adjust based on your needs
 #define DMA_CHANNEL        SPI_DMA_CH_AUTO
 #define MAX_TRANSFER_SIZE  (4092)  // Maximum DMA transfer size (must be multiple of 4)
 
