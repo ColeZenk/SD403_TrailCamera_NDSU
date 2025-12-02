@@ -53,7 +53,9 @@ module top (
   wire       esp_rx_ready;
   
   // Image buffer
-  localparam IMAGE_SIZE = 32768;
+  localparam PIC_LENGTH = 320;
+  localparam PIC_WIDTH  = 240;
+  localparam IMAGE_SIZE = PIC_LENGTH * PIC_WIDTH;
   localparam ADDR_WIDTH = 15;
   
   // BRAM signals
@@ -67,10 +69,10 @@ module top (
   reg frame_complete;
   
   // State machine
-  localparam IDLE         = 3'b000;
-  localparam RECEIVING    = 3'b001;
-  localparam PROCESSING   = 3'b010;
-  localparam TRANSMITTING = 3'b011;
+  localparam IDLE         = 2'b00;
+  localparam RECEIVING    = 2'b01;
+  localparam PROCESSING   = 2'b10;
+  localparam TRANSMITTING = 2'b11;
   
   reg [2:0] state;
   
@@ -81,15 +83,15 @@ module top (
   esp_interface esp_slave(
       .clk        (sys_clk),
       .rst_n      (sys_rst_n),
-      .spi_mosi   (esp_mosi),
-      .spi_miso   (esp_miso),
-      .spi_sclk   (esp_sclk),
-      .spi_cs_n   (esp_cs_n),
+      .esp_mosi   (esp_mosi),
+      .esp_miso   (esp_miso),
+      .esp_sclk   (esp_sclk),
+      .esp_cs_n   (esp_cs_n),
       .rx_data    (esp_rx_data),
       .rx_valid   (esp_rx_valid),
       .rx_ready   (esp_rx_ready)
   );
-  
+
   //============================================================
   // Block RAM for Memory storage
   //============================================================
@@ -156,7 +158,7 @@ module top (
           lcd_test_pattern <= 8'h1F;  // Blue-ish
   end
   
-  rgb_lcd_controller lcd_ctrl (
+  lcd_controller lcd_ctrl (
       .clk        (sys_clk),
       .rst_n      (sys_rst_n),
       .bram_addr  (lcd_bram_addr),
@@ -186,6 +188,7 @@ module top (
   
   
       if(esp_rx_valid && state == RECEIVING) begin
+        if (bram_addr > 1) bram_write_data <= 0;
          bram_write_data <= esp_rx_data;
          bram_write_addr <= bram_write_addr + 1'b1;
          bram_write_en   <= 1'b1;
@@ -214,6 +217,7 @@ module top (
       case (state)
          IDLE: begin
            if (!esp_cs_n) begin // Chip select asserted, now good to recieve 
+             bram_write_addr <= 15'd0;
              state <= RECEIVING;
            end
         end

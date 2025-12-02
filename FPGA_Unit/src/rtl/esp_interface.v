@@ -10,10 +10,10 @@ module esp_interface (
     input  wire        rst_n,        // Active-low reset
     
     // SPI interface
-    input  wire        spi_mosi,     // Master Out Slave In
-    output reg         spi_miso,     // Master In Slave Out
-    input  wire        spi_sclk,     // SPI clock from master
-    input  wire        spi_cs_n,     // Chip select (active low)
+    input  wire        esp_mosi,     // Master Out Slave In
+    output reg         esp_miso,     // Master In Slave Out
+    input  wire        esp_sclk,     // SPI clock from master
+    input  wire        esp_cs_n,     // Chip select (active low)
     
     // Parallel data interface
     output reg  [7:0]  rx_data,      // Received byte
@@ -52,9 +52,9 @@ module esp_interface (
             mosi_sync <= 2'b00;
         end
         else begin
-            sclk_sync <= {sclk_sync[1:0], spi_sclk};
-            cs_sync   <= {cs_sync[1:0], spi_cs_n};
-            mosi_sync <= {mosi_sync[0], spi_mosi};
+            sclk_sync <= {sclk_sync[1:0], esp_sclk};
+            cs_sync   <= {cs_sync[1:0], esp_cs_n};
+            mosi_sync <= {mosi_sync[0], esp_mosi};
         end
     end
     
@@ -122,15 +122,15 @@ module esp_interface (
     
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            spi_miso <= 1'b0;
+            esp_miso <= 1'b0;
         end
         else begin
             if (!cs_active) begin
-                spi_miso <= 1'b0;
+                esp_miso  <= 1'b0;
             end
             else if (sclk_falling) begin
                 // Shift out dummy data on falling edge
-                spi_miso <= 1'b0;  // TODO: shift out actual response
+                esp_miso <= 1'b0;  // TODO: shift out actual response
             end
         end
     end
