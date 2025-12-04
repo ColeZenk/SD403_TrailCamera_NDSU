@@ -1,6 +1,13 @@
 idf_component_register(
-    SRCS "../src/main.c"
-         # "../src/hspi_slave.c"
-         # "../src/camera_control.c"
-    INCLUDE_DIRS "../include"
+  SRCS "../src/main.c"
+       "../src/camera_control.c"
+       "../src/DMA_SPI_master.c"
+       "../src/image_buffer_pool.c"
+  INCLUDE_DIRS "../include"
+  REQUIRES esp_timer 
+           driver 
+           esp32-camera
+           fatfs
+           sdmmc
+           vfs
 )
