@@ -1,6 +1,6 @@
 /*
- * ESP32-S3 WROOM SPI DMA Receiver
- * Receives image data over SPI using DMA for maximum throughput
+ * ESP32-S3 Handheld LoRa Transmitter
+ * Press BOOT button to send trigger to trail camera
  */
 
 #include <inttypes.h>
@@ -8,257 +8,128 @@
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "freertos/queue.h"
-#include "driver/spi_slave.h"
 #include "driver/gpio.h"
+#include "driver/uart.h"
 #include "esp_log.h"
 
-// ESP32-S3 SPI2 slave pins (hardware-fixed for DMA)
-#define PIN_NUM_MOSI       11
-#define PIN_NUM_MISO       13
-#define PIN_NUM_CLK        12
-#define PIN_NUM_CS         10
+static const char *TAG = "LORA_TX";
 
-#define DMA_CHANNEL        SPI_DMA_CH_AUTO
-#define BUFFER_SIZE        4096
+#define LORA_UART       UART_NUM_1
+#define LORA_TX_PIN     GPIO_NUM_17
+#define LORA_RX_PIN     GPIO_NUM_18
+#define LORA_BAUD       115200
 
-static const char *TAG = "SPI_RX";
+#define BOOT_BUTTON     GPIO_NUM_9  // Boot button on S3 DevKit
 
-typedef struct {
-    uint32_t magic;
-    uint32_t size;
-    uint32_t checksum;
-} __attribute__((packed)) image_header_t;
-
-typedef struct {
-    uint8_t *buffer;
-    size_t size;
-} image_data_t;
-
-static QueueHandle_t image_queue;
-
-// DMA buffers (must be in DMA-capable memory)
-WORD_ALIGNED_ATTR uint8_t rx_buffer[BUFFER_SIZE];
-WORD_ALIGNED_ATTR uint8_t tx_buffer[BUFFER_SIZE];
-
-// Initialize SPI slave with DMA
-esp_err_t spi_slave_dma_init(void)
-{
-    esp_err_t ret;
-
-    image_queue = xQueueCreate(3, sizeof(image_data_t));
-    if (image_queue == NULL) {
-        ESP_LOGE(TAG, "Failed to create image queue");
-        return ESP_FAIL;
-    }
-
-    spi_bus_config_t bus_cfg = {
-        .mosi_io_num = PIN_NUM_MOSI,
-        .miso_io_num = PIN_NUM_MISO,
-        .sclk_io_num = PIN_NUM_CLK,
-        .quadwp_io_num = -1,
-        .quadhd_io_num = -1,
-        .max_transfer_sz = BUFFER_SIZE,
+void lora_init(void) {
+    uart_config_t cfg = {
+        .baud_rate = LORA_BAUD,
+        .data_bits = UART_DATA_8_BITS,
+        .parity = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .source_clk = UART_SCLK_DEFAULT,
     };
+    
+    uart_driver_install(LORA_UART, 2048, 2048, 0, NULL, 0);
+    uart_param_config(LORA_UART, &cfg);
+    uart_set_pin(LORA_UART, LORA_TX_PIN, LORA_RX_PIN, -1, -1);
+    
+    vTaskDelay(pdMS_TO_TICKS(500));  // Let module boot
+    
+    uint8_t buf[64];
+    int len;
+    
+    // Set ADDRESS with verification
+    uart_flush(LORA_UART);
+    uart_write_bytes(LORA_UART, "AT+ADDRESS=1\r\n", 14);
+    vTaskDelay(pdMS_TO_TICKS(300));
+    len = uart_read_bytes(LORA_UART, buf, sizeof(buf)-1, pdMS_TO_TICKS(500));
+    if (len > 0) { buf[len] = '\0'; ESP_LOGI(TAG, "ADDRESS set: %s", buf); }
+    
+    // Set NETWORKID with verification
+    uart_flush(LORA_UART);
+    uart_write_bytes(LORA_UART, "AT+NETWORKID=6\r\n", 16);
+    vTaskDelay(pdMS_TO_TICKS(300));
+    len = uart_read_bytes(LORA_UART, buf, sizeof(buf)-1, pdMS_TO_TICKS(500));
+    if (len > 0) { buf[len] = '\0'; ESP_LOGI(TAG, "NETWORKID set: %s", buf); }
+    
+    // Query back to verify
+    uart_flush(LORA_UART);
+    uart_write_bytes(LORA_UART, "AT+ADDRESS?\r\n", 13);
+    vTaskDelay(pdMS_TO_TICKS(300));
+    len = uart_read_bytes(LORA_UART, buf, sizeof(buf)-1, pdMS_TO_TICKS(500));
+    if (len > 0) { buf[len] = '\0'; ESP_LOGI(TAG, "ADDRESS: %s", buf); }
+    
+    uart_flush(LORA_UART);
+    uart_write_bytes(LORA_UART, "AT+NETWORKID?\r\n", 15);
+    vTaskDelay(pdMS_TO_TICKS(300));
+    len = uart_read_bytes(LORA_UART, buf, sizeof(buf)-1, pdMS_TO_TICKS(500));
+    if (len > 0) { buf[len] = '\0'; ESP_LOGI(TAG, "NETWORKID: %s", buf); }
+    
+    uart_flush(LORA_UART);
+    uart_write_bytes(LORA_UART, "AT+PARAMETER?\r\n", 15);
+    vTaskDelay(pdMS_TO_TICKS(300));
+    len = uart_read_bytes(LORA_UART, buf, sizeof(buf)-1, pdMS_TO_TICKS(500));
+    if (len > 0) { buf[len] = '\0'; ESP_LOGI(TAG, "PARAMETER: %s", buf); }
+    
+    uart_flush(LORA_UART);
+    uart_write_bytes(LORA_UART, "AT+BAND?\r\n", 10);
+    vTaskDelay(pdMS_TO_TICKS(300));
+    len = uart_read_bytes(LORA_UART, buf, sizeof(buf)-1, pdMS_TO_TICKS(500));
+    if (len > 0) { buf[len] = '\0'; ESP_LOGI(TAG, "BAND: %s", buf); }
+    
+    ESP_LOGI(TAG, "LoRa init complete");
+}
 
-    spi_slave_interface_config_t slave_cfg = {
-        .mode = 0,
-        .spics_io_num = PIN_NUM_CS,
-        .queue_size = 3,
-        .flags = 0,
+void lora_send_trigger(void) {
+    // Send 'T' to address 2 (DevKitV1 trail camera)
+    const char *cmd = "AT+SEND=2,1,T\r\n";
+    uart_write_bytes(LORA_UART, cmd, strlen(cmd));
+    ESP_LOGI(TAG, "Trigger sent to camera!");
+    
+    // Wait for +OK response
+    uint8_t buf[64];
+    int len = uart_read_bytes(LORA_UART, buf, sizeof(buf)-1, pdMS_TO_TICKS(300));
+    if (len > 0) {
+        buf[len] = '\0';
+        ESP_LOGI(TAG, "Response: %s", buf);
+    }
+}
+
+void button_task(void *arg) {
+    // Configure boot button
+    gpio_config_t btn = {
+        .pin_bit_mask = (1ULL << BOOT_BUTTON),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+        .intr_type = GPIO_INTR_DISABLE,
     };
-
-    ret = spi_slave_initialize(SPI2_HOST, &bus_cfg, &slave_cfg, DMA_CHANNEL);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to initialize SPI slave: %s", esp_err_to_name(ret));
-        return ret;
-    }
-
-    gpio_set_pull_mode(PIN_NUM_CS, GPIO_PULLUP_ONLY);
-
-    ESP_LOGI(TAG, "SPI DMA slave initialized successfully");
-    ESP_LOGI(TAG, "Buffer size: %d bytes", BUFFER_SIZE);
+    gpio_config(&btn);
     
-    return ESP_OK;
-}
-
-esp_err_t spi_slave_receive_chunk(uint8_t *buffer, size_t *received_length, uint32_t timeout_ms)
-{
-    spi_slave_transaction_t trans = {
-        .length = BUFFER_SIZE * 8,
-        .rx_buffer = buffer,
-        .tx_buffer = tx_buffer,
-    };
-
-    esp_err_t ret = spi_slave_transmit(SPI2_HOST, &trans, pdMS_TO_TICKS(timeout_ms));
-    if (ret != ESP_OK) {
-        if (ret != ESP_ERR_TIMEOUT) {
-            ESP_LOGE(TAG, "SPI receive error: %s", esp_err_to_name(ret));
-        }
-        return ret;
-    }
-
-    *received_length = trans.trans_len / 8;
-    return ESP_OK;
-}
-
-static bool process_image_header(const uint8_t *data, image_header_t *header)
-{
-    memcpy(header, data, sizeof(image_header_t));
+    ESP_LOGI(TAG, "Button task ready - press BOOT to trigger camera");
     
-    if (header->magic != 0xCAFEBEEF) {
-        ESP_LOGW(TAG, "Invalid magic: 0x%08" PRIX32, header->magic);
-        return false;
-    }
+    bool last_state = 1;  // Button is active-low
     
-    if (header->size == 0 || header->size > (1024 * 1024)) {
-        ESP_LOGW(TAG, "Invalid size: %" PRIu32, header->size);
-        return false;
-    }
-    
-    ESP_LOGI(TAG, "Valid header - Size: %" PRIu32 " bytes, Checksum: 0x%08" PRIX32, 
-             header->size, header->checksum);
-    return true;
-}
-
-static bool verify_image_checksum(const uint8_t *data, size_t size, uint32_t expected_checksum)
-{
-    uint32_t calculated = 0;
-    for (size_t i = 0; i < size; i++) {
-        calculated ^= data[i];
-    }
-    
-    bool valid = (calculated == expected_checksum);
-    if (!valid) {
-        ESP_LOGE(TAG, "Checksum mismatch! Expected: 0x%08" PRIX32 ", Got: 0x%08" PRIX32,
-                 expected_checksum, calculated);
-    }
-    
-    return valid;
-}
-
-void spi_receive_task(void *pvParameters)
-{
-    ESP_LOGI(TAG, "SPI receive task started");
-    
-    image_header_t current_header = {0};
-    uint8_t *image_buffer = NULL;
-    size_t bytes_received = 0;
-    bool receiving_image = false;
-
-    while (1) {
-        size_t chunk_size = 0;
-        esp_err_t ret = spi_slave_receive_chunk(rx_buffer, &chunk_size, 5000);
+    while(1) {
+        bool current_state = gpio_get_level(BOOT_BUTTON);
         
-        if (ret == ESP_ERR_TIMEOUT) {
-            if (receiving_image) {
-                ESP_LOGW(TAG, "Transfer timeout, resetting");
-                free(image_buffer);
-                image_buffer = NULL;
-                receiving_image = false;
-                bytes_received = 0;
-            }
-            continue;
+        // Detect button press (transition from high to low)
+        if (last_state == 1 && current_state == 0) {
+            ESP_LOGI(TAG, "Button pressed!");
+            lora_send_trigger();
+            vTaskDelay(pdMS_TO_TICKS(300));  // Debounce
         }
         
-        if (ret != ESP_OK) {
-            continue;
-        }
-
-        ESP_LOGD(TAG, "Received chunk: %zu bytes", chunk_size);
-
-        if (!receiving_image && chunk_size >= sizeof(image_header_t)) {
-            if (process_image_header(rx_buffer, &current_header)) {
-                image_buffer = malloc(current_header.size);
-                if (image_buffer == NULL) {
-                    ESP_LOGE(TAG, "Failed to allocate %" PRIu32 " bytes", current_header.size);
-                    continue;
-                }
-                
-                receiving_image = true;
-                bytes_received = 0;
-                ESP_LOGI(TAG, "Starting image reception: %" PRIu32 " bytes", current_header.size);
-                
-                size_t header_size = sizeof(image_header_t);
-                if (chunk_size > header_size) {
-                    size_t data_in_chunk = chunk_size - header_size;
-                    memcpy(image_buffer, rx_buffer + header_size, data_in_chunk);
-                    bytes_received += data_in_chunk;
-                    ESP_LOGD(TAG, "Header chunk contained %zu data bytes", data_in_chunk);
-                }
-            }
-        }
-        else if (receiving_image && image_buffer != NULL) {
-            size_t bytes_to_copy = chunk_size;
-            if (bytes_received + bytes_to_copy > current_header.size) {
-                bytes_to_copy = current_header.size - bytes_received;
-            }
-            
-            memcpy(image_buffer + bytes_received, rx_buffer, bytes_to_copy);
-            bytes_received += bytes_to_copy;
-            
-            ESP_LOGD(TAG, "Image progress: %zu / %" PRIu32 " bytes", bytes_received, current_header.size);
-            
-            if (bytes_received >= current_header.size) {
-                ESP_LOGI(TAG, "Image reception complete: %zu bytes", bytes_received);
-                
-                if (verify_image_checksum(image_buffer, current_header.size, current_header.checksum)) {
-                    ESP_LOGI(TAG, "Image verified successfully!");
-                    
-                    image_data_t img_data = {
-                        .buffer = image_buffer,
-                        .size = current_header.size
-                    };
-                    
-                    if (xQueueSend(image_queue, &img_data, 0) != pdTRUE) {
-                        ESP_LOGW(TAG, "Image queue full, dropping image");
-                        free(image_buffer);
-                    }
-                } else {
-                    ESP_LOGE(TAG, "Image checksum failed, dropping");
-                    free(image_buffer);
-                }
-                
-                image_buffer = NULL;
-                receiving_image = false;
-                bytes_received = 0;
-            }
-        }
-    }
-}
-
-void image_process_task(void *pvParameters)
-{
-    image_data_t img_data;
-    
-    ESP_LOGI(TAG, "Image processing task started");
-    
-    while (1) {
-        if (xQueueReceive(image_queue, &img_data, portMAX_DELAY) == pdTRUE) {
-            ESP_LOGI(TAG, "Processing image: %zu bytes", img_data.size);
-            
-            uint32_t sum = 0;
-            for (size_t i = 0; i < img_data.size && i < 1000; i++) {
-                sum += img_data.buffer[i];
-            }
-            ESP_LOGI(TAG, "Image sample checksum: 0x%08" PRIX32, sum);
-            
-            free(img_data.buffer);
-        }
+        last_state = current_state;
+        vTaskDelay(pdMS_TO_TICKS(50));  // 50ms polling
     }
 }
 
 void app_main(void)
 {
-    ESP_LOGI(TAG, "ESP32-WROOM SPI DMA Receiver");
+    ESP_LOGI(TAG, "ESP32-S3 Handheld LoRa Transmitter");
     
-    if (spi_slave_dma_init() != ESP_OK) {
-        ESP_LOGE(TAG, "SPI initialization failed!");
-        return;
-    }
-
-    xTaskCreate(spi_receive_task, "spi_rx_task", 4096, NULL, 5, NULL);
-    xTaskCreate(image_process_task, "img_proc_task", 8192, NULL, 4, NULL);
-    
-    ESP_LOGI(TAG, "SPI DMA highway ready!");
+    lora_init();
+    xTaskCreate(button_task, "button", 4096, NULL, 5, NULL);
 }
