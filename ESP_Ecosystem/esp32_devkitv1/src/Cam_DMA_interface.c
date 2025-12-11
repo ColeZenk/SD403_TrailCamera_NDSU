@@ -34,7 +34,7 @@ static struct {
     uint8_t *buffer;
     size_t bytes_received;
     bool receiving;
-    QueueHandle_t queue;  // <-- add this
+    QueueHandle_t queue;
 } rx_state = {0};
 
 // Forward declarations
@@ -100,6 +100,8 @@ static void reset_rx_state(void) {
 static bool handle_header_chunk(const uint8_t *data, size_t size) {
     if (size < sizeof(image_header_t)) return false;
     
+    ESP_LOGI(TAG, "handle_header_chunk: size=%zu, header_size=%zu", size, sizeof(image_header_t));
+    
     if (!process_image_header(data, &rx_state.header)) {
         return false;
     }
@@ -110,15 +112,24 @@ static bool handle_header_chunk(const uint8_t *data, size_t size) {
         return false;
     }
     
-    rx_state.receiving = true;
-    rx_state.bytes_received = 0;
-    
     // Copy any data after header in same chunk
     size_t header_size = sizeof(image_header_t);
     if (size > header_size) {
         size_t data_bytes = size - header_size;
+        ESP_LOGI(TAG, "Copying %zu bytes from offset %zu", data_bytes, header_size);
+        
+        // Print what we're about to copy
+        ESP_LOGI(TAG, "Source data at offset %zu:", header_size);
+        for (int i = 0; i < 32; i++) {
+            printf("%02X ", data[header_size + i]);
+            if ((i+1) % 16 == 0) printf("\n");
+        }
+        printf("\n");
+        
         memcpy(rx_state.buffer, data + header_size, data_bytes);
         rx_state.bytes_received += data_bytes;
+        
+        ESP_LOGI(TAG, "bytes_received now: %zu", rx_state.bytes_received);
     }
     
     return true;
@@ -137,6 +148,14 @@ static void handle_data_chunk(const uint8_t *data, size_t size) {
 static void finalize_image(void) {
     ESP_LOGI(TAG, "Image reception complete: %zu bytes", rx_state.bytes_received);
     
+
+    ESP_LOGI(TAG, "First 32 bytes of ASSEMBLED buffer:");
+    for (int i = 0; i < 32 && i < rx_state.bytes_received; i++) {
+        printf("%02X ", rx_state.buffer[i]);
+        if ((i + 1) % 16 == 0) printf("\n");
+    }
+    printf("\n");
+
     if (verify_image_checksum(rx_state.buffer, rx_state.header.size, rx_state.header.checksum)) {
         ESP_LOGI(TAG, "Image verified successfully!");
         
@@ -161,33 +180,45 @@ static void finalize_image(void) {
 void spi_receive_task(void *pvParameters)
 {
     ESP_LOGI(TAG, "SPI receive task started");
-
     while (1) {
         size_t chunk_size = 0;
+        
+        ESP_LOGI(TAG, "Waiting for SPI data (receiving=%d)...", rx_state.receiving);  // ADD THIS
+        
         esp_err_t ret = spi_slave_receive_chunk(rx_buffer, &chunk_size, 5000);
         
         if (ret == ESP_ERR_TIMEOUT) {
+            ESP_LOGW(TAG, "Transfer timeout (was receiving=%d)", rx_state.receiving);  // ADD THIS
             if (rx_state.receiving) {
-                ESP_LOGW(TAG, "Transfer timeout, resetting");
+                ESP_LOGW(TAG, "Resetting - had %zu/%" PRIu32 " bytes", 
+                        rx_state.bytes_received, rx_state.header.size);  // ADD THIS
                 reset_rx_state();
             }
             continue;
         }
         
         if (ret != ESP_OK) continue;
-
+        
+        ESP_LOGI(TAG, "Received chunk: %zu bytes", chunk_size);  // ADD THIS
+        
         if (!rx_state.receiving) {
             // Looking for header
             if (handle_header_chunk(rx_buffer, chunk_size)) {
                 ESP_LOGI(TAG, "Starting image reception: %" PRIu32 " bytes", rx_state.header.size);
+                 
+                 // CHECK IF WE ALREADY GOT ALL THE DATA IN ONE CHUNK!
+                 if (rx_state.bytes_received >= rx_state.header.size) finalize_image();
+
             }
         } else {
             // Collecting data
+            ESP_LOGI(TAG, "Calling handle_data_chunk with %zu bytes", chunk_size);  // ADD THIS
             handle_data_chunk(rx_buffer, chunk_size);
             
-            if (rx_state.bytes_received >= rx_state.header.size) {
-                finalize_image();
-            }
+            ESP_LOGI(TAG, "Progress: %zu/%" PRIu32 " bytes", 
+                    rx_state.bytes_received, rx_state.header.size);  // ADD THIS
+            
+            if (rx_state.bytes_received >= rx_state.header.size) finalize_image();
         }
     }
 }
@@ -215,6 +246,13 @@ static bool process_image_header(const uint8_t *data, image_header_t *header)
 // Verify image checksum
 static bool verify_image_checksum(const uint8_t *data, size_t size, uint32_t expected_checksum)
 {
+    ESP_LOGI(TAG, "First 32 bytes received:");
+    for (int i = 0; i < 32 && i < size; i++) {
+        printf("%02X ", data[i]);
+        if ((i + 1) % 16 == 0) printf("\n");
+    }
+    printf("\n");
+    
     uint32_t calculated = 0;
     for (size_t i = 0; i < size; i++) {
         calculated ^= data[i];

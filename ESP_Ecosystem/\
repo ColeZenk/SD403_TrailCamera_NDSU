@@ -1,0 +1,152 @@
+/*
+ * ESP32-S3 Handheld LoRa Transmitter
+ * Press BOOT button to send trigger to trail camera
+ */
+
+#include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "driver/gpio.h"
+#include "driver/uart.h"
+#include "esp_log.h"
+
+static const char *TAG = "LORA_TX";
+
+#define LORA_UART       UART_NUM_1
+#define LORA_TX_PIN     GPIO_NUM_17
+#define LORA_RX_PIN     GPIO_NUM_18
+#define LORA_BAUD       9600
+
+#define BOOT_BUTTON     GPIO_NUM_9  // Boot button on S3 DevKit
+
+void lora_init(void) {
+    uart_config_t cfg = {
+        .baud_rate = LORA_BAUD,
+        .data_bits = UART_DATA_8_BITS,
+        .parity = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .source_clk = UART_SCLK_DEFAULT,
+    };
+    
+    uart_driver_install(LORA_UART, 2048, 2048, 0, NULL, 0);
+    uart_param_config(LORA_UART, &cfg);
+    uart_set_pin(LORA_UART, LORA_TX_PIN, LORA_RX_PIN, -1, -1);
+    
+    uart_write_bytes(LORA_UART, "AT+ADDRESS=1\r\n", 14);
+    vTaskDelay(pdMS_TO_TICKS(100));
+    uart_write_bytes(LORA_UART, "AT+NETWORKID=6\r\n", 16);
+    vTaskDelay(pdMS_TO_TICKS(100));
+    
+    ESP_LOGI(TAG, "LoRa configured: Address=1, Network=6");
+    
+    uint8_t buf[64];
+    int len = uart_read_bytes(LORA_UART, buf, sizeof(buf), pdMS_TO_TICKS(500));
+    if (len > 0) {
+        buf[len] = '\0';
+        ESP_LOGI(TAG, "LoRa ready: %s", buf);
+    } else {
+        ESP_LOGW(TAG, "No LoRa response - check wiring");
+    }
+}
+
+void lora_send_trigger(void) {
+    const char *cmd = "AT+SEND=0,1,01\r\n";  // Send byte 0x01 to address 0
+    uart_write_bytes(LORA_UART, cmd, strlen(cmd));
+    ESP_LOGI(TAG, "Trigger sent!");
+    
+    // Optional: wait for +OK response
+    uint8_t buf[64];
+    int len = uart_read_bytes(LORA_UART, buf, sizeof(buf), pdMS_TO_TICKS(200));
+    if (len > 0) {
+        buf[len] = '\0';
+        ESP_LOGI(TAG, "Response: %s", buf);
+    }
+}
+
+void button_task(void *arg) {
+    // Configure boot button
+    gpio_config_t btn = {
+        .pin_bit_mask = (1ULL << BOOT_BUTTON),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    gpio_config(&btn);
+    
+    ESP_LOGI(TAG, "Button task ready - press BOOT button to trigger camera");
+    
+    bool last_state = 1;  // Button is active-low
+    
+    while(1) {
+        bool current_state = gpio_get_level(BOOT_BUTTON);
+        
+        // Detect button press (transition from high to low)
+        if (last_state == 1 && current_state == 0) {
+            ESP_LOGI(TAG, "Button pressed!");
+            lora_send_trigger();
+        }
+        
+        last_state = current_state;
+        vTaskDelay(pdMS_TO_TICKS(50));  // 50ms polling
+    }
+}
+
+void lora_detect_baud(void) {
+    const int bauds[] = {9600, 19200, 38400, 57600, 115200};
+    
+    for (int i = 0; i < 5; i++) {
+        ESP_LOGI(TAG, "Testing baud rate: %d", bauds[i]);
+        
+        // Reconfigure UART
+        uart_set_baudrate(LORA_UART, bauds[i]);
+        vTaskDelay(pdMS_TO_TICKS(200));
+        
+        // Send AT
+        uart_flush(LORA_UART);
+        uart_write_bytes(LORA_UART, "AT\r\n", 4);
+        vTaskDelay(pdMS_TO_TICKS(300));
+        
+        // Read response
+        uint8_t buf[64] = {0};
+        int len = uart_read_bytes(LORA_UART, buf, sizeof(buf)-1, pdMS_TO_TICKS(500));
+        
+        if (len > 0) {
+            buf[len] = '\0';
+            ESP_LOGI(TAG, "Response at %d: %s", bauds[i], buf);
+            
+            if (strstr((char*)buf, "+OK") || strstr((char*)buf, "OK")) {
+                ESP_LOGI(TAG, "*** FOUND WORKING BAUD: %d ***", bauds[i]);
+                break;
+            }
+        }
+    }
+}
+
+void app_main(void)
+{
+    ESP_LOGI(TAG, "ESP32-S3 LoRa Baud Rate Detector");
+    
+    // Basic UART init at any rate
+    uart_config_t cfg = {
+        .baud_rate = 9600,
+        .data_bits = UART_DATA_8_BITS,
+        .parity = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+    };
+    uart_driver_install(LORA_UART, 2048, 2048, 0, NULL, 0);
+    uart_param_config(LORA_UART, &cfg);
+    uart_set_pin(LORA_UART, LORA_TX_PIN, LORA_RX_PIN, -1, -1);
+    
+    lora_detect_baud();  // Find the right baud
+
+    ESP_LOGI(TAG, "ESP32-S3 Handheld LoRa Transmitter");
+    ESP_LOGI(TAG, "Press BOOT button to trigger remote camera");
+    
+    lora_init();
+    
+    xTaskCreate(button_task, "button", 4096, NULL, 5, NULL);
+}
