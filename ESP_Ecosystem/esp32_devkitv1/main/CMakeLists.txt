@@ -3,5 +3,6 @@ idf_component_register(
          "../src/Cam_DMA_interface.c"
          "../src/Image_buffer.c"
          "../src/FPGA_SPI_interface.c"
+         "../src/LoRa_UART_Interface.c"
     INCLUDE_DIRS "../include"
 )

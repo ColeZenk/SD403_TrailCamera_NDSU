@@ -23,6 +23,7 @@
 #include "esp_log.h"
 #include "Cam_DMA_interface.h"
 #include "Image_buffer.h"
+#include "LoRa_UART_Interface.h"
 #include "FPGA_SPI_interface.h"
 
 static const char *TAG = "MAIN";
@@ -43,6 +44,7 @@ void app_main(void)
         return;
     }
     
+    lora_init();
     image_buffer_init();
     
     // CAM → DevKit tasks
@@ -53,4 +55,10 @@ void app_main(void)
     xTaskCreate(fpga_test_task, "fpga_test", 4096, NULL, 5, NULL);
     
     ESP_LOGI(TAG, "System ready - press BOOT to test FPGA");
+
+    //LoRa tasks
+    xTaskCreate(lora_rx_task, "lora_rx", 4096, NULL, 5, NULL);
+
+    ESP_LOGI(TAG, "System ready - LoRa listening for triggers");
+
 }
