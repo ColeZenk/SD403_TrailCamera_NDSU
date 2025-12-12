@@ -21,6 +21,7 @@ PROGRAMMER = openFPGALoader
 TOP_MODULE = top
 VERILOG_SOURCES = $(SRC_DIR)/top.v \
                   $(SRC_DIR)/esp_interface.v \
+									$(SRC_DIR)/bram_image_buffer.v\
                   $(SRC_DIR)/lcd_controller.v
 
 CONSTRAINTS = $(CONSTR_DIR)/pins.cst

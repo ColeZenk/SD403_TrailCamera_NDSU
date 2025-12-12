@@ -5,11 +5,14 @@ IO_PORT "sys_clk" IO_TYPE=LVCMOS33 PULL_MODE=NONE;
 IO_LOC "sys_rst_n" 3;
 IO_PORT "sys_rst_n" IO_TYPE=LVCMOS18 PULL_MODE=UP;
 
+IO_LOC  "btn" 4;
+IO_PORT "btn" IO_TYPE=LVCMOS18 PULL_MODE=UP;
+
 // SPI interface from ESP32
-IO_LOC "esp_cs_n" 38;
-IO_LOC "esp_mosi" 37;
-IO_LOC "esp_sclk" 36;
-IO_LOC "esp_miso" 39;
+IO_LOC "esp_mosi" 77;
+IO_LOC "esp_miso" 76;
+IO_LOC "esp_sclk" 48;
+IO_LOC "esp_cs_n" 49;
 IO_PORT "esp_mosi" IO_TYPE=LVCMOS33 PULL_MODE=UP;
 IO_PORT "esp_miso" IO_TYPE=LVCMOS33;
 IO_PORT "esp_sclk" IO_TYPE=LVCMOS33 PULL_MODE=UP;

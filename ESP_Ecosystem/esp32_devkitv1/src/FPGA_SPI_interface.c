@@ -118,23 +118,41 @@ void fpga_test_task(void *pvParameters)
     int frame_count = 0;
     
     ESP_LOGI(TAG, "Test task ready - press BOOT button to transmit");
-    
-    while (1) {
-        if (gpio_get_level(BUTTON_PIN) == 0) {
-            ESP_LOGI(TAG, "Button pressed! Frame %d (pattern 0x%02X)", frame_count, pattern);
-            
-            memset(test_buffer, pattern, TEST_IMAGE_SIZE);
-            fpga_spi_transmit_image(test_buffer, TEST_IMAGE_SIZE);
-            
-            pattern = (pattern == 0xAA) ? 0x55 : 0xAA;
-            frame_count++;
-            
-            vTaskDelay(pdMS_TO_TICKS(500));  // Debounce
-        }
-        
-        vTaskDelay(pdMS_TO_TICKS(10));
-    }
-    
+   static uint8_t pattern_num = 0;
+
+  while (1) {
+      if (gpio_get_level(BUTTON_PIN) == 0) {
+          ESP_LOGI(TAG, "Button pressed! Pattern %d", pattern_num);
+          
+          // Generate different patterns
+          switch (pattern_num % 4) {
+              case 0:  // Solid white
+                  memset(test_buffer, 0xFF, TEST_IMAGE_SIZE);
+                  ESP_LOGI(TAG, "Pattern: Solid WHITE");
+                  break;
+              case 1:  // Solid black
+                  memset(test_buffer, 0x00, TEST_IMAGE_SIZE);
+                  ESP_LOGI(TAG, "Pattern: Solid BLACK");
+                  break;
+              case 2:  // Gradient - should show smooth color transition
+                  for (int i = 0; i < TEST_IMAGE_SIZE; i++) {
+                      test_buffer[i] = (i / 16) & 0xFF;  // Slower gradient, more visible
+                  }
+                  ESP_LOGI(TAG, "Pattern: Gradient");
+                  break;
+              case 3:  // Alternating 0xAA/0x55 (checkerboard-ish)
+                  for (int i = 0; i < TEST_IMAGE_SIZE; i++) {
+                      test_buffer[i] = (i & 1) ? 0xAA : 0x55;
+                  }
+                  ESP_LOGI(TAG, "Pattern: Alternating");
+                  break;
+          }
+          
+          fpga_spi_transmit_image(test_buffer, TEST_IMAGE_SIZE);
+          pattern_num++;
+      }
+      
+  }    
     free(test_buffer);
     vTaskDelete(NULL);
 }
