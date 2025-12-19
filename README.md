@@ -6,7 +6,7 @@
 
 SD 403/405 is the final demonstration of applied skills for soon to be graduating NDSU students.
 The project chosen for this group(6) was to create a trail cam with the ability to capture images with an ESP32-CAM and transmit it to a phone 2 miles away including relavand data (sensor info). An additional requirement of a TFT UI was also included in the initial BOR.
-This group decided to up the anti so to speak, and devised a structure that could transmil *live* data 2 miles away.
+This group decided to up the anti so to speak, and devised a structure that could transmit *live* data 2 miles away.
 
 ## Plan:
 
@@ -46,12 +46,12 @@ Use edge AI and FFTs to deconstruct and reconstruct images as well as sensor dat
 
 *Also included in project OneNote under: /"Project Charter"/"Relevant Standards"
 
-    1. Modular file system. I.e. multiple concise (ideally less that 300 lines) files and corresponding header files. Not one monolithic main file per microcontroller. 
+1. Modular file system. I.e. multiple concise (ideally less that 300 lines) files and corresponding header files. Not one monolithic main file per microcontroller. 
 
-    2. Document pin allocations, feature implementations and so on either by updating the relevant readme.md, commit message, or both. Headers on files for clarity. 
+2. Document pin allocations, feature implementations and so on either by updating the relevant readme.md, commit message, or both. Headers on files for clarity. 
 
-    3. Try to commit often.
+3. Try to commit often.
 
-    4. Try to adhere to UNIX philosophy if relevant. 
+4. Try to adhere to UNIX philosophy if relevant. 
 
-    5. Adhere to C standards Verilog standards, and dart(flutter) standards when applicable.
+5. Adhere to C standards Verilog standards, and dart(flutter) standards when applicable.
