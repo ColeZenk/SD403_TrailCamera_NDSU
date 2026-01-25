@@ -1,2 +1,0 @@
-IO_LOC "led" 26;
-IO_PORT "led" PULL_MODE=UP;

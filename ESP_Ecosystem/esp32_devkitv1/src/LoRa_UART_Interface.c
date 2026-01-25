@@ -1,27 +1,37 @@
-/*
- * ESP32-S3 Handheld LoRa Transmitter
- * Press BOOT button to send trigger to trail camera
- */
-
-#include <inttypes.h>
-#include <stdio.h>
-#include <string.h>
+// LoRa_UART_Interface.c - ESP32 DevKitV1 (Receiver)
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "driver/gpio.h"
 #include "driver/uart.h"
+#include "driver/gpio.h"
 #include "esp_log.h"
+#include <string.h>
 
-static const char *TAG = "LORA_TX";
+#define DEV_TEST_LORA_UART 1
 
-#define LORA_UART       UART_NUM_1
+#define LORA_UART       UART_NUM_2
 #define LORA_TX_PIN     GPIO_NUM_17
-#define LORA_RX_PIN     GPIO_NUM_18
+#define LORA_RX_PIN     GPIO_NUM_16
 #define LORA_BAUD       115200
 
-#define BOOT_BUTTON     GPIO_NUM_9  // Boot button on S3 DevKit
+#ifdef DEV_TEST_LORA_UART
+  #define LED_PIN         GPIO_NUM_2
+#endif
 
+static const char *TAG = "LORA";
+ 
 void lora_init(void) {
+  #ifdef DEV_TEST_LORA_UART
+    gpio_config_t led_conf = {
+        .pin_bit_mask = (1ULL << LED_PIN),
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+    gpio_config(&led_conf);
+    gpio_set_level(LED_PIN, 0);
+  #endif
+    
     uart_config_t cfg = {
         .baud_rate = LORA_BAUD,
         .data_bits = UART_DATA_8_BITS,
@@ -42,7 +52,7 @@ void lora_init(void) {
     
     // Set ADDRESS with verification
     uart_flush(LORA_UART);
-    uart_write_bytes(LORA_UART, "AT+ADDRESS=1\r\n", 14);
+    uart_write_bytes(LORA_UART, "AT+ADDRESS=2\r\n", 14);
     vTaskDelay(pdMS_TO_TICKS(300));
     len = uart_read_bytes(LORA_UART, buf, sizeof(buf)-1, pdMS_TO_TICKS(500));
     if (len > 0) { buf[len] = '\0'; ESP_LOGI(TAG, "ADDRESS set: %s", buf); }
@@ -83,53 +93,48 @@ void lora_init(void) {
 }
 
 void lora_send_trigger(void) {
-    // Send 'T' to address 2 (DevKitV1 trail camera)
-    const char *cmd = "AT+SEND=2,1,T\r\n";
+    const char *cmd = "AT+SEND=1,1,T\r\n";  // Send to S3 (addr 1)
     uart_write_bytes(LORA_UART, cmd, strlen(cmd));
-    ESP_LOGI(TAG, "Trigger sent to camera!");
-    
-    // Wait for +OK response
-    uint8_t buf[64];
-    int len = uart_read_bytes(LORA_UART, buf, sizeof(buf)-1, pdMS_TO_TICKS(300));
-    if (len > 0) {
-        buf[len] = '\0';
-        ESP_LOGI(TAG, "Response: %s", buf);
-    }
+    ESP_LOGI(TAG, "Trigger sent");
 }
 
-void button_task(void *arg) {
-    // Configure boot button
-    gpio_config_t btn = {
-        .pin_bit_mask = (1ULL << BOOT_BUTTON),
-        .mode = GPIO_MODE_INPUT,
-        .pull_up_en = GPIO_PULLUP_ENABLE,
-        .intr_type = GPIO_INTR_DISABLE,
-    };
-    gpio_config(&btn);
+void lora_rx_task(void *arg) {
+    uint8_t buf[256];
+    ESP_LOGI(TAG, "LoRa RX task started, waiting for triggers...");
     
-    ESP_LOGI(TAG, "Button task ready - press BOOT to trigger camera");
-    
-    bool last_state = 1;  // Button is active-low
+    int poll_count = 0;
     
     while(1) {
-        bool current_state = gpio_get_level(BOOT_BUTTON);
+        int len = uart_read_bytes(LORA_UART, buf, sizeof(buf)-1, pdMS_TO_TICKS(100));
         
-        // Detect button press (transition from high to low)
-        if (last_state == 1 && current_state == 0) {
-            ESP_LOGI(TAG, "Button pressed!");
-            lora_send_trigger();
-            vTaskDelay(pdMS_TO_TICKS(300));  // Debounce
+        poll_count++;
+        if (poll_count % 100 == 0) {  // Every 10 seconds
+            ESP_LOGI(TAG, "RX task alive - %d polls, listening...", poll_count);
         }
         
-        last_state = current_state;
-        vTaskDelay(pdMS_TO_TICKS(50));  // 50ms polling
+        if (len > 0) {
+            buf[len] = '\0';
+            ESP_LOGI(TAG, "RX raw (%d bytes): [%s]", len, buf);
+            
+            #ifdef DEV_TEST_LORA_UART
+            if (strstr((char*)buf, "+RCV=") != NULL) {
+                ESP_LOGI(TAG, "GOT +RCV MESSAGE!");
+                
+                // Check for trigger - data could be "T", "0", or "01"
+                if (strstr((char*)buf, ",T,") != NULL || 
+                    strstr((char*)buf, ",0,") != NULL || 
+                    strstr((char*)buf, ",01,") != NULL) {
+                    ESP_LOGI(TAG, "TRIGGER RECEIVED! Blinking LED...");
+                    
+                    for (int i = 0; i < 3; i++) {
+                        gpio_set_level(LED_PIN, 1);
+                        vTaskDelay(pdMS_TO_TICKS(200));
+                        gpio_set_level(LED_PIN, 0);
+                        vTaskDelay(pdMS_TO_TICKS(200));
+                    }
+                }
+            }
+            #endif
+        }
     }
-}
-
-void app_main(void)
-{
-    ESP_LOGI(TAG, "ESP32-S3 Handheld LoRa Transmitter");
-    
-    lora_init();
-    xTaskCreate(button_task, "button", 4096, NULL, 5, NULL);
 }
