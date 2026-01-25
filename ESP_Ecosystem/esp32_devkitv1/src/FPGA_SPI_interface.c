@@ -21,6 +21,15 @@ static const char *TAG = "FPGA_SPI";
 
 static spi_device_handle_t spi_fpga;
 
+static SemaphoreHandle_t button_sem = NULL;
+
+static void IRAM_ATTR button_isr(void *arg)
+{
+    BaseType_t yield = pdFALSE;
+    xSemaphoreGiveFromISR(button_sem, &yield);
+    portYIELD_FROM_ISR(yield);
+}
+
 esp_err_t fpga_spi_init(void)
 {
     ESP_LOGI(TAG, "Initializing SPI master to FPGA...");
@@ -60,6 +69,19 @@ esp_err_t fpga_spi_init(void)
     ESP_LOGI(TAG, "  MOSI=%d MISO=%d SCLK=%d CS=%d", 
              FPGA_MOSI_PIN, FPGA_MISO_PIN, FPGA_SCLK_PIN, FPGA_CS_PIN);
     ESP_LOGI(TAG, "  Clock: %d MHz", SPI_CLOCK_MHZ);
+    button_sem = xSemaphoreCreateBinary();
+    
+    gpio_config_t btn_cfg = {
+        .pin_bit_mask = (1ULL << BUTTON_PIN),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+        .intr_type = GPIO_INTR_NEGEDGE,
+    };
+ 
+    gpio_config(&btn_cfg);
+    
+    gpio_install_isr_service(0);
+    gpio_isr_handler_add(BUTTON_PIN, button_isr, NULL);
     
     return ESP_OK;
 }
@@ -96,63 +118,45 @@ esp_err_t fpga_spi_transmit_image(const uint8_t *data, size_t total_size)
 
 void fpga_test_task(void *pvParameters)
 {
-    // Configure button
-    gpio_config_t btn_cfg = {
-        .pin_bit_mask = (1ULL << BUTTON_PIN),
-        .mode = GPIO_MODE_INPUT,
-        .pull_up_en = GPIO_PULLUP_ENABLE,
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_DISABLE,
-    };
-    gpio_config(&btn_cfg);
-    
-    // Allocate DMA-capable buffer
     uint8_t *test_buffer = heap_caps_malloc(TEST_IMAGE_SIZE, MALLOC_CAP_DMA);
-    if (test_buffer == NULL) {
+    if (!test_buffer) {
         ESP_LOGE(TAG, "DMA buffer allocation failed");
         vTaskDelete(NULL);
-        return;
     }
     
-    uint8_t pattern = 0xAA;
-    int frame_count = 0;
-    
-    ESP_LOGI(TAG, "Test task ready - press BOOT button to transmit");
-   static uint8_t pattern_num = 0;
+    uint8_t pattern_num = 0;
+    ESP_LOGI(TAG, "Test task ready - press BOOT button");
 
   while (1) {
-      if (gpio_get_level(BUTTON_PIN) == 0) {
-          ESP_LOGI(TAG, "Button pressed! Pattern %d", pattern_num);
+    if (xSemaphoreTake(button_sem, portMAX_DELAY) == pdTRUE) {
+      ESP_LOGI(TAG, "Button pressed! Pattern %d", pattern_num);
           
           // Generate different patterns
-          switch (pattern_num % 4) {
-              case 0:  // Solid white
-                  memset(test_buffer, 0xFF, TEST_IMAGE_SIZE);
-                  ESP_LOGI(TAG, "Pattern: Solid WHITE");
-                  break;
-              case 1:  // Solid black
-                  memset(test_buffer, 0x00, TEST_IMAGE_SIZE);
-                  ESP_LOGI(TAG, "Pattern: Solid BLACK");
-                  break;
-              case 2:  // Gradient - should show smooth color transition
-                  for (int i = 0; i < TEST_IMAGE_SIZE; i++) {
-                      test_buffer[i] = (i / 16) & 0xFF;  // Slower gradient, more visible
-                  }
-                  ESP_LOGI(TAG, "Pattern: Gradient");
-                  break;
-              case 3:  // Alternating 0xAA/0x55 (checkerboard-ish)
-                  for (int i = 0; i < TEST_IMAGE_SIZE; i++) {
-                      test_buffer[i] = (i & 1) ? 0xAA : 0x55;
-                  }
-                  ESP_LOGI(TAG, "Pattern: Alternating");
-                  break;
+      switch (pattern_num % 4) {
+        case 0:  // Solid white
+          memset(test_buffer, 0xFF, TEST_IMAGE_SIZE);
+          ESP_LOGI(TAG, "Pattern: Solid WHITE");
+          break;
+        case 1:  // Solid black
+          memset(test_buffer, 0x00, TEST_IMAGE_SIZE);
+          ESP_LOGI(TAG, "Pattern: Solid BLACK");
+          break;
+        case 2:  // Gradient - should show smooth color transition
+          for (int i = 0; i < TEST_IMAGE_SIZE; i++) {
+              test_buffer[i] = (i / 16) & 0xFF;  // Slower gradient, more visible
           }
-          
-          fpga_spi_transmit_image(test_buffer, TEST_IMAGE_SIZE);
-          pattern_num++;
+          ESP_LOGI(TAG, "Pattern: Gradient");
+          break;
+        case 3:  // Alternating 0xAA/0x55 (checkerboard-ish)
+          for (int i = 0; i < TEST_IMAGE_SIZE; i++) {
+              test_buffer[i] = (i & 1) ? 0xAA : 0x55;
+          }
+          ESP_LOGI(TAG, "Pattern: Alternating");
+          break;
       }
-      
-  }    
-    free(test_buffer);
-    vTaskDelete(NULL);
+          
+      fpga_spi_transmit_image(test_buffer, TEST_IMAGE_SIZE);
+      pattern_num++;
+    }
+  }
 }
