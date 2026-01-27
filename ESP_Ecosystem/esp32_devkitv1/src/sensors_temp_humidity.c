@@ -4,7 +4,7 @@
 // Sensor 3: ONLY triggers temp/humidity read (no motor)
 // With ~1.5 ms kick and 10% run duty, 3 s wait.
 // AHT20 reads at most once every 7 seconds.
-
+//hello
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
