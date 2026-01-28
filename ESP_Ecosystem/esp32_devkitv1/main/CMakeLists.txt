@@ -1,6 +1,5 @@
 idf_component_register(
-    SRCS "../src/main.c"
-         "../src/Cam_DMA_interface.c"
-         "../src/Image_buffer.c"
-    INCLUDE_DIRS "../include"
+    SRCS "i2cdev.c"
+    INCLUDE_DIRS "."
+    REQUIRES esp_driver_gpio esp_driver_i2c
 )
