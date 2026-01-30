@@ -1,36 +1,108 @@
 # SD403_TrailCamera_NDSU
+## Disclaimer : Work in Progress
+This project was prompted by NDSU's senior design classes, and has been transformed into a way for the maintainers to explore a wide range of disciplines within the EE umbrella.
 
 ---
 
-## WIP
+# Brief
 
----
-
-# Scope/Context:
-
+## Prompt
 SD 403/405 is the final demonstration of applied skills for soon to be graduating NDSU students.
-The project chosen for this group(6) was to create a trail cam with the ability to capture images with an ESP32-CAM and transmit it to a phone 2 miles away including relavand data (sensor info). An additional requirement of a TFT UI was also included in the initial BOR.
-This group decided to up the anti so to speak, and devised a structure that could transmit *live* data 2 miles away.
+The project chosen for this group(6) was to create a trail cam with the ability to capture images with an ESP32-CAM and transmit it to a phone 2 miles away including relevant data (sensor info). An additional requirement of a TFT UI was also included in the initial BOR.
+
+## Interpretation
+
+Given the finallity of senior design and the fundamental lack of limitations design groups can make the challenge as easy or difficult to implement. This may well be the last exposure to a project in an academic setting that has **no limitations**. While simple designs in the real world are undeniably more successful, they are also undeniably less interesting and teach less. In summary, this project is a relatively brief exploration into as many disciplines under the electrical engineering umberella as possible to create a system that does the impossible while remaining under $300. To summarize, this project is meant to use
 
 ---
 
-## Plan:
+# Plan:
 
 Use FFTs to deconstruct and reconstruct images as well as sensor data.
  **This feature will implement an FPGA in the design (GOWIN Tang Nano 9K)**
 
-## Processor responsibilities:
+---
 
-### ESP32-CAM:
+# Development Standards
+
+## Code Organization
+1. Modular file system - multiple concise files (<300 lines ideally), not monolithic main files
+2. One file, one purpose - minimal global interfaces per file. **NO GLOBAL VARIABLES**
+3. Proper file separation with corresponding headers
+
+## Architecture Principles
+- File-scope coupling: Static functions may be tightly integrated for performance
+- Module-scope coupling: Loosely coupled between files via minimal interfaces
+- Strong cohesion within modules
+- No global variables - use proper encapsulation
+
+## Documentation
+- Document pin allocations and feature implementations
+- Update relevant README.md or commit messages
+- Headers on files for clarity
+- Commit frequently
+
+## Standards Compliance
+- Adhere to Unix philosophy where applicable
+- Follow C standards for embedded code
+- Follow Verilog standards for FPGA code
+- Follow Dart/Flutter standards for app development
+- Use ESP-IDF and FreeRTOS best practices
+
+---
+
+# Table Of Contents
+
+## Software Design Descriptions (SDDs):
+- [System-level](./Documentation/SDDs/SDD000.md)
+  - [ESP32-Cam](./ESP_Ecosystem/esp32cam/docs/SDD/SDD100.md)
+  - [ESP32-DevkitV1](./ESP_Ecosystem/esp32_devkitv1/docs/SDD/SDD200.md)
+  - [ESP32-S3 (WROOM)](./ESP_Ecosystem/esp32s3_wroom/docs/SDD/SDD300.md)
+  - [Tang Nano 9k](./FPGA_Unit/docs/SDD/SDD400.md)
+  - [App Development](./Remote_Inteface/docs/SDD/SDD500.md)
+
+## Testing
+- [Test Requirments](./Documentation/TPD.md)
+
+### Test Protocols
+- [System-level](./Documentation/TP/TP000.md)
+  - [ESP32-Cam](./ESP_Ecosystem/esp32cam/docs/TP/TP100.md)
+  - [ESP32-DevkitV1](./ESP_Ecosystem/esp32_devkitv1/docs/TP/TP200.md)
+  - [ESP32-S3 (WROOM)](./ESP_Ecosystem/esp32s3_wroom/docs/TP/TP300.md)
+  - [Tang Nano 9k](./FPGA_Unit/docs/TP/TP400.md)
+  - [App Development](./Remote_Inteface/docs/TP/TP500.md)
+
+## Physical Features and Budgets (BOMs)
+[BOM Summary](./Doumentation/BOM/BOM000.md)
+
+## Power
+- [Total Power Budget](./Documentation/BOM/PWR000.md)
+  - [ESP32-Cam](./ESP_Ecosystem/esp32cam/docs/BOM/PWR100.md)
+  - [ESP32-DevkitV1](./ESP_Ecosystem/esp32_devkitv1/docs/BOM/PWR200.md)
+  - [ESP32-S3 (WROOM)](./ESP_Ecosystem/esp32s3_wroom/docs/BOM/PWR300.md)
+  - [Tang Nano 9k](./FPGA_Unit/docs/BOM/PWR400.md)
+
+## Pin Allocations
+- [Pin Allocations](./Documentation/BOM/PIN000.md)
+  - [ESP32-Cam](./ESP_Ecosystem/esp32cam/docs/BOM/PIN101.md)
+  - [ESP32-DevkitV1](./ESP_Ecosystem/esp32_devkitv1/docs/BOM/PIN201.md)
+  - [ESP32-S3 (WROOM)](./ESP_Ecosystem/esp32s3_wroom/docs/BOM/PIN301.md)
+  - [Tang Nano 9k](./FPGA_Unit/docs/BOM/PIN401.md)
+
+---
+
+# Components:
+
+## ESP32-CAM:
  - Capture, store, and pass images rapidly to ESP32-DEVKITV1
 
-### ESP32-DEVKITV1:
+## ESP32-DEVKITV1:
   - Serve as intermediary between CAM and FPGA.
   - House (back end) edge ML model for motion prediction.
   - Manage stepper motor, RTC, and temperature/humidity sensor.
   - Manage pre-rendered backgrounds for TFT UI.
 
-### Tang Nano 9K:
+## Tang Nano 9K:
 
   - Manage TFT display interfacing.
   - Compress (pre-process) image streams to be transmitted via LoRa(UART).
@@ -38,44 +110,46 @@ Use FFTs to deconstruct and reconstruct images as well as sensor data.
   - Manage low power watch dog system with PIR sensors.
   - Serve as a "smart IC" for extra pin needs (going to be connected in parallel bit transfer so this is needed)
 
-### ESP32-S3 (WROOM):
-  - Recieve FFT coefficients.
+## ESP32-S3 (WROOM):
+  - Receive FFT coefficients.
   - House first daisy ML reconstruction mechanism.
   - Functionally serve as an API for iPhone.
 
-### iPhone:
+## iPhone:
   - Final virtual user interface.
   - Polish and patch partitioned ML reconstructed image data.
   - On/Off, motor control, training en/dis.
 
 ---
 
-# Table Of Contents
+# References
 
-## Build Target Docs
-- [ESP32-Cam](./ESP_Ecosystem/esp32cam/docs/index.md)
-- [ESP32-DevkitV1](./ESP_Ecosystem/esp32_devkitv1/docs/index.md)
-- [ESP32-S3 (WROOM)](./ESP_Ecosystem/esp32s3_wroom/docs/index.md)
-- [Tang Nano 9k](./FPGA_Unit/docs/Index.md)
+## Other Documents
+- [Camera Implementation](./SDD201.md)
+- [WiFi Implementation](./SDD202.md)
+- [Stepper Motor Implementation](./SDD203.md)
 
-## Physical Features and Budgets
-- [Total Power Budget]()
-- [Pin Allocations]()
--
+## Vendor Tools
+- [esp-idf](https://github.com/espressif/esp-idf)
+- [camera component]()
 
+## Definitions
+- [Cohiesion and Coupling](https://www.geeksforgeeks.org/software-engineering/software-engineering-coupling-and-cohesion/)
+- [Composability](https://stackoverflow.com/questions/2887013/what-does-composability-mean-in-context-of-functional-programmingtions)
+- [Unix Design Philosophy](https://en.wikipedia.org/wiki/Unix_philosophy) -- The authors of C
+- [FreeRTOS](https://en.wikipedia.org/wiki/FreeRTOS)
 
 ---
 
-## Programming standards:
+# Relevant Standards and Practices
+- Tightly [coupled](## Definitons) functions at static (file) scope
+  - Simple and [composable](## Definitions)
+- Loosely coupled functions when globally scoped
+- Strong cohesion overall
+- Use of ESP supported software components where possible
+- Proper use of file seperation
+  - Minimal global interfaces per file
+  - One file has one purpose
+- Proper use of [FreeRTOS](## Definitions)
 
-*Also included in project OneNote under: /"Project Charter"/"Relevant Standards"*
 
-1. Modular file system. I.e. multiple concise (ideally less that 300 lines) files and corresponding header files. Not one monolithic main file per microcontroller.
-
-2. Document pin allocations, feature implementations and so on either by updating the relevant readme.md, commit message, or both. Headers on files for clarity.
-
-3. Try to commit often.
-
-4. Try to adhere to UNIX philosophy if relevant.
-
-5. Adhere to C standards Verilog standards, and dart(flutter) standards when applicable.
