@@ -1,0 +1,13 @@
+# Exclude build artifacts from language stats
+build/** linguist-generated=true
+**/build/** linguist-generated=true
+
+# Exclude vendored dependencies
+**/managed_components/** linguist-vendored=true
+**/components/** linguist-vendored=true
+
+# Mark actual project languages
+*.c linguist-detectable=true
+*.h linguist-detectable=true
+*.v linguist-detectable=true
+*.md linguist-documentation=true
