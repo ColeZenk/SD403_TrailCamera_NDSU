@@ -11,3 +11,4 @@ build/** linguist-generated=true
 *.h linguist-detectable=true
 *.v linguist-detectable=true
 *.md linguist-documentation=true
+* -copilot
