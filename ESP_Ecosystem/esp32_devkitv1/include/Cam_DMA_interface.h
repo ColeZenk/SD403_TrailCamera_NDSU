@@ -7,6 +7,15 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+// ESP32-S3 SPI2 slave pins (hardware-fixed for DMA)
+#define PIN_NUM_MOSI       23
+#define PIN_NUM_MISO       19
+#define PIN_NUM_CLK        18
+#define PIN_NUM_CS         5
+
+#define DMA_CHANNEL        SPI_DMA_CH_AUTO
+#define BUFFER_SIZE        4096
+
 // Image header structure
 typedef struct {
     uint32_t magic;

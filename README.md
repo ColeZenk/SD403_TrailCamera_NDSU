@@ -7,7 +7,41 @@
 Remote trail camera system with 2-mile LoRa transmission using FPGA-accelerated FFT compression. Multi-processor architecture spanning ESP32-CAM, ESP32-DevKit, Tang Nano 9K FPGA, ESP32-S3 receiver, and mobile interface.
 
 ## Architectural Overview
-TODO
+```mermaid
+
+%%{init: {'theme':'base', 'themeVariables': {'primaryTextColor':'#000','textColor':'#000'}}}%%
+flowchart LR
+    subgraph trailcam[Trail Cam IV]
+        CAM[Camera<br/>OV2640]
+        MAIN[Main Controller<br/>ESP32-DevKit]
+        FPGA[FPGA<br/>Tang Nano 9K]
+        LORA_TX[LoRa TX<br/>REYAX]
+    end
+
+    subgraph receiver[Receiver]
+        LORA_RX[LoRa RX<br/>REYAX]
+        S3[Reconstruction<br/>ESP32-S3]
+        APP[Mobile App]
+    end
+
+    CAM -->|SPI DMA<br/>10 MHz| MAIN
+    MAIN -->|SPI<br/>Image Data| FPGA
+    MAIN -->|UART<br/>Packets| LORA_TX
+    LORA_TX -.->|RF 915MHz<br/>2 miles| LORA_RX
+    LORA_RX -->|Coefficients| S3
+    S3 -->|Reconstructed<br/>BLE/WiFi| APP
+
+    style trailcam fill:#e8f5e9,stroke:#000,stroke-width:2px
+    style receiver fill:#e3f2fd,stroke:#000,stroke-width:2px
+    style CAM fill:#fff,stroke:#000,color:#000
+    style MAIN fill:#fff,stroke:#000,color:#000
+    style FPGA fill:#fff,stroke:#000,color:#000
+    style LORA_TX fill:#fff,stroke:#000,color:#000
+    style LORA_RX fill:#fff,stroke:#000,color:#000
+    style S3 fill:#fff,stroke:#000,color:#000
+    style APP fill:#fff,stroke:#000,color:#000
+```
+
 
 ## Components
 - **ESP32-CAM** Image capture and SD storage

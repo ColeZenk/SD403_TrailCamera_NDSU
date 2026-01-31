@@ -1,0 +1,16 @@
+CompileFlags:
+  CompilationDatabase: build
+  Remove:
+    - -fno-tree-switch-conversion
+    - -fstrict-volatile-bitfields
+    - -mlongcalls
+    - -mtext-section-literals
+    - -fno-builtin-*
+    - -mfix-esp32-psram-cache-*
+
+Diagnostics:
+  UnusedIncludes: None
+  ClangTidy:
+    Remove: "*"
+  Suppress:
+    - "-Wpp-file-not-found"

@@ -17,14 +17,6 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 
-// ESP32-S3 SPI2 slave pins (hardware-fixed for DMA)
-#define PIN_NUM_MOSI       23
-#define PIN_NUM_MISO       19
-#define PIN_NUM_CLK        18
-#define PIN_NUM_CS         5
-
-#define DMA_CHANNEL        SPI_DMA_CH_AUTO
-#define BUFFER_SIZE        4096
 
 static const char *TAG = "SPI_RX";
 
@@ -84,7 +76,7 @@ esp_err_t spi_slave_dma_init(void)
 
     ESP_LOGI(TAG, "SPI DMA slave initialized successfully");
     ESP_LOGI(TAG, "Buffer size: %d bytes", BUFFER_SIZE);
-    
+
     return ESP_OK;
 }
 
@@ -99,20 +91,20 @@ static void reset_rx_state(void) {
 
 static bool handle_header_chunk(const uint8_t *data, size_t size) {
     if (size < sizeof(image_header_t)) return false;
-    
+
     if (!process_image_header(data, &rx_state.header)) {
         return false;
     }
-    
+
     rx_state.buffer = malloc(rx_state.header.size);
     if (!rx_state.buffer) {
         ESP_LOGE(TAG, "Failed to allocate %" PRIu32 " bytes", rx_state.header.size);
         return false;
     }
-    
+
     rx_state.receiving = true;
     rx_state.bytes_received = 0;
-    
+
     // Copy any data after header in same chunk
     size_t header_size = sizeof(image_header_t);
     if (size > header_size) {
@@ -120,7 +112,7 @@ static bool handle_header_chunk(const uint8_t *data, size_t size) {
         memcpy(rx_state.buffer, data + header_size, data_bytes);
         rx_state.bytes_received += data_bytes;
     }
-    
+
     return true;
 }
 
@@ -129,22 +121,22 @@ static void handle_data_chunk(const uint8_t *data, size_t size) {
     if (rx_state.bytes_received + bytes_to_copy > rx_state.header.size) {
         bytes_to_copy = rx_state.header.size - rx_state.bytes_received;
     }
-    
+
     memcpy(rx_state.buffer + rx_state.bytes_received, data, bytes_to_copy);
     rx_state.bytes_received += bytes_to_copy;
 }
 
 static void finalize_image(void) {
     ESP_LOGI(TAG, "Image reception complete: %zu bytes", rx_state.bytes_received);
-    
+
     if (verify_image_checksum(rx_state.buffer, rx_state.header.size, rx_state.header.checksum)) {
         ESP_LOGI(TAG, "Image verified successfully!");
-        
+
         image_data_t img_data = {
             .buffer = rx_state.buffer,
             .size = rx_state.header.size
         };
-        
+
         if (xQueueSend(rx_state.queue, &img_data, 0) != pdTRUE) {
             ESP_LOGW(TAG, "Image queue full, dropping image");
             free(rx_state.buffer);
@@ -153,7 +145,7 @@ static void finalize_image(void) {
         ESP_LOGE(TAG, "Image checksum failed, dropping");
         free(rx_state.buffer);
     }
-    
+
     rx_state.buffer = NULL;  // don't double-free
     rx_state.receiving = false;
 }
@@ -165,7 +157,7 @@ void spi_receive_task(void *pvParameters)
     while (1) {
         size_t chunk_size = 0;
         esp_err_t ret = spi_slave_receive_chunk(rx_buffer, &chunk_size, 5000);
-        
+
         if (ret == ESP_ERR_TIMEOUT) {
             if (rx_state.receiving) {
                 ESP_LOGW(TAG, "Transfer timeout, resetting");
@@ -173,7 +165,7 @@ void spi_receive_task(void *pvParameters)
             }
             continue;
         }
-        
+
         if (ret != ESP_OK) continue;
 
         if (!rx_state.receiving) {
@@ -184,7 +176,7 @@ void spi_receive_task(void *pvParameters)
         } else {
             // Collecting data
             handle_data_chunk(rx_buffer, chunk_size);
-            
+
             if (rx_state.bytes_received >= rx_state.header.size) {
                 finalize_image();
             }
@@ -196,18 +188,18 @@ void spi_receive_task(void *pvParameters)
 static bool process_image_header(const uint8_t *data, image_header_t *header)
 {
     memcpy(header, data, sizeof(image_header_t));
-    
+
     if (header->magic != 0xCAFEBEEF) {
         ESP_LOGW(TAG, "Invalid magic: 0x%08" PRIX32, header->magic);
         return false;
     }
-    
+
     if (header->size == 0 || header->size > (1024 * 1024)) {
         ESP_LOGW(TAG, "Invalid size: %" PRIu32, header->size);
         return false;
     }
-    
-    ESP_LOGI(TAG, "Valid header - Size: %" PRIu32 " bytes, Checksum: 0x%08" PRIX32, 
+
+    ESP_LOGI(TAG, "Valid header - Size: %" PRIu32 " bytes, Checksum: 0x%08" PRIX32,
              header->size, header->checksum);
     return true;
 }
@@ -219,13 +211,13 @@ static bool verify_image_checksum(const uint8_t *data, size_t size, uint32_t exp
     for (size_t i = 0; i < size; i++) {
         calculated ^= data[i];
     }
-    
+
     bool valid = (calculated == expected_checksum);
     if (!valid) {
         ESP_LOGE(TAG, "Checksum mismatch! Expected: 0x%08" PRIX32 ", Got: 0x%08" PRIX32,
                  expected_checksum, calculated);
     }
-    
+
     return valid;
 }
 
