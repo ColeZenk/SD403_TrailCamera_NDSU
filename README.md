@@ -32,19 +32,7 @@ TODO
 ## Todos and Timline
 
 ```mermaid
-%%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#fff',
-    'primaryTextColor': '#000',
-    'primaryBorderColor': '#000',
-    'lineColor': '#000',
-    'secondaryColor': '#f0f0f0',
-    'tertiaryColor': '#e0e0e0',
-    'textColor': '#000',
-    'fontSize': '14px'
-  }
-}}%%
+%%{init: {'theme':'forest'}}%%
 gantt
     dateFormat  YYYY-MM-DD
     title       Trail Camera IV - Senior Design Project Timeline
