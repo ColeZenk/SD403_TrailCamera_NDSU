@@ -9,16 +9,17 @@ Remote trail camera system with 2-mile LoRa transmission using FPGA-accelerated 
 ## Architectural Overview
 TODO
 
-omponents
+## Components
 - **ESP32-CAM** Image capture and SD storage
 - **ESP32-DevKit** Sensor management and motor control
 - **Tang Nano 9K FPGA** FFT compression and TFT display
 - **ESP32-S3** FFT reconstruction and mobile API
 - **Mobile App** Cross-platform UI (Flutter)
 
+## Documentation
 - [Software Design Documents](./Documentation/SDDs/SDD000.md)
 - [Test Documents](./Documentation/TPD.md)
-- [BOM Summary](./Doumentation/BOM/BOM000.md)
+- [BOM Summary](./Documentation/BOM/BOM000.md)
 
 ## Project Info
 **Budget** <$300 | **Goal Range** 2 miles | **Team** 3 members
