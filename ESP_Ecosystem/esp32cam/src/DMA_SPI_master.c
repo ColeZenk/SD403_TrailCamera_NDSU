@@ -1,7 +1,7 @@
 /*
  * DMA_SPI_master.c
  * ESP32-CAM SPI DMA Master Implementation
- * 
+ *
  * Sends image data over SPI using DMA for maximum throughput
  */
 
@@ -167,7 +167,7 @@ void spi_transmit_task(void *pvParameters)
   ESP_LOGI(TAG, "SPI transmit task started");
   vTaskDelay(pdMS_TO_TICKS(1000));
 
-  while (1) {
+  for (;;) {
     if (xQueueReceive(image_queue, &img_data, portMAX_DELAY) == pdTRUE) {
       LOG_DEBUG("Sending image via SPI: %d bytes", img_data.size);
 

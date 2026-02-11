@@ -1,197 +1,228 @@
 /*
- * ESP32-CAM camera_control
- * camera init, testing, and log to SD
+ * camera_control.c
+ * ESP32-CAM camera initialization and frame capture
  */
 
 #include <stdio.h>
 #include <string.h>
+
+#include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
+
 #include "esp_log.h"
 #include "esp_camera.h"
-#include "esp_vfs_fat.h"
-#include "sdmmc_cmd.h"
-#include "driver/sdmmc_host.h"
 
 #include "image_buffer_pool.h"
-#include "DMA_SPI_master.h"
+#include "sd_storage.h"
+#include "sensor.h"
 #include "camera_control.h"
 
-static sdmmc_card_t *card = NULL;
-static int image_counter = 0;
+/* File scope variables */
 static QueueHandle_t tx_queue = NULL;
-
 static const char *TAG = "CAM_CTRL";
 
-// Debug flag - set to 1 to enable verbose logging
-#define UNIT_TEST_CAMERA 0
+/**************************************************************************************************
+  Core Logical Function
+**************************************************************************************************/
 
-#if UNIT_TEST_CAMERA
-#define LOG_DEBUG(fmt, ...) ESP_LOGI(TAG, fmt, ##__VA_ARGS__)
-#else
-#define LOG_DEBUG(fmt, ...) do {} while(0)
-#endif
-
-// AI-Thinker ESP32-CAM Camera Configuration
-static camera_config_t camera_config = {
-  .pin_pwdn = 32,
-  .pin_reset = -1,
-  .pin_xclk = 0,
-  .pin_sccb_sda = 26,
-  .pin_sccb_scl = 27,
-
-  .pin_d7 = 35,
-  .pin_d6 = 34,
-  .pin_d5 = 39,
-  .pin_d4 = 36,
-  .pin_d3 = 21,
-  .pin_d2 = 19,
-  .pin_d1 = 18,
-  .pin_d0 = 5,
-  .pin_vsync = 25,
-  .pin_href = 23,
-  .pin_pclk = 22,
-
-  .xclk_freq_hz = 20000000,
-  .ledc_timer = LEDC_TIMER_0,
-  .ledc_channel = LEDC_CHANNEL_0,
-
-  .pixel_format = PIXFORMAT_GRAYSCALE,
-  .frame_size = FRAMESIZE_QVGA,  // 320x240
-  .jpeg_quality = 12,
-  .fb_count = 1,
-  .fb_location = CAMERA_FB_IN_PSRAM,
-  .grab_mode = CAMERA_GRAB_WHEN_EMPTY
-};
-
-esp_err_t sd_card_init(void)
+/**
+ * Capture a single frame from camera
+ * Saves to SD and optionally sends to SPI queue
+ *
+ * @param pv_parameters FreeRTOS task parameters (unused)
+ */
+static void capture_frame(void *pv_parameters)
 {
-  LOG_DEBUG("Initializing SD card...");
+    ESP_LOGI(TAG, "Camera capture initiated");
 
-  esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-    .format_if_mount_failed = false,
-    .max_files = 5,
-    .allocation_unit_size = 16 * 1024
-  };
-
-  sdmmc_host_t host = SDMMC_HOST_DEFAULT();
-  host.max_freq_khz = SDMMC_FREQ_HIGHSPEED;  // 40 MHz
-
-  sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
-  slot_config.width = 4;  // 4-bit mode
-
-  esp_err_t ret = esp_vfs_fat_sdmmc_mount("/sdcard", &host, &slot_config, &mount_config, &card);
-
-  if (ret != ESP_OK) {
-    if (ret == ESP_FAIL) {
-      ESP_LOGE(TAG, "Failed to mount filesystem. Insert SD card and reset.");
-    } else {
-      ESP_LOGE(TAG, "Failed to initialize SD card: %s", esp_err_to_name(ret));
-    }
-    return ret;
-  }
-
-#if UNIT_TEST_CAMERA
-  sdmmc_card_print_info(stdout, card);
-#endif
-
-  ESP_LOGI(TAG, "SD card mounted successfully");
-
-  return ESP_OK;
-}
-
-void camera_capture_task(void *pvParameters)
-{
-  ESP_LOGI(TAG, "Camera capture task started");
-  vTaskDelay(pdMS_TO_TICKS(1000));
-
-  while (1) {
-    // Capture frame
     camera_fb_t *fb = esp_camera_fb_get();
 
     if (fb == NULL) {
-      ESP_LOGE(TAG, "Camera capture failed");
-      vTaskDelay(pdMS_TO_TICKS(100));
-      continue;
+        ESP_LOGE(TAG, "Camera capture failed");
+        return;
     }
 
-    LOG_DEBUG("Captured: %d bytes (%dx%d)", fb->len, fb->width, fb->height);
+    LOG_DEBUG("Captured: %zu bytes (%dx%d)", fb->len, fb->width, fb->height);
 
-    // ===== SEND TO QUEUE FOR SPI TRANSMISSION =====
-    if (tx_queue != NULL) {
-      // Get buffer from PSRAM pool
-      uint8_t *tx_buffer = image_buffer_alloc();
+// TODO: Tailor this function to local hosting instead of DMA
+//    if (tx_queue != NULL) {
+//        send_frame_to_spi_queue(fb->buf, fb->len);
+//    }
 
-      if (tx_buffer != NULL) {
-        memcpy(tx_buffer, fb->buf, fb->len);
+    /* Save to SD card */
+    sd_save_image(fb->buf, fb->len);
 
-        image_data_t img_data = {
-          .buffer = tx_buffer,
-          .size = fb->len
-        };
-
-        if (xQueueSend(tx_queue, &img_data, 0) == pdTRUE) {
-          LOG_DEBUG("→ Queued for SPI transmission");
-        } else {
-          ESP_LOGW(TAG, "SPI queue full, dropping image");
-          image_buffer_free(tx_buffer);
-        }
-      } else {
-        ESP_LOGW(TAG, "No free buffers, skipping SPI transmission");
-      }
-    }
-
-    // ===== SAVE TO SD CARD =====
-    char filename[32];
-    snprintf(filename, sizeof(filename), "/sdcard/img_%04d.raw", image_counter++);
-
-    FILE *f = fopen(filename, "wb");
-    if (f == NULL) {
-      ESP_LOGE(TAG, "Failed to open file: %s", filename);
-    } else {
-      size_t written = fwrite(fb->buf, 1, fb->len, f);
-      fclose(f);
-
-      if (written == fb->len) {
-        LOG_DEBUG("Saved: %s (%d bytes)", filename, written);
-      } else {
-        ESP_LOGE(TAG, "Write failed: %d/%d bytes", written, fb->len);
-      }
-    }
-
-    // Return camera buffer
+    /* Return camera buffer to driver */
     esp_camera_fb_return(fb);
-
-    // Capture every 2 seconds
-    vTaskDelay(pdMS_TO_TICKS(2000));
-  }
 }
 
+/**************************************************************************************************
+  Global Interface
+**************************************************************************************************/
+
+esp_err_t camera_init(void)
+{
+    /* AI-Thinker ESP32-CAM Camera Configuration */
+    static camera_config_t camera_config = {
+        .pin_pwdn = 32,
+        .pin_reset = -1,
+        .pin_xclk = 0,
+        .pin_sccb_sda = 26,
+        .pin_sccb_scl = 27,
+
+        .pin_d7 = 35,
+        .pin_d6 = 34,
+        .pin_d5 = 39,
+        .pin_d4 = 36,
+        .pin_d3 = 21,
+        .pin_d2 = 19,
+        .pin_d1 = 18,
+        .pin_d0 = 5,
+        .pin_vsync = 25,
+        .pin_href = 23,
+        .pin_pclk = 22,
+
+        .xclk_freq_hz = 20000000,
+        .ledc_timer = LEDC_TIMER_0,
+        .ledc_channel = LEDC_CHANNEL_0,
+
+        .pixel_format = PIXFORMAT_GRAYSCALE,
+        .frame_size = FRAMESIZE_VGA,  /* 640x480 */
+        /* .jpeg_quality = 12, */
+        .fb_count = 2,
+        .fb_location = CAMERA_FB_IN_PSRAM,
+        .grab_mode = CAMERA_GRAB_WHEN_EMPTY
+    };
+
+    LOG_DEBUG("Initializing camera...");
+
+    esp_err_t err = esp_camera_init(&camera_config);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Camera init failed: 0x%x", err);
+        return err;
+    }
+
+    ESP_LOGI(TAG, "Camera initialized successfully");
+    return ESP_OK;
+}
+
+/**************************************************************************************************
+  File Scope Functions
+**************************************************************************************************/
+// TODO: Tailor this function to local hosting instead of DMA
+/* static inline void send_frame_to_spi_queue(const uint8_t *buffer, size_t length) */
+/* { */
+/*     /1* Get buffer from PSRAM pool *1/ */
+/*     uint8_t *tx_buffer = image_buffer_alloc(); */
+
+/*     if (tx_buffer != NULL) { */
+/*         memcpy(tx_buffer, buffer, length); */
+
+/*         image_data_t img_data = { */
+/*             .buffer = tx_buffer, */
+/*             .size = length */
+/*         }; */
+
+/*         if (xQueueSend(tx_queue, &img_data, 0) == pdTRUE) { */
+/*             LOG_DEBUG("→ Queued for SPI transmission"); */
+/*         } else { */
+/*             ESP_LOGW(TAG, "SPI queue full, dropping image"); */
+/*             image_buffer_free(tx_buffer); */
+/*         } */
+/*     } else { */
+/*         ESP_LOGW(TAG, "No free buffers, skipping SPI transmission"); */
+/*     } */
+/* } */
+
+/**************************************************************************************************
+  Testing and Experimental
+**************************************************************************************************/
+
+#ifdef UNIT_TEST_CAMERA
 void cam_log_unit_test(QueueHandle_t queue)
 {
-  tx_queue = queue;  // Store queue handle for SPI transmission
+    tx_queue = queue;  /* Store queue handle for SPI transmission */
 
-  ESP_LOGI(TAG, "ESP32-CAM System Initializing");
+    ESP_LOGI(TAG, "ESP32-CAM System Initializing");
 
-  // Initialize SD card FIRST
-  if (sd_card_init() != ESP_OK) {
-    ESP_LOGE(TAG, "SD card init failed - halting");
-    return;
-  }
+    /* Initialize SD card first */
+    if (sd_card_init() != ESP_OK) {
+        ESP_LOGE(TAG, "SD card init failed - halting");
+        return;
+    }
 
-  LOG_DEBUG("Initializing camera...");
+    /* Initialize camera */
+    if (camera_init() != ESP_OK) {
+        ESP_LOGE(TAG, "Camera init failed - halting");
+        return;
+    }
 
-  // Initialize camera
-  esp_err_t err = esp_camera_init(&camera_config);
-  if (err != ESP_OK) {
-    ESP_LOGE(TAG, "Camera init failed: 0x%x", err);
-    return;
-  }
+    /* Create capture task */
+    xTaskCreate(camera_capture_task, "cam_task", 4096, NULL, 5, NULL);
 
-  ESP_LOGI(TAG, "Camera initialized successfully");
-
-  // Create capture task
-  xTaskCreate(camera_capture_task, "cam_task", 4096, NULL, 5, NULL);
-
-  ESP_LOGI(TAG, "System ready");
+    ESP_LOGI(TAG, "System ready");
 }
+#endif
+
+#ifdef ISOLATED_CAM
+
+#include "driver/gptimer.h"
+
+static SemaphoreHandle_t trigger_capture = NULL;
+static gptimer_handle_t timer_handle = NULL;
+
+static bool IRAM_ATTR time_to_capture(gptimer_handle_t timer,
+                                       const gptimer_alarm_event_data_t *event_data,
+                                       void *user_ctx)
+{
+    BaseType_t higher_priority_task_woken = pdFALSE;
+    xSemaphoreGiveFromISR(trigger_capture, &higher_priority_task_woken);
+    return higher_priority_task_woken == pdTRUE;
+}
+
+esp_err_t camera_timer_init(uint32_t interval_ms)
+{
+    trigger_capture = xSemaphoreCreateBinary();
+    if (trigger_capture == NULL) {
+        return ESP_FAIL;
+    }
+
+    gptimer_config_t timer_config = {
+        .clk_src = GPTIMER_CLK_SRC_DEFAULT,
+        .direction = GPTIMER_COUNT_UP,
+        .resolution_hz = 1000000,  /* 1MHz, 1 tick = 1µs */
+    };
+    ESP_ERROR_CHECK(gptimer_new_timer(&timer_config, &timer_handle));
+
+    gptimer_alarm_config_t alarm_config = {
+        .reload_count = 0,
+        .alarm_count = interval_ms * 1000,  /* Convert ms to µs */
+        .flags.auto_reload_on_alarm = true,
+    };
+    ESP_ERROR_CHECK(gptimer_set_alarm_action(timer_handle, &alarm_config));
+
+    gptimer_event_callbacks_t cbs = {
+        .on_alarm = time_to_capture,
+    };
+    ESP_ERROR_CHECK(gptimer_register_event_callbacks(timer_handle, &cbs, NULL));
+
+    ESP_ERROR_CHECK(gptimer_enable(timer_handle));
+    ESP_ERROR_CHECK(gptimer_start(timer_handle));
+
+    ESP_LOGI(TAG, "Timer initialized: %lu ms interval", interval_ms);
+    return ESP_OK;
+}
+
+void isolated_capture_task(void *pv_params)
+{
+    ESP_LOGI(TAG, "Isolated capture task waiting for timer triggers...");
+
+    for (;;) {
+        if (xSemaphoreTake(trigger_capture, portMAX_DELAY) == pdTRUE) {
+            capture_frame(pv_params);
+        }
+    }
+}
+#endif
