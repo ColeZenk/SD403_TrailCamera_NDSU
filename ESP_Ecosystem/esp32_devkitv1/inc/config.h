@@ -77,10 +77,10 @@
 #define FPGA_SPI_HOST               SPI3_HOST
 #define FPGA_SPI_DMA_CHAN           SPI_DMA_CH_AUTO
 
-#define FPGA_PIN_MOSI               GPIO_NUM_23
-#define FPGA_PIN_MISO               GPIO_NUM_19
-#define FPGA_PIN_SCLK               GPIO_NUM_18
-#define FPGA_PIN_CS                 GPIO_NUM_5
+#define FPGA_PIN_MOSI               GPIO_NUM_32
+#define FPGA_PIN_MISO               GPIO_NUM_33
+#define FPGA_PIN_SCLK               GPIO_NUM_25
+#define FPGA_PIN_CS                 GPIO_NUM_26
 
 #define FPGA_SPI_CLOCK_MHZ          9
 #define FPGA_SPI_CLOCK_HZ           (FPGA_SPI_CLOCK_MHZ * 1000000)
