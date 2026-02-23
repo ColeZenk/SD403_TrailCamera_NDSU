@@ -2,6 +2,9 @@
 // lcd_controller.v
 // RGB LCD controller with button-cycled test patterns
 //
+// CLOCK FIX: pclk_en is a 1-cycle strobe every 3 sys_clk (9 MHz pixel rate).
+//            lcd_clk_r is a separate toggle for 4.5 MHz output to the panel.
+//
 
 module lcd_controller (
     input  wire        clk,       // 27MHz
@@ -33,24 +36,46 @@ module lcd_controller (
     localparam V_BACK   = 2;
     localparam V_TOTAL  = V_ACTIVE + V_FRONT + V_SYNC + V_BACK;  // 286
 
-    // Clock divider - 27MHz / 2 = 13.5MHz pixel clock
-    reg pclk_div;
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n)
-            pclk_div <= 1'b0;
-        else
-            pclk_div <= ~pclk_div;
-    end
-    assign lcd_clk = pclk_div;
+    // =========================================================
+    // Pixel clock generation — 27 MHz / 3 = 9 MHz pixel rate
+    // =========================================================
+    //
+    // pclk_cnt:  0, 1, 2, 0, 1, 2, ...
+    // pclk_en:   0, 0, 1, 0, 0, 1, ...   (single-cycle strobe)
+    // lcd_clk_r: toggles on each pclk_en  (4.5 MHz, 50% duty)
+    //
+    reg [1:0] pclk_cnt;
+    wire      pclk_en = (pclk_cnt == 2'd2);
+    reg       lcd_clk_r;
 
-    // Counters
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            pclk_cnt  <= 2'd0;
+            lcd_clk_r <= 1'b0;
+        end
+        else begin
+            if (pclk_cnt == 2'd2) begin
+                pclk_cnt  <= 2'd0;
+                lcd_clk_r <= ~lcd_clk_r;
+            end
+            else begin
+                pclk_cnt <= pclk_cnt + 1'b1;
+            end
+        end
+    end
+
+    assign lcd_clk = lcd_clk_r;
+
+    // =========================================================
+    // Horizontal / vertical counters (advance on pclk_en)
+    // =========================================================
     reg [9:0] h_count;
     reg [9:0] v_count;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
             h_count <= 10'd0;
-        else if (pclk_div) begin
+        else if (pclk_en) begin
             if (h_count >= H_TOTAL - 1)
                 h_count <= 10'd0;
             else
@@ -61,7 +86,7 @@ module lcd_controller (
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
             v_count <= 10'd0;
-        else if (pclk_div && (h_count == H_TOTAL - 1)) begin
+        else if (pclk_en && (h_count == H_TOTAL - 1)) begin
             if (v_count >= V_TOTAL - 1)
                 v_count <= 10'd0;
             else
@@ -69,13 +94,15 @@ module lcd_controller (
         end
     end
 
-    // Sync signals
+    // =========================================================
+    // Sync signals (update on pclk_en)
+    // =========================================================
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             lcd_hsync <= 1'b0;
             lcd_vsync <= 1'b0;
         end
-        else begin
+        else if (pclk_en) begin
             lcd_hsync <= (h_count >= H_ACTIVE + H_FRONT) &&
                          (h_count < H_ACTIVE + H_FRONT + H_SYNC);
 
@@ -84,26 +111,31 @@ module lcd_controller (
         end
     end
 
-    // Data enable
+    // =========================================================
+    // Data enable (update on pclk_en)
+    // =========================================================
     wire visible = (h_count < H_ACTIVE) && (v_count < V_ACTIVE);
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
             lcd_de <= 1'b0;
-        else
+        else if (pclk_en)
             lcd_de <= visible;
     end
 
-    // BRAM address - prefetch one pixel ahead to compensate for 1-cycle read latency.
-    // BSRAM is synchronous: addr presented on cycle N returns data on cycle N+1.
-    // Starting at 1 means the first pixel clock reads addr 0 data correctly.
+    // =========================================================
+    // BRAM address — prefetch one pixel ahead for 1-cycle
+    // BSRAM read latency. Reset at start of each frame.
+    // =========================================================
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
             bram_addr <= 15'd1;
-        else if (v_count == 0 && h_count == 0)
-            bram_addr <= 15'd1;
-        else if (pclk_div && visible)
-            bram_addr <= bram_addr + 15'd1;
+        else if (pclk_en) begin
+            if (v_count == 0 && h_count == 0)
+                bram_addr <= 15'd1;
+            else if (visible)
+                bram_addr <= bram_addr + 15'd1;
+        end
     end
 
     // =========================================================
@@ -158,7 +190,7 @@ module lcd_controller (
     end
 
     // =========================================================
-    // Test patterns
+    // Test patterns (update on pclk_en)
     // =========================================================
     wire [2:0] bar_num = h_count[6:4];  // Vertical bars
 
@@ -168,75 +200,77 @@ module lcd_controller (
             lcd_g <= 6'd0;
             lcd_b <= 5'd0;
         end
-        else if (visible) begin
-            case (pattern_sel)
-                3'd0: begin  // Solid RED
-                    lcd_r <= 5'd31;
-                    lcd_g <= 6'd0;
-                    lcd_b <= 5'd0;
-                end
+        else if (pclk_en) begin
+            if (visible) begin
+                case (pattern_sel)
+                    3'd0: begin  // Solid RED
+                        lcd_r <= 5'd31;
+                        lcd_g <= 6'd0;
+                        lcd_b <= 5'd0;
+                    end
 
-                3'd1: begin  // Solid GREEN
-                    lcd_r <= 5'd0;
-                    lcd_g <= 6'd63;
-                    lcd_b <= 5'd0;
-                end
+                    3'd1: begin  // Solid GREEN
+                        lcd_r <= 5'd0;
+                        lcd_g <= 6'd63;
+                        lcd_b <= 5'd0;
+                    end
 
-                3'd2: begin  // Solid BLUE
-                    lcd_r <= 5'd0;
-                    lcd_g <= 6'd0;
-                    lcd_b <= 5'd31;
-                end
+                    3'd2: begin  // Solid BLUE
+                        lcd_r <= 5'd0;
+                        lcd_g <= 6'd0;
+                        lcd_b <= 5'd31;
+                    end
 
-                3'd3: begin  // Solid WHITE
-                    lcd_r <= 5'd31;
-                    lcd_g <= 6'd63;
-                    lcd_b <= 5'd31;
-                end
-
-                3'd4: begin  // Vertical color bars
-                    case (bar_num)
-                        3'd0: begin lcd_r <= 5'd31; lcd_g <= 6'd0;  lcd_b <= 5'd0;  end
-                        3'd1: begin lcd_r <= 5'd0;  lcd_g <= 6'd63; lcd_b <= 5'd0;  end
-                        3'd2: begin lcd_r <= 5'd0;  lcd_g <= 6'd0;  lcd_b <= 5'd31; end
-                        3'd3: begin lcd_r <= 5'd31; lcd_g <= 6'd63; lcd_b <= 5'd0;  end
-                        3'd4: begin lcd_r <= 5'd31; lcd_g <= 6'd0;  lcd_b <= 5'd31; end
-                        3'd5: begin lcd_r <= 5'd0;  lcd_g <= 6'd63; lcd_b <= 5'd31; end
-                        3'd6: begin lcd_r <= 5'd31; lcd_g <= 6'd63; lcd_b <= 5'd31; end
-                        3'd7: begin lcd_r <= 5'd0;  lcd_g <= 6'd0;  lcd_b <= 5'd0;  end
-                    endcase
-                end
-
-                3'd5: begin  // Horizontal gradient (red)
-                    lcd_r <= h_count[8:4];
-                    lcd_g <= 6'd0;
-                    lcd_b <= 5'd0;
-                end
-
-                3'd6: begin  // Checkerboard
-                    if (h_count[5] ^ v_count[5]) begin
+                    3'd3: begin  // Solid WHITE
                         lcd_r <= 5'd31;
                         lcd_g <= 6'd63;
                         lcd_b <= 5'd31;
                     end
-                    else begin
-                        lcd_r <= 5'd0;
+
+                    3'd4: begin  // Vertical color bars
+                        case (bar_num)
+                            3'd0: begin lcd_r <= 5'd31; lcd_g <= 6'd0;  lcd_b <= 5'd0;  end
+                            3'd1: begin lcd_r <= 5'd0;  lcd_g <= 6'd63; lcd_b <= 5'd0;  end
+                            3'd2: begin lcd_r <= 5'd0;  lcd_g <= 6'd0;  lcd_b <= 5'd31; end
+                            3'd3: begin lcd_r <= 5'd31; lcd_g <= 6'd63; lcd_b <= 5'd0;  end
+                            3'd4: begin lcd_r <= 5'd31; lcd_g <= 6'd0;  lcd_b <= 5'd31; end
+                            3'd5: begin lcd_r <= 5'd0;  lcd_g <= 6'd63; lcd_b <= 5'd31; end
+                            3'd6: begin lcd_r <= 5'd31; lcd_g <= 6'd63; lcd_b <= 5'd31; end
+                            3'd7: begin lcd_r <= 5'd0;  lcd_g <= 6'd0;  lcd_b <= 5'd0;  end
+                        endcase
+                    end
+
+                    3'd5: begin  // Horizontal gradient (red)
+                        lcd_r <= h_count[8:4];
                         lcd_g <= 6'd0;
                         lcd_b <= 5'd0;
                     end
-                end
 
-                3'd7: begin  // Use BRAM data (for future SPI test)
-                    lcd_r <= bram_data[7:3];
-                    lcd_g <= bram_data[7:2];
-                    lcd_b <= bram_data[7:3];
-                end
-            endcase
-        end
-        else begin
-            lcd_r <= 5'd0;
-            lcd_g <= 6'd0;
-            lcd_b <= 5'd0;
+                    3'd6: begin  // Checkerboard
+                        if (h_count[5] ^ v_count[5]) begin
+                            lcd_r <= 5'd31;
+                            lcd_g <= 6'd63;
+                            lcd_b <= 5'd31;
+                        end
+                        else begin
+                            lcd_r <= 5'd0;
+                            lcd_g <= 6'd0;
+                            lcd_b <= 5'd0;
+                        end
+                    end
+
+                    3'd7: begin  // BRAM data display
+                        lcd_r <= bram_data[7:3];
+                        lcd_g <= bram_data[7:2];
+                        lcd_b <= bram_data[7:3];
+                    end
+                endcase
+            end
+            else begin
+                lcd_r <= 5'd0;
+                lcd_g <= 6'd0;
+                lcd_b <= 5'd0;
+            end
         end
     end
 
