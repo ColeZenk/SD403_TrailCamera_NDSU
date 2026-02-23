@@ -14,12 +14,15 @@
 /*************************************************************************
  INCLUDES
  *************************************************************************/
-#include "lora_uart.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/uart.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
+
+#include "isr_signals.h"
+#include "lora_uart.h"
+
 #include <string.h>
 
 /*************************************************************************
@@ -55,6 +58,7 @@ static void handleTriggerReceived(void);
 #ifdef DEV_TEST_LORA_UART
 static esp_err_t initTestLED(void);
 static void blinkLED(void);
+static void lora_uart_devtest(const uint8_t *buf);
 #endif
 
 /*************************************************************************
@@ -63,7 +67,7 @@ static void blinkLED(void);
 
 /**
  * @brief Send AT command to LoRa module and log response
- * 
+ *
  * @param command AT command string (must include \r\n)
  * @param description Human-readable description for logging
  * @return ESP_OK on success, error code otherwise
@@ -77,7 +81,7 @@ static esp_err_t sendATCommand(const char *command, const char *description)
     uart_write_bytes(LORA_UART, command, strlen(command));
     vTaskDelay(pdMS_TO_TICKS(AT_CMD_DELAY_MS));
 
-    len = uart_read_bytes(LORA_UART, buf, sizeof(buf) - 1, 
+    len = uart_read_bytes(LORA_UART, buf, sizeof(buf) - 1,
                           pdMS_TO_TICKS(AT_CMD_TIMEOUT_MS));
 
     if (len > 0) {
@@ -92,7 +96,7 @@ static esp_err_t sendATCommand(const char *command, const char *description)
 
 /**
  * @brief Query AT parameter and log result
- * 
+ *
  * @param query AT query string (must include \r\n)
  * @param param_name Parameter name for logging
  * @return ESP_OK on success, error code otherwise
@@ -125,18 +129,13 @@ static esp_err_t queryATParameter(const char *query, const char *param_name)
 
 /**
  * @brief Handle received trigger message
- * 
+ *
  * Processes trigger reception and provides visual feedback in test mode.
  */
 static void handleTriggerReceived(void)
 {
     ESP_LOGI(TAG, "TRIGGER RECEIVED!");
-
-#ifdef DEV_TEST_LORA_UART
-    blinkLED();
-#endif
-
-    // TODO: Signal image capture pipeline
+    ISR_OnLoRaTrigger();
 }
 
 /*************************************************************************
@@ -181,10 +180,10 @@ static void blinkLED(void)
 
 /**
  * @brief Initialize LoRa UART interface and configure module
- * 
+ *
  * Configures UART peripheral, sets up LoRa module parameters via AT commands,
  * and optionally initializes test LED.
- * 
+ *
  * @return ESP_OK on success, error code otherwise
  */
 esp_err_t lora_init(void)
@@ -247,7 +246,7 @@ esp_err_t lora_init(void)
 
 /**
  * @brief Send trigger command to remote LoRa device
- * 
+ *
  * Sends a trigger message to address 1 (ESP32-S3 camera module).
  */
 void lora_send_trigger(void)
@@ -259,10 +258,10 @@ void lora_send_trigger(void)
 
 /**
  * @brief LoRa receive task - monitors for incoming trigger messages
- * 
+ *
  * Continuously polls UART for LoRa messages and processes trigger commands.
  * Provides periodic status logging.
- * 
+ *
  * @param arg Unused task parameter
  */
 void lora_receive_task(void *arg)
@@ -272,7 +271,7 @@ void lora_receive_task(void *arg)
 
     ESP_LOGI(TAG, "LoRa RX task started, waiting for triggers...");
 
-    while (1) {
+    for (;;) {
         int len = uart_read_bytes(LORA_UART, buf, sizeof(buf) - 1,
                                   pdMS_TO_TICKS(100));
 
@@ -287,18 +286,23 @@ void lora_receive_task(void *arg)
             ESP_LOGI(TAG, "RX raw (%d bytes): [%s]", len, buf);
 
 #ifdef DEV_TEST_LORA_UART
-            // Check for LoRa receive message
-            if (strstr((char*)buf, "+RCV=") != NULL) {
-                ESP_LOGI(TAG, "GOT +RCV MESSAGE!");
-
-                // Check for trigger data - accepts "T", "0", or "01"
-                if (strstr((char*)buf, ",T,") != NULL ||
-                    strstr((char*)buf, ",0,") != NULL ||
-                    strstr((char*)buf, ",01,") != NULL) {
-                    handleTriggerReceived();
-                }
-            }
+            lora_uart_devtest(buf);
 #endif
         }
     }
 }
+
+#ifdef DEV_TEST_LORA_UART
+static void lora_uart_devtest(const uint8_t *buf)
+{
+    if (strstr((const char*)buf, "+RCV=") != NULL) {
+        ESP_LOGI(TAG, "GOT +RCV MESSAGE!");
+
+        if (strstr((const char*)buf, ",T,") != NULL ||
+            strstr((const char*)buf, ",0,") != NULL ||
+            strstr((const char*)buf, ",01,") != NULL) {
+            handleTriggerReceived();
+        }
+    }
+}
+#endif

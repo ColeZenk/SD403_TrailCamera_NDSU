@@ -1,8 +1,11 @@
 idf_component_register(
     SRCS "../src/main.c"
-         "../src/Cam_DMA_interface.c"
-         "../src/Image_buffer.c"
-         "../src/FPGA_SPI_interface.c"
-         "../src/LoRa_UART_Interface.c"
-    INCLUDE_DIRS "../include"
+         "../src/cam_spi.c"
+         "../src/fpga_spi.c"
+         "../src/image_processor.c"
+         "../src/isr.c"
+         "../src/lora_uart.c"
+         "../src/utils.c"
+
+    INCLUDE_DIRS "../inc"
 )

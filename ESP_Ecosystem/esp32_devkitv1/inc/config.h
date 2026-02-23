@@ -14,7 +14,7 @@
  * Test mode configuration - similar to WarblingWire pattern
  * Uncomment ONE of these to enable specific test modes
  */
-/* #define TEST_MODE_FPGA_PATTERNS */
+#define TEST_MODE_FPGA_PATTERNS
 /* #define TEST_MODE_LORA_LOOPBACK */
 /* #define TEST_MODE_CAMERA_INJECT */
 
@@ -82,7 +82,7 @@
 #define FPGA_PIN_SCLK               GPIO_NUM_18
 #define FPGA_PIN_CS                 GPIO_NUM_5
 
-#define FPGA_SPI_CLOCK_MHZ          10
+#define FPGA_SPI_CLOCK_MHZ          9
 #define FPGA_SPI_CLOCK_HZ           (FPGA_SPI_CLOCK_MHZ * 1000000)
 #define FPGA_SPI_MODE               0
 #define FPGA_SPI_QUEUE_SIZE         3
@@ -165,7 +165,7 @@
  ******************************************************************************/
 
 #define IMAGE_HEADER_MAGIC          0xCAFEBEEF
-#define IMAGE_HEADER_SIZE           24
+#define IMAGE_HEADER_SIZE           28
 
 // Image header structure (packed for wire protocol)
 typedef struct {
@@ -179,7 +179,7 @@ typedef struct {
     uint8_t  reserved[7];
 } __attribute__((packed)) image_header_t;
 
-_Static_assert(sizeof(image_header_t) == IMAGE_HEADER_SIZE, 
+_Static_assert(sizeof(image_header_t) == IMAGE_HEADER_SIZE,
                "Image header must be 24 bytes");
 
 // Image data container

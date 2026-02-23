@@ -94,14 +94,16 @@ module lcd_controller (
             lcd_de <= visible;
     end
 
-    // BRAM address
+    // BRAM address - prefetch one pixel ahead to compensate for 1-cycle read latency.
+    // BSRAM is synchronous: addr presented on cycle N returns data on cycle N+1.
+    // Starting at 1 means the first pixel clock reads addr 0 data correctly.
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
-            bram_addr <= 15'd0;
+            bram_addr <= 15'd1;
+        else if (v_count == 0 && h_count == 0)
+            bram_addr <= 15'd1;
         else if (pclk_div && visible)
             bram_addr <= bram_addr + 15'd1;
-        else if (v_count == 0 && h_count == 0)
-            bram_addr <= 15'd0;
     end
 
     // =========================================================
@@ -150,7 +152,7 @@ module lcd_controller (
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
-            pattern_sel <= 3'd0;
+            pattern_sel <= 3'd7;   // Boot directly into BRAM display mode
         else if (btn_pressed)
             pattern_sel <= pattern_sel + 1'b1;
     end

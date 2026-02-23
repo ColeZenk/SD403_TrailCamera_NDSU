@@ -22,6 +22,7 @@
 
 // Module headers
 #include "config.h"
+#include "isr_signals.h"
 #include "cam_spi.h"
 #include "fpga_spi.h"
 #include "lora_uart.h"
@@ -72,10 +73,10 @@ static void printOperatingMode(void)
 
 /**
  * @brief Initialize all system subsystems
- * 
+ *
  * Initializes camera SPI, FPGA SPI, LoRa UART, and image processor
  * in sequence. Halts on any initialization failure.
- * 
+ *
  * @return ESP_OK on success, error code on failure
  */
 static esp_err_t initializeSystem(void)
@@ -87,10 +88,17 @@ static esp_err_t initializeSystem(void)
 
     ESP_LOGI(TAG, "Initializing subsystems...");
 
+    // Initialize ISR module first — semaphores must exist before tasks start
+    ret = isr_init();
+    if (UNLIKELY(ret != ESP_OK)) {
+        ESP_LOGE(TAG, "ISR initialization failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
     // Initialize camera SPI slave (receives from ESP32-CAM)
     ret = cam_spi_init();
     if (UNLIKELY(ret != ESP_OK)) {
-        ESP_LOGE(TAG, "Camera SPI initialization failed: %s", 
+        ESP_LOGE(TAG, "Camera SPI initialization failed: %s",
                  esp_err_to_name(ret));
         return ret;
     }
@@ -98,7 +106,7 @@ static esp_err_t initializeSystem(void)
     // Initialize FPGA SPI master (sends to Tang Nano 9K)
     ret = fpga_spi_init();
     if (UNLIKELY(ret != ESP_OK)) {
-        ESP_LOGE(TAG, "FPGA SPI initialization failed: %s", 
+        ESP_LOGE(TAG, "FPGA SPI initialization failed: %s",
                  esp_err_to_name(ret));
         return ret;
     }
@@ -106,7 +114,7 @@ static esp_err_t initializeSystem(void)
     // Initialize LoRa UART
     ret = lora_init();
     if (UNLIKELY(ret != ESP_OK)) {
-        ESP_LOGE(TAG, "LoRa initialization failed: %s", 
+        ESP_LOGE(TAG, "LoRa initialization failed: %s",
                  esp_err_to_name(ret));
         return ret;
     }
@@ -114,7 +122,7 @@ static esp_err_t initializeSystem(void)
     // Initialize image processor
     ret = image_processor_init();
     if (UNLIKELY(ret != ESP_OK)) {
-        ESP_LOGE(TAG, "Image processor initialization failed: %s", 
+        ESP_LOGE(TAG, "Image processor initialization failed: %s",
                  esp_err_to_name(ret));
         return ret;
     }
@@ -129,7 +137,7 @@ static esp_err_t initializeSystem(void)
 
 /**
  * @brief Create all system tasks
- * 
+ *
  * Creates FreeRTOS tasks for camera reception, image processing,
  * LoRa reception, and optional FPGA testing.
  */
@@ -222,7 +230,7 @@ static void printReadyStatus(void)
 
 /**
  * @brief Main system monitoring loop
- * 
+ *
  * Periodically monitors heap usage and logs system status.
  * Tracks heap changes to detect potential memory leaks.
  */
@@ -250,7 +258,7 @@ static void monitorSystem(void)
 
 /**
  * @brief Application main entry point
- * 
+ *
  * Initializes all subsystems, creates tasks, and enters monitoring loop.
  * System halts on initialization failure.
  */

@@ -20,6 +20,7 @@
 #include "driver/spi_slave.h"
 #include "driver/gpio.h"
 #include <string.h>
+#include <inttypes.h>
 
 static const char *TAG = "CAM_SPI";
 
@@ -122,7 +123,7 @@ static inline bool processHeader(cam_spi_context_t *ctx,
     // Allocate buffer for image data
     ctx->buffer = dma_malloc(ctx->header.size);
     if (UNLIKELY(!ctx->buffer)) {
-        ESP_LOGE(TAG, "Failed to allocate %u bytes for image", ctx->header.size);
+        ESP_LOGE(TAG, "Failed to allocate %" PRIu32 " bytes for image", ctx->header.size);
         return false;
     }
 
@@ -139,7 +140,7 @@ static inline bool processHeader(cam_spi_context_t *ctx,
         ctx->bytes_received = copy_bytes;
     }
 
-    ESP_LOGI(TAG, "Header received - Image size: %u bytes", ctx->header.size);
+    ESP_LOGI(TAG, "Header received - Image size: %" PRIu32 " bytes", ctx->header.size);
     return true;
 }
 

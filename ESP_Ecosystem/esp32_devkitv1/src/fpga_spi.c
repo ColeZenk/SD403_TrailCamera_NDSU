@@ -15,6 +15,7 @@
  INCLUDES
  *************************************************************************/
 #include "fpga_spi.h"
+#include "isr_signals.h"
 #include "utils.h"
 #include "esp_log.h"
 #include "driver/spi_master.h"
@@ -33,9 +34,6 @@ static const char *TAG = "FPGA_SPI";
 typedef struct {
     spi_device_handle_t device;
     bool initialized;
-#ifdef TEST_MODE_FPGA_PATTERNS
-    SemaphoreHandle_t button_sem;
-#endif
 } fpga_spi_context_t;
 
 /*************************************************************************
@@ -50,7 +48,15 @@ static inline esp_err_t transmitChunk(fpga_spi_context_t *ctx,
                                       size_t size);
 
 #ifdef TEST_MODE_FPGA_PATTERNS
-static void IRAM_ATTR buttonISRHandler(void *arg);
+
+typedef enum {
+    PATTERN_WHITE,
+    PATTERN_BLACK,
+    PATTERN_GRADIENT,
+    PATTERN_CHECKERBOARD,
+    PATTERN_COUNT
+} test_pattern_t;
+
 static esp_err_t setupTestButton(void);
 
 __attribute__((always_inline))
@@ -75,32 +81,8 @@ static inline fpga_spi_context_t* getContext(void)
 
 #ifdef TEST_MODE_FPGA_PATTERNS
 
-typedef enum {
-    PATTERN_WHITE,
-    PATTERN_BLACK,
-    PATTERN_GRADIENT,
-    PATTERN_CHECKERBOARD,
-    PATTERN_COUNT
-} test_pattern_t;
-
-static void IRAM_ATTR buttonISRHandler(void *arg)
-{
-    fpga_spi_context_t *ctx = getContext();
-    BaseType_t higher_priority_task_woken = pdFALSE;
-    xSemaphoreGiveFromISR(ctx->button_sem, &higher_priority_task_woken);
-    portYIELD_FROM_ISR(higher_priority_task_woken);
-}
-
 static esp_err_t setupTestButton(void)
 {
-    fpga_spi_context_t *ctx = getContext();
-
-    ctx->button_sem = xSemaphoreCreateBinary();
-    if (!ctx->button_sem) {
-        ESP_LOGE(TAG, "Failed to create button semaphore");
-        return ESP_FAIL;
-    }
-
     gpio_config_t btn_cfg = {
         .pin_bit_mask = (1ULL << TEST_BUTTON_PIN),
         .mode = GPIO_MODE_INPUT,
@@ -119,7 +101,7 @@ static esp_err_t setupTestButton(void)
         return ret;
     }
 
-    return gpio_isr_handler_add(TEST_BUTTON_PIN, buttonISRHandler, NULL);
+    return gpio_isr_handler_add(TEST_BUTTON_PIN, ISR_OnButtonPress, NULL);
 }
 
 __attribute__((always_inline))
@@ -290,10 +272,6 @@ void fpga_spi_deinit(void)
     if (!ctx->initialized) return;
 
 #ifdef TEST_MODE_FPGA_PATTERNS
-    if (ctx->button_sem) {
-        vSemaphoreDelete(ctx->button_sem);
-        ctx->button_sem = NULL;
-    }
     gpio_isr_handler_remove(TEST_BUTTON_PIN);
 #endif
 
@@ -314,15 +292,12 @@ void fpga_spi_deinit(void)
 
 void fpga_test_task(void *pvParameters)
 {
-    fpga_spi_context_t *ctx = getContext();
-
-    if (!ctx->button_sem) {
+    if (!g_button_sem) {
         ESP_LOGE(TAG, "Button semaphore not created, test task exiting");
         vTaskDelete(NULL);
         return;
     }
 
-    // Allocate test buffer
     uint8_t *test_buffer = dma_malloc(TEST_IMAGE_SIZE);
     if (!test_buffer) {
         ESP_LOGE(TAG, "Failed to allocate test buffer");
@@ -334,24 +309,19 @@ void fpga_test_task(void *pvParameters)
     ESP_LOGI(TAG, "Test task ready - press BOOT button to cycle patterns");
 
     for (;;) {
-        if (xSemaphoreTake(ctx->button_sem, portMAX_DELAY) == pdTRUE) {
+        if (xSemaphoreTake(g_button_sem, portMAX_DELAY) == pdTRUE) {
             ESP_LOGI(TAG, "Button pressed - Pattern %d", pattern);
-
-            // Generate pattern (inlined for performance)
             generateTestPattern(test_buffer, TEST_IMAGE_SIZE, pattern);
 
-            // Transmit
             esp_err_t ret = fpga_spi_transmit(test_buffer, TEST_IMAGE_SIZE);
             if (ret != ESP_OK) {
                 ESP_LOGE(TAG, "Test pattern transmission failed");
             }
 
-            // Cycle to next pattern
             pattern = (pattern + 1) % PATTERN_COUNT;
         }
     }
 
-    // Cleanup (unreachable in current implementation)
     free(test_buffer);
     vTaskDelete(NULL);
 }
