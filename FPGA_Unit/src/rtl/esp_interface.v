@@ -1,50 +1,31 @@
 //
 // esp_interface.v
-// 
-// SPI slave module for receiving data from ESP32 DevKit
-// Mode 0: CPOL=0, CPHA=0 (sample on rising edge, shift on falling edge)
+//
+// SPI slave — Mode 0 (CPOL=0 CPHA=0): sample rising, shift falling
+// Branchless datapath: AND-mask / OR-combine, if only for async reset
 //
 
 module esp_interface (
-    input  wire        clk,          // System clock (27 MHz)
-    input  wire        rst_n,        // Active-low reset
-    
-    // SPI interface
-    input  wire        esp_mosi,     // Master Out Slave In
-    output reg         esp_miso,     // Master In Slave Out
-    input  wire        esp_sclk,     // SPI clock from master
-    input  wire        esp_cs_n,     // Chip select (active low)
-    
-    // Parallel data interface
-    output reg  [7:0]  rx_data,      // Received byte
-    output reg         rx_valid,     // Data valid strobe
-    input  wire        rx_ready      // Ready for next byte
+    input  wire        clk,
+    input  wire        rst_n,
+
+    input  wire        esp_mosi,
+    output reg         esp_miso,
+    input  wire        esp_sclk,
+    input  wire        esp_cs_n,
+
+    output reg  [7:0]  rx_data,
+    output reg         rx_valid,
+    input  wire        rx_ready
 );
 
-    //==========================================================================
-    // Internal signals
-    //==========================================================================
-    
-    // Synchronize SPI signals to system clock domain
-    reg [2:0] sclk_sync;
-    reg [2:0] cs_sync;
+    // ==========================================================
+    // Synchronizers — 3-stage sclk/cs, 2-stage mosi
+    // Pure shift, no branches
+    // ==========================================================
+    reg [2:0] sclk_sync, cs_sync;
     reg [1:0] mosi_sync;
-    
-    wire sclk_rising;
-    wire sclk_falling;
-    wire cs_active;
-    
-    // Shift register
-    reg [7:0] shift_reg;
-    reg [2:0] bit_count;
-    
-    // State
-    reg       byte_ready;
-    
-    //==========================================================================
-    // Synchronize SPI signals (avoid metastability)
-    //==========================================================================
-    
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             sclk_sync <= 3'b000;
@@ -57,16 +38,39 @@ module esp_interface (
             mosi_sync <= {mosi_sync[0], esp_mosi};
         end
     end
-    
-    // Edge detection
-    assign sclk_rising  = (sclk_sync[2:1] == 2'b01);
-    assign sclk_falling = (sclk_sync[2:1] == 2'b10);
-    assign cs_active    = !cs_sync[2];  // Active low
-    
-    //==========================================================================
-    // SPI Mode 0: Sample on rising edge, shift on falling edge
-    //==========================================================================
-    
+
+    // edge / level detection — combinational
+    wire sclk_rise = (sclk_sync[2:1] == 2'b01);
+    wire sclk_fall = (sclk_sync[2:1] == 2'b10);
+    wire cs_active = ~cs_sync[2];
+
+    // ==========================================================
+    // Shift register + bit counter
+    //
+    // On sclk_rise & cs_active: shift in mosi, increment count
+    // On ~cs_active: hold zeros (AND-mask clears)
+    // byte_complete when bit_count == 7 on a rising edge
+    //
+    // shift_next: shift in new bit, AND-masked by (sclk_rise & cs_active)
+    //             held at 0 when ~cs_active
+    // count_next: (count + 1) on shift, AND-masked to wrap at 8,
+    //             zeroed when ~cs_active
+    // ==========================================================
+    reg [7:0] shift_reg;
+    reg [2:0] bit_count;
+    reg       byte_ready;
+
+    wire       shifting    = sclk_rise & cs_active;
+    wire       byte_done   = shifting & (bit_count == 3'd7);
+    wire [7:0] shifted_in  = {shift_reg[6:0], mosi_sync[1]};
+
+    // AND-mask: shifting selects new shifted value, ~shifting holds current
+    // ~cs_active zeros everything (overrides shifting since shifting requires cs_active)
+    wire [7:0] shift_next = (shifted_in & {8{shifting}}) | (shift_reg & {8{~shifting & cs_active}});
+    wire [2:0] count_inc  = (bit_count + 3'd1) & {3{~byte_done}};  // wraps to 0 on byte_done
+    wire [2:0] count_next = (count_inc & {3{shifting}}) | (bit_count & {3{~shifting}});
+    wire [2:0] count_out  = count_next & {3{cs_active}};  // zero when CS deasserted
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             shift_reg  <= 8'h00;
@@ -74,65 +78,39 @@ module esp_interface (
             byte_ready <= 1'b0;
         end
         else begin
-            byte_ready <= 1'b0;  // Default: clear strobe
-           
-            if (!cs_active) begin
-                // CS deasserted - reset
-                bit_count <= 3'd0;
-                shift_reg <= 8'h00;
-            end
-            else if (sclk_rising) begin
-                // Sample MOSI on rising edge
-                shift_reg <= {shift_reg[6:0], mosi_sync[1]};
-                bit_count <= bit_count + 1'b1;
-                
-                // After 8 bits, byte is complete
-                if (bit_count == 3'd7) begin
-                    byte_ready <= 1'b1;
-                    bit_count  <= 3'd0;
-                end
-            end
+            shift_reg  <= shift_next & {8{cs_active}};
+            bit_count  <= count_out;
+            byte_ready <= byte_done;
         end
     end
-    
-    //==========================================================================
-    // Output received byte with valid strobe
-    //==========================================================================
-    
+
+    // ==========================================================
+    // Output latch — rx_data holds on byte_ready, rx_valid strobes
+    //
+    // data: AND-mask selects new capture vs hold
+    // valid: just byte_ready delayed one cycle (already is — byte_ready
+    //        is registered, so rx_valid = byte_ready is the strobe)
+    // ==========================================================
+    wire [7:0] captured   = {shift_reg[6:0], mosi_sync[1]};  // include last bit
+    wire [7:0] data_next  = (captured & {8{byte_ready}}) | (rx_data & {8{~byte_ready}});
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             rx_data  <= 8'h00;
             rx_valid <= 1'b0;
         end
         else begin
-            if (byte_ready) begin
-                rx_data  <= {shift_reg[6:0], mosi_sync[1]};  // Include last bit
-                rx_valid <= 1'b1;
-            end
-            else begin
-                rx_valid <= 1'b0;
-            end
+            rx_data  <= data_next;
+            rx_valid <= byte_ready;
         end
     end
-    
-    //==========================================================================
-    // MISO output (for now, just send dummy data)
-    // TODO: Implement proper response when needed
-    //==========================================================================
-    
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            esp_miso <= 1'b0;
-        end
-        else begin
-            if (!cs_active) begin
-                esp_miso  <= 1'b0;
-            end
-            else if (sclk_falling) begin
-                // Shift out dummy data on falling edge
-                esp_miso <= 1'b0;  // TODO: shift out actual response
-            end
-        end
-    end
+
+    // ==========================================================
+    // MISO — dummy for now, zeroed when CS inactive
+    // TODO: shift out actual response for bidirectional SPI
+    // ==========================================================
+    always @(posedge clk or negedge rst_n)
+        if (!rst_n) esp_miso <= 1'b0;
+        else        esp_miso <= 1'b0;  // placeholder
 
 endmodule

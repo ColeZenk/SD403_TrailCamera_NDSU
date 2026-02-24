@@ -1,7 +1,7 @@
 /*
  * DMA_SPI_master.h
  * ESP32-CAM SPI DMA Master Interface Header
- * 
+ *
  * Provides high-performance SPI DMA transmission for image data
  */
 

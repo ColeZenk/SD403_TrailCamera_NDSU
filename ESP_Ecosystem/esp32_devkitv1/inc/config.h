@@ -57,10 +57,10 @@
 #define CAM_SPI_HOST                SPI2_HOST
 #define CAM_SPI_DMA_CHAN            SPI_DMA_CH_AUTO
 
-#define CAM_PIN_MOSI                GPIO_NUM_13
-#define CAM_PIN_MISO                GPIO_NUM_12
-#define CAM_PIN_SCLK                GPIO_NUM_14
-#define CAM_PIN_CS                  GPIO_NUM_15
+#define CAM_PIN_MOSI                GPIO_NUM_23
+#define CAM_PIN_MISO                GPIO_NUM_19
+#define CAM_PIN_SCLK                GPIO_NUM_18
+#define CAM_PIN_CS                  GPIO_NUM_5
 
 #define CAM_SPI_MODE                0
 #define CAM_SPI_QUEUE_SIZE          3
