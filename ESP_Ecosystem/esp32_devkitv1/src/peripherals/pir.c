@@ -1,4 +1,4 @@
-#include "pir.h"
+#include "peripherals/pir.h"
 
 #include "driver/gpio.h"
 

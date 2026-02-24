@@ -1,5 +1,5 @@
 // main/motor.c
-#include "motor.h"
+#include "peripherals/motor.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"

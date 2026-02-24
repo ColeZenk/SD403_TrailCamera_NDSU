@@ -1,5 +1,17 @@
 idf_component_register(
-    SRCS "i2cdev.c"
-    INCLUDE_DIRS "."
-    REQUIRES esp_driver_gpio esp_driver_i2c
+    SRCS "../src/main.c"
+         "../src/peripherals/aht20.c"
+         "../src/peripherals/i2c_bus.c"
+         "../src/peripherals/motor.c"
+         "../src/peripherals/pir.c"
+         "../src/peripherals/sensors_temp_humidity.c"
+         # "../src/cam_spi.c"
+         # "../src/fpga_spi.c"
+         # "../src/image_processor.c"
+         # "../src/isr.c"
+         # "../src/lora_uart.c"
+         # "../src/utils.c"
+
+    INCLUDE_DIRS "../inc"
+    PRIV_REQUIRES driver
 )
