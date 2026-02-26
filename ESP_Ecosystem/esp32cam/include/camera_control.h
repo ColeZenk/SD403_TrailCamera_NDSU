@@ -9,56 +9,22 @@
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
-#include <stdint.h>
-
-#define ISOLATED_CAM
-
-/* Debug flag - set to 1 to enable verbose logging */
-#ifndef UNIT_TEST_CAMERA
-// #define UNIT_TEST_CAMERA 0
-#endif
-
-#if UNIT_TEST_CAMERA
-#define LOG_DEBUG(fmt, ...) ESP_LOGI(TAG, fmt, ##__VA_ARGS__)
-#else
-#define LOG_DEBUG(fmt, ...) do {} while(0)
-#endif
 
 /**
- * Initialize camera hardware and driver
- *
- * @return ESP_OK on success, error code otherwise
+ * Initialize OV2640 camera — 640x480 grayscale, 2 PSRAM frame buffers
  */
 esp_err_t camera_init(void);
 
-#ifdef ISOLATED_CAM
-
-#define CAPTURE_RATE_S      10
-#define CAPTURE_RATE       (CAPTURE_RATE_S * 1000)
+/**
+ * Set the SPI transmit queue for downstream image data
+ */
+void camera_set_tx_queue(QueueHandle_t queue);
 
 /**
- * Initialize hardware timer for periodic camera capture
- *
- * @param interval_ms Capture interval in milliseconds
- * @return ESP_OK on success, error code otherwise
+ * Start the capture loop task.
+ * Runs on core 0, captures at max rate, sends every frame to SPI,
+ * saves JPEG to SD every 3 seconds.
  */
-esp_err_t camera_timer_init(uint32_t interval_ms);
-
-/**
- * FreeRTOS task that waits for timer trigger to capture frames
- *
- * @param pv_params FreeRTOS task parameters
- */
-void isolated_capture_task(void *pv_params);
-#endif
-
-#ifdef UNIT_TEST_CAMERA
-/**
- * Unit test function for camera and SD logging
- *
- * @param queue SPI transmission queue handle (can be NULL)
- */
-void cam_log_unit_test(QueueHandle_t queue);
-#endif
+void camera_start_capture(void);
 
 #endif /* CAMERA_CONTROL_H */

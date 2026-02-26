@@ -1,61 +1,180 @@
 /*
  * camera_control.c
  * ESP32-CAM camera initialization and frame capture
+ *
+ * Two rates:
+ *   - SPI pipeline: grayscale frames as fast as possible (~30fps target)
+ *   - SD save: every 3 seconds, software JPEG encode + save
+ *
+ * SD and SPI share GPIO 13/14. Pin time-sharing:
+ *   deinit SPI → mount SD → save → unmount SD → reinit SPI
  */
 
 #include <stdio.h>
 #include <string.h>
 
 #include "esp_err.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 
 #include "esp_log.h"
 #include "esp_camera.h"
+#include "esp_heap_caps.h"
 
 #include "image_buffer_pool.h"
+#include "image_data.h"
 #include "sd_storage.h"
-#include "sensor.h"
+#include "DMA_SPI_master.h"
 #include "camera_control.h"
 
-/* File scope variables */
+/* jpeg encoder — esp_jpeg component */
+// #include "esp_jpeg_enc.h"
+
 static QueueHandle_t tx_queue = NULL;
 static const char *TAG = "CAM_CTRL";
 
+#define SD_SAVE_INTERVAL_US  (3 * 1000 * 1000)
+#define JPEG_BUF_SIZE        (64 * 1024)
+
+static int64_t last_sd_save_us = 0;
+
 /**************************************************************************************************
-  Core Logical Function
+  File Scope Functions
 **************************************************************************************************/
 
-/**
- * Capture a single frame from camera
- * Saves to SD and optionally sends to SPI queue
- *
- * @param pv_parameters FreeRTOS task parameters (unused)
- */
-static void capture_frame(void *pv_parameters)
+static void send_frame_to_spi_queue(const uint8_t *buffer, size_t length)
 {
-    ESP_LOGI(TAG, "Camera capture initiated");
+    uint8_t *tx_buffer = image_buffer_alloc();
 
-    camera_fb_t *fb = esp_camera_fb_get();
-
-    if (fb == NULL) {
-        ESP_LOGE(TAG, "Camera capture failed");
+    if (tx_buffer == NULL) {
+        ESP_LOGW(TAG, "No free buffers, skipping SPI send");
         return;
     }
 
-    LOG_DEBUG("Captured: %zu bytes (%dx%d)", fb->len, fb->width, fb->height);
+    size_t copy_len = (length > IMAGE_BUFFER_SIZE) ? IMAGE_BUFFER_SIZE : length;
+    memcpy(tx_buffer, buffer, copy_len);
 
-// TODO: Tailor this function to local hosting instead of DMA
-//    if (tx_queue != NULL) {
-//        send_frame_to_spi_queue(fb->buf, fb->len);
-//    }
+    image_data_t img_data = {
+        .buffer = tx_buffer,
+        .size = copy_len
+    };
 
-    /* Save to SD card */
-    sd_save_image(fb->buf, fb->len);
+    if (xQueueSend(tx_queue, &img_data, 0) != pdTRUE) {
+        ESP_LOGW(TAG, "SPI queue full, dropping frame");
+        image_buffer_free(tx_buffer);
+    }
+}
 
-    /* Return camera buffer to driver */
-    esp_camera_fb_return(fb);
+/**
+ * Software JPEG encode a grayscale frame.
+ * Returns encoded size, or 0 on failure.
+ */
+static size_t jpeg_encode_grayscale(const uint8_t *raw, uint16_t width, uint16_t height,
+                                     uint8_t *jpeg_buf, size_t jpeg_buf_size)
+{
+    jpeg_enc_info_t enc_info = {
+        .width = width,
+        .height = height,
+        .src_type = JPEG_RAW_TYPE_GRAY,
+        .subsampling = JPEG_SUB_SAMPLE_Y,
+        .quality = 80,
+        .task_enable = false,
+    };
+
+    jpeg_enc_handle_t encoder = NULL;
+    if (jpeg_enc_open(&enc_info, &encoder) != ESP_OK) {
+        ESP_LOGE(TAG, "JPEG encoder open failed");
+        return 0;
+    }
+
+    int out_len = 0;
+    esp_err_t ret = jpeg_enc_process(encoder, raw, raw + (width * height),
+                                      jpeg_buf, jpeg_buf_size, &out_len);
+    jpeg_enc_close(encoder);
+
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "JPEG encode failed: %s", esp_err_to_name(ret));
+        return 0;
+    }
+
+    return (size_t)out_len;
+}
+
+/**
+ * Save a frame to SD as JPEG.
+ * Pin time-sharing: deinit SPI → mount SD → save → unmount → reinit SPI
+ * JPEG encoding happens BEFORE pin swap (CPU work, no pin conflict).
+ */
+static void save_frame_to_sd(const uint8_t *raw, size_t raw_len,
+                              uint16_t width, uint16_t height)
+{
+    uint8_t *jpeg_buf = heap_caps_malloc(JPEG_BUF_SIZE, MALLOC_CAP_SPIRAM);
+    if (jpeg_buf == NULL) {
+        ESP_LOGW(TAG, "No PSRAM for JPEG buffer, skipping SD save");
+        return;
+    }
+
+    /* Encode while SPI still running — pure CPU work, no pin conflict */
+    size_t jpeg_len = jpeg_encode_grayscale(raw, width, height, jpeg_buf, JPEG_BUF_SIZE);
+    if (jpeg_len == 0) {
+        free(jpeg_buf);
+        return;
+    }
+
+    ESP_LOGI(TAG, "JPEG: %zu bytes (%.1f:1)", jpeg_len, (float)raw_len / jpeg_len);
+
+    /* --- pin swap: SPI off, SD on --- */
+    spi_dma_deinit();
+
+    if (sd_card_init() == ESP_OK) {
+        sd_save_image(jpeg_buf, jpeg_len);
+        sd_card_deinit();
+    } else {
+        ESP_LOGW(TAG, "SD mount failed, frame lost");
+    }
+
+    /* --- pin swap: SD off, SPI back --- */
+    spi_dma_init();
+
+    free(jpeg_buf);
+}
+
+/**************************************************************************************************
+  Core Capture Loop
+**************************************************************************************************/
+
+static void capture_loop(void *pv_parameters)
+{
+    ESP_LOGI(TAG, "Capture loop started");
+
+    last_sd_save_us = esp_timer_get_time();
+
+    for (;;) {
+        camera_fb_t *fb = esp_camera_fb_get();
+
+        if (fb == NULL) {
+            ESP_LOGW(TAG, "Capture failed, retrying");
+            vTaskDelay(pdMS_TO_TICKS(10));
+            continue;
+        }
+
+        /* Always send to SPI pipeline */
+        if (tx_queue != NULL) {
+            send_frame_to_spi_queue(fb->buf, fb->len);
+        }
+
+        /* Periodic SD save */
+        int64_t now = esp_timer_get_time();
+        if ((now - last_sd_save_us) >= SD_SAVE_INTERVAL_US) {
+            save_frame_to_sd(fb->buf, fb->len, fb->width, fb->height);
+            last_sd_save_us = esp_timer_get_time();
+        }
+
+        esp_camera_fb_return(fb);
+        taskYIELD();
+    }
 }
 
 /**************************************************************************************************
@@ -64,7 +183,6 @@ static void capture_frame(void *pv_parameters)
 
 esp_err_t camera_init(void)
 {
-    /* AI-Thinker ESP32-CAM Camera Configuration */
     static camera_config_t camera_config = {
         .pin_pwdn = 32,
         .pin_reset = -1,
@@ -89,14 +207,11 @@ esp_err_t camera_init(void)
         .ledc_channel = LEDC_CHANNEL_0,
 
         .pixel_format = PIXFORMAT_GRAYSCALE,
-        .frame_size = FRAMESIZE_VGA,  /* 640x480 */
-        /* .jpeg_quality = 12, */
+        .frame_size = FRAMESIZE_VGA,
         .fb_count = 2,
         .fb_location = CAMERA_FB_IN_PSRAM,
-        .grab_mode = CAMERA_GRAB_WHEN_EMPTY
+        .grab_mode = CAMERA_GRAB_LATEST_WHEN_EMPTY
     };
-
-    LOG_DEBUG("Initializing camera...");
 
     esp_err_t err = esp_camera_init(&camera_config);
     if (err != ESP_OK) {
@@ -104,125 +219,16 @@ esp_err_t camera_init(void)
         return err;
     }
 
-    ESP_LOGI(TAG, "Camera initialized successfully");
+    ESP_LOGI(TAG, "Camera initialized: 640x480 grayscale");
     return ESP_OK;
 }
 
-/**************************************************************************************************
-  File Scope Functions
-**************************************************************************************************/
-// TODO: Tailor this function to local hosting instead of DMA
-/* static inline void send_frame_to_spi_queue(const uint8_t *buffer, size_t length) */
-/* { */
-/*     /1* Get buffer from PSRAM pool *1/ */
-/*     uint8_t *tx_buffer = image_buffer_alloc(); */
-
-/*     if (tx_buffer != NULL) { */
-/*         memcpy(tx_buffer, buffer, length); */
-
-/*         image_data_t img_data = { */
-/*             .buffer = tx_buffer, */
-/*             .size = length */
-/*         }; */
-
-/*         if (xQueueSend(tx_queue, &img_data, 0) == pdTRUE) { */
-/*             LOG_DEBUG("→ Queued for SPI transmission"); */
-/*         } else { */
-/*             ESP_LOGW(TAG, "SPI queue full, dropping image"); */
-/*             image_buffer_free(tx_buffer); */
-/*         } */
-/*     } else { */
-/*         ESP_LOGW(TAG, "No free buffers, skipping SPI transmission"); */
-/*     } */
-/* } */
-
-/**************************************************************************************************
-  Testing and Experimental
-**************************************************************************************************/
-
-#ifdef UNIT_TEST_CAMERA
-void cam_log_unit_test(QueueHandle_t queue)
+void camera_set_tx_queue(QueueHandle_t queue)
 {
-    tx_queue = queue;  /* Store queue handle for SPI transmission */
-
-    ESP_LOGI(TAG, "ESP32-CAM System Initializing");
-
-    /* Initialize SD card first */
-    if (sd_card_init() != ESP_OK) {
-        ESP_LOGE(TAG, "SD card init failed - halting");
-        return;
-    }
-
-    /* Initialize camera */
-    if (camera_init() != ESP_OK) {
-        ESP_LOGE(TAG, "Camera init failed - halting");
-        return;
-    }
-
-    /* Create capture task */
-    xTaskCreate(camera_capture_task, "cam_task", 4096, NULL, 5, NULL);
-
-    ESP_LOGI(TAG, "System ready");
-}
-#endif
-
-#ifdef ISOLATED_CAM
-
-#include "driver/gptimer.h"
-
-static SemaphoreHandle_t trigger_capture = NULL;
-static gptimer_handle_t timer_handle = NULL;
-
-static bool IRAM_ATTR time_to_capture(gptimer_handle_t timer,
-                                       const gptimer_alarm_event_data_t *event_data,
-                                       void *user_ctx)
-{
-    BaseType_t higher_priority_task_woken = pdFALSE;
-    xSemaphoreGiveFromISR(trigger_capture, &higher_priority_task_woken);
-    return higher_priority_task_woken == pdTRUE;
+    tx_queue = queue;
 }
 
-esp_err_t camera_timer_init(uint32_t interval_ms)
+void camera_start_capture(void)
 {
-    trigger_capture = xSemaphoreCreateBinary();
-    if (trigger_capture == NULL) {
-        return ESP_FAIL;
-    }
-
-    gptimer_config_t timer_config = {
-        .clk_src = GPTIMER_CLK_SRC_DEFAULT,
-        .direction = GPTIMER_COUNT_UP,
-        .resolution_hz = 1000000,  /* 1MHz, 1 tick = 1µs */
-    };
-    ESP_ERROR_CHECK(gptimer_new_timer(&timer_config, &timer_handle));
-
-    gptimer_alarm_config_t alarm_config = {
-        .reload_count = 0,
-        .alarm_count = interval_ms * 1000,  /* Convert ms to µs */
-        .flags.auto_reload_on_alarm = true,
-    };
-    ESP_ERROR_CHECK(gptimer_set_alarm_action(timer_handle, &alarm_config));
-
-    gptimer_event_callbacks_t cbs = {
-        .on_alarm = time_to_capture,
-    };
-    ESP_ERROR_CHECK(gptimer_register_event_callbacks(timer_handle, &cbs, NULL));
-
-    ESP_ERROR_CHECK(gptimer_enable(timer_handle));
-    ESP_ERROR_CHECK(gptimer_start(timer_handle));
-
-    ESP_LOGI(TAG, "Timer initialized: %lu ms interval", interval_ms);
-    return ESP_OK;
+    xTaskCreatePinnedToCore(capture_loop, "capture", 8192, NULL, 6, NULL, 0);
 }
-
-void isolated_capture_task(void *pv_params)
-{
-    ESP_LOGI(TAG, "Isolated capture task waiting for timer triggers...");
-
-    for (;;) {
-        if (xSemaphoreTake(trigger_capture, portMAX_DELAY) == pdTRUE) {
-            capture_frame(pv_params);
-        }
-    }
-}
-#endif

@@ -1,6 +1,7 @@
 /*
  * ESP32-CAM Main Application
- * Camera + SPI DMA Transmitter
+ * Camera capture → SPI DMA to DevKit (every frame)
+ *                → JPEG to SD card (every 3 seconds)
  */
 
 #include "freertos/FreeRTOS.h"
@@ -8,39 +9,50 @@
 #include "esp_log.h"
 
 #include "camera_control.h"
-#include "sd_storage.h"
 #include "image_buffer_pool.h"
+#include "image_data.h"
+#include "DMA_SPI_master.h"
 
-static QueueHandle_t image_queue = NULL;
+static const char *TAG = "MAIN";
+
+#define IMAGE_QUEUE_DEPTH  2
 
 void app_main(void)
 {
-    ESP_LOGI("MAIN", "Remote Inspection Unit Starting...");
+    ESP_LOGI(TAG, "ESP32-CAM Starting...");
 
-    /* Initialize SD card first */
-    if (sd_card_init() != ESP_OK)
-    {
-        ESP_LOGE("MAIN", "SD card init failed - halting");
+    /* PSRAM buffer pool for DMA transfers */
+    if (image_buffer_pool_init() != ESP_OK) {
+        ESP_LOGE(TAG, "Buffer pool init failed — halting");
         return;
     }
 
-    /* Initialize camera */
-    if (camera_init() != ESP_OK)
-    {
-        ESP_LOGE("MAIN", "Camera init failed - halting");
+    /* SPI DMA master — pins 13/14 (shared with SD, time-shared in capture loop) */
+    if (spi_dma_init() != ESP_OK) {
+        ESP_LOGE(TAG, "SPI DMA init failed — halting");
         return;
     }
 
-#ifdef ISOLATED_CAM
-    /* Start timer-triggered capture */
-    if (camera_timer_init(CAPTURE_RATE) != ESP_OK) {
-        ESP_LOGE("MAIN", "Timer init failed - halting");
+    /* Camera */
+    if (camera_init() != ESP_OK) {
+        ESP_LOGE(TAG, "Camera init failed — halting");
         return;
     }
 
-    /* Create capture task (waits for timer) */
-    xTaskCreate(isolated_capture_task, "capture", 4096, NULL, 5, NULL);
-#endif
+    /* Image queue: capture → SPI transmit */
+    QueueHandle_t image_queue = xQueueCreate(IMAGE_QUEUE_DEPTH, sizeof(image_data_t));
+    if (image_queue == NULL) {
+        ESP_LOGE(TAG, "Queue creation failed — halting");
+        return;
+    }
 
-    ESP_LOGI("MAIN", "System initialized successfully!");
+    camera_set_tx_queue(image_queue);
+
+    /* SPI transmit task — dequeues frames, sends via DMA */
+    xTaskCreate(spi_transmit_task, "spi_tx", 4096, (void *)image_queue, 5, NULL);
+
+    /* Capture loop — max fps to SPI, JPEG to SD every 3s */
+    camera_start_capture();
+
+    ESP_LOGI(TAG, "Pipeline running");
 }
