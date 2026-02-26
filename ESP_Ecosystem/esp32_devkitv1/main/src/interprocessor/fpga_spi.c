@@ -4,7 +4,8 @@
  * @author ESP32 Image Pipeline Team
  *
  * Implements SPI master interface for transmitting image data to Tang Nano 9K FPGA.
- * Supports test pattern generation for development and debugging.
+ * Uses async queue/get pattern to keep DMA fed continuously — no idle gaps between
+ * chunks while CPU catches up.
  *
  * @scope
  * File covers SPI transmission, DMA operations, and optional test pattern generation
@@ -36,16 +37,15 @@ typedef struct {
     bool initialized;
 } fpga_spi_context_t;
 
+// Transaction pool — must stay valid until get_trans_result returns.
+// Sized to FPGA_SPI_QUEUE_SIZE so we can keep the queue fully fed.
+static spi_transaction_t s_trans_pool[FPGA_SPI_QUEUE_SIZE];
+
 /*************************************************************************
  FILE SCOPED FUNCTIONS
  *************************************************************************/
 __attribute__((always_inline))
 static inline fpga_spi_context_t* getContext(void);
-
-__attribute__((always_inline))
-static inline esp_err_t transmitChunk(fpga_spi_context_t *ctx,
-                                      const uint8_t *data,
-                                      size_t size);
 
 #ifdef TEST_MODE_FPGA_PATTERNS
 
@@ -84,22 +84,18 @@ static inline fpga_spi_context_t* getContext(void)
 static esp_err_t setupTestButton(void)
 {
     gpio_config_t btn_cfg = {
-        .pin_bit_mask = (1ULL << TEST_BUTTON_PIN),
-        .mode = GPIO_MODE_INPUT,
-        .pull_up_en = GPIO_PULLUP_ENABLE,
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_NEGEDGE,
+        .pin_bit_mask  = (1ULL << TEST_BUTTON_PIN),
+        .mode          = GPIO_MODE_INPUT,
+        .pull_up_en    = GPIO_PULLUP_ENABLE,
+        .pull_down_en  = GPIO_PULLDOWN_DISABLE,
+        .intr_type     = GPIO_INTR_NEGEDGE,
     };
 
     esp_err_t ret = gpio_config(&btn_cfg);
-    if (ret != ESP_OK) {
-        return ret;
-    }
+    if (ret != ESP_OK) return ret;
 
     ret = gpio_install_isr_service(0);
-    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
-        return ret;
-    }
+    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) return ret;
 
     return gpio_isr_handler_add(TEST_BUTTON_PIN, ISR_OnButtonPress, NULL);
 }
@@ -143,24 +139,11 @@ static inline void generateTestPattern(uint8_t *buffer, size_t size,
 
 /*************************************************************************
  HOT PATH - TRANSMISSION
- *************************************************************************/
-
-__attribute__((always_inline))
-static inline esp_err_t transmitChunk(fpga_spi_context_t *ctx,
-                                      const uint8_t *data,
-                                      size_t size)
-{
-    spi_transaction_t trans = {
-        .length = size * 8,
-        .tx_buffer = data,
-        .rx_buffer = NULL,
-    };
-
-    return spi_device_transmit(ctx->device, &trans);
-}
-
-/*************************************************************************
- PUBLIC INTERFACE
+ *
+ * Async queue/get pattern:
+ *   - Queue up to FPGA_SPI_QUEUE_SIZE chunks without waiting
+ *   - Collect results as queue fills
+ *   - DMA stays fed continuously, no idle gaps between chunks
  *************************************************************************/
 
 __attribute__((hot))
@@ -168,7 +151,6 @@ esp_err_t fpga_spi_transmit(const uint8_t *data, size_t size)
 {
     fpga_spi_context_t *ctx = getContext();
 
-    // FIXED: Added proper braces to prevent bug
     if (UNLIKELY(!ctx->initialized)) {
         ESP_LOGE(TAG, "Not initialized");
         return ESP_ERR_INVALID_STATE;
@@ -179,28 +161,50 @@ esp_err_t fpga_spi_transmit(const uint8_t *data, size_t size)
         return ESP_ERR_INVALID_ARG;
     }
 
-    ESP_LOGI(TAG, "Transmitting %zu bytes to FPGA", size);
+    size_t offset    = 0;
+    size_t in_flight = 0;
+    size_t pool_idx  = 0;
 
-    size_t offset = 0;
-    while (offset < size) {
-        size_t chunk_size = min_size(size - offset, FPGA_MAX_TRANSFER_SIZE);
+    while (offset < size || in_flight > 0) {
 
-        esp_err_t ret = transmitChunk(ctx, data + offset, chunk_size);
+        // Feed the queue while there's data and slots available
+        while (offset < size && in_flight < FPGA_SPI_QUEUE_SIZE) {
+            size_t chunk_size = min_size(size - offset, FPGA_MAX_TRANSFER_SIZE);
+
+            spi_transaction_t *t = &s_trans_pool[pool_idx % FPGA_SPI_QUEUE_SIZE];
+            t->length    = chunk_size * 8;
+            t->tx_buffer = data + offset;
+            t->rx_buffer = NULL;
+            t->flags     = 0;
+
+            esp_err_t ret = spi_device_queue_trans(ctx->device, t, portMAX_DELAY);
+            if (UNLIKELY(ret != ESP_OK)) {
+                ESP_LOGE(TAG, "Queue failed at offset %zu: %s",
+                         offset, esp_err_to_name(ret));
+                return ret;
+            }
+
+            offset    += chunk_size;
+            in_flight++;
+            pool_idx++;
+        }
+
+        // Collect one completed transaction — yields task, not CPU
+        spi_transaction_t *result;
+        esp_err_t ret = spi_device_get_trans_result(ctx->device, &result, portMAX_DELAY);
         if (UNLIKELY(ret != ESP_OK)) {
-            ESP_LOGE(TAG, "Transmit failed at offset %zu: %s",
-                     offset, esp_err_to_name(ret));
+            ESP_LOGE(TAG, "get_trans_result failed: %s", esp_err_to_name(ret));
             return ret;
         }
 
-        offset += chunk_size;
+        in_flight--;
     }
 
-    ESP_LOGI(TAG, "Transmission complete");
     return ESP_OK;
 }
 
 /*************************************************************************
-  FPGA Communicatio State Management
+ INIT / DEINIT
  *************************************************************************/
 
 esp_err_t fpga_spi_init(void)
@@ -214,11 +218,10 @@ esp_err_t fpga_spi_init(void)
         return ESP_OK;
     }
 
-    // Configure SPI bus
     spi_bus_config_t bus_cfg = {
-        .mosi_io_num = FPGA_PIN_MOSI,
-        .miso_io_num = FPGA_PIN_MISO,
-        .sclk_io_num = FPGA_PIN_SCLK,
+        .mosi_io_num   = FPGA_PIN_MOSI,
+        .miso_io_num   = FPGA_PIN_MISO,
+        .sclk_io_num   = FPGA_PIN_SCLK,
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
         .max_transfer_sz = FPGA_MAX_TRANSFER_SIZE,
@@ -231,13 +234,13 @@ esp_err_t fpga_spi_init(void)
         return ret;
     }
 
-    // Configure SPI device
     spi_device_interface_config_t dev_cfg = {
         .clock_speed_hz = FPGA_SPI_CLOCK_HZ,
-        .mode = FPGA_SPI_MODE,
-        .spics_io_num = FPGA_PIN_CS,
-        .queue_size = FPGA_SPI_QUEUE_SIZE,
-        .flags = 0,
+        .mode           = FPGA_SPI_MODE,
+        .spics_io_num   = FPGA_PIN_CS,
+        .queue_size     = FPGA_SPI_QUEUE_SIZE,  // set this to 4-8 in config.h
+        .flags          = 0,
+        // No post_cb — queue/get handles sync internally
     };
 
     ret = spi_bus_add_device(FPGA_SPI_HOST, &dev_cfg, &ctx->device);
@@ -251,7 +254,7 @@ esp_err_t fpga_spi_init(void)
 
     ESP_LOGI(TAG, "FPGA SPI initialized - MOSI=%d MISO=%d CLK=%d CS=%d",
              FPGA_PIN_MOSI, FPGA_PIN_MISO, FPGA_PIN_SCLK, FPGA_PIN_CS);
-    ESP_LOGI(TAG, "Clock: %d MHz", FPGA_SPI_CLOCK_MHZ);
+    ESP_LOGI(TAG, "Clock: %d MHz, queue depth: %d", FPGA_SPI_CLOCK_MHZ, FPGA_SPI_QUEUE_SIZE);
 
 #ifdef TEST_MODE_FPGA_PATTERNS
     ret = setupTestButton();
@@ -278,7 +281,7 @@ void fpga_spi_deinit(void)
     spi_bus_remove_device(ctx->device);
     spi_bus_free(FPGA_SPI_HOST);
 
-    ctx->device = NULL;
+    ctx->device      = NULL;
     ctx->initialized = false;
 
     ESP_LOGI(TAG, "FPGA SPI deinitialized");
