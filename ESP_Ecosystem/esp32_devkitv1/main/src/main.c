@@ -1,9 +1,7 @@
 /**
- * @file main.c
- * @brief ESP32 DevKitV1 - Main Entry Point
+ * main.c — ESP32 DevKitV1 entry point
  *
- * Image pipeline (cam_spi, fpga_spi, lora, image_processor)
- * + sensor subsystem (AHT20, PIR, stepper motor)
+ * Initializes all subsystems, creates tasks, monitors heap.
  */
 
 #include <stdio.h>
@@ -22,95 +20,57 @@
 
 static const char *TAG = "MAIN";
 
-static esp_err_t initializeSystem(void)
+static esp_err_t init_system(void)
 {
+    ESP_LOGI(TAG, "=== Trail Camera IV — ESP32 DevKitV1 ===");
+    ESP_LOGI(TAG, "IDF %s | heap %lu bytes", esp_get_idf_version(),
+             esp_get_free_heap_size());
+
     esp_err_t ret;
 
-    ESP_LOGI(TAG, "=== ESP32 DevKitV1 - Trail Camera IV ===");
-    ESP_LOGI(TAG, "ESP-IDF Version: %s", esp_get_idf_version());
-    ESP_LOGI(TAG, "Free heap: %lu bytes", esp_get_free_heap_size());
+    /* ISR semaphores must exist before any tasks */
+    ret = isr_init();           if (ret != ESP_OK) return ret;
+    ret = cam_spi_init();       if (ret != ESP_OK) return ret;
+    ret = fpga_spi_init();      if (ret != ESP_OK) return ret;
+    ret = lora_init();          if (ret != ESP_OK) return ret;
+    ret = image_processor_init(); if (ret != ESP_OK) return ret;
+    ret = sensors_init();       if (ret != ESP_OK) return ret;
 
-    // ISR module first — semaphores must exist before tasks
-    ret = isr_init();
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "ISR init failed: %s", esp_err_to_name(ret));
-        return ret;
-    }
-
-    ret = cam_spi_init();
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Camera SPI init failed: %s", esp_err_to_name(ret));
-        return ret;
-    }
-
-    ret = fpga_spi_init();
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "FPGA SPI init failed: %s", esp_err_to_name(ret));
-        return ret;
-    }
-
-    ret = lora_init();
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "LoRa init failed: %s", esp_err_to_name(ret));
-        return ret;
-    }
-
-    ret = image_processor_init();
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Image processor init failed: %s", esp_err_to_name(ret));
-        return ret;
-    }
-
-    ret = sensors_init();
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Sensor init failed: %s", esp_err_to_name(ret));
-        return ret;
-    }
-
-    ESP_LOGI(TAG, "All subsystems initialized");
+    ESP_LOGI(TAG, "all subsystems ready");
     return ESP_OK;
 }
 
-static void createTasks(void)
+static void create_tasks(void)
 {
-    ESP_LOGI(TAG, "Creating tasks...");
-
-    xTaskCreate(cam_spi_receive_task, "cam_spi_rx", STACK_SIZE_MEDIUM, NULL, TASK_PRIORITY_HIGH, NULL);
-    xTaskCreate(image_processor_task, "img_processor", STACK_SIZE_LARGE, NULL, TASK_PRIORITY_MEDIUM, NULL);
-    xTaskCreate(lora_receive_task, "lora_rx", STACK_SIZE_MEDIUM, NULL, TASK_PRIORITY_MEDIUM, NULL);
-    xTaskCreate(sensors_task, "sensors", STACK_SIZE_MEDIUM, NULL, TASK_PRIORITY_LOW, NULL);
+    xTaskCreate(cam_spi_receive_task, "cam_rx",   STACK_SIZE_MEDIUM, NULL, TASK_PRIORITY_HIGH,   NULL);
+    xTaskCreate(image_processor_task, "img_proc",  STACK_SIZE_LARGE,  NULL, TASK_PRIORITY_MEDIUM, NULL);
+    xTaskCreate(lora_receive_task,    "lora_rx",   STACK_SIZE_MEDIUM, NULL, TASK_PRIORITY_MEDIUM, NULL);
+    xTaskCreate(sensors_task,         "sensors",   STACK_SIZE_MEDIUM, NULL, TASK_PRIORITY_LOW,    NULL);
 
 #ifdef TEST_MODE_FPGA_PATTERNS
     xTaskCreate(fpga_test_task, "fpga_test", STACK_SIZE_MEDIUM, NULL, TASK_PRIORITY_MEDIUM, NULL);
-    ESP_LOGI(TAG, "FPGA test task created — press BOOT to send patterns");
 #endif
-
-    ESP_LOGI(TAG, "All tasks created");
 }
 
-static void monitorSystem(void)
+static void monitor_heap(void)
 {
-    uint32_t last_heap = esp_get_free_heap_size();
+    uint32_t prev = esp_get_free_heap_size();
 
-    while (1) {
+    for (;;) {
         vTaskDelay(SECONDS_TO_TICKS(10));
-
-        uint32_t current_heap = esp_get_free_heap_size();
-        int32_t heap_change = (int32_t)(current_heap - last_heap);
-
-        ESP_LOGI(TAG, "Free heap: %lu bytes (%+ld)", current_heap, heap_change);
-        last_heap = current_heap;
+        uint32_t now = esp_get_free_heap_size();
+        ESP_LOGI(TAG, "heap: %lu (%+ld)", now, (int32_t)(now - prev));
+        prev = now;
     }
 }
 
 void app_main(void)
 {
-    esp_err_t ret = initializeSystem();
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "System initialization failed — halted");
+    if (init_system() != ESP_OK) {
+        ESP_LOGE(TAG, "init failed — halted");
         return;
     }
 
-    createTasks();
-    monitorSystem();
+    create_tasks();
+    monitor_heap();
 }

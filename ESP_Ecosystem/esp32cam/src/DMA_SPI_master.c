@@ -33,9 +33,10 @@ static const char *TAG = "SPI_TX";
 typedef struct {
   spi_device_handle_t spi;
   SemaphoreHandle_t transfer_complete;
+  bool initialized;
 } spi_dma_context_t;
 
-static spi_dma_context_t ctx;
+static spi_dma_context_t ctx = { .initialized = false };
 
 // DMA transaction callback
 static void IRAM_ATTR spi_post_transfer_callback(spi_transaction_t *trans)
@@ -49,6 +50,11 @@ static void IRAM_ATTR spi_post_transfer_callback(spi_transaction_t *trans)
 
 esp_err_t spi_dma_init(void)
 {
+  if (ctx.initialized) {
+    ESP_LOGW(TAG, "SPI DMA already initialized");
+    return ESP_OK;
+  }
+
   esp_err_t ret;
 
   ctx.transfer_complete = xSemaphoreCreateBinary();
@@ -89,9 +95,28 @@ esp_err_t spi_dma_init(void)
     return ret;
   }
 
+  ctx.initialized = true;
   ESP_LOGI(TAG, "SPI DMA initialized: %d MHz", SPI_CLOCK_SPEED / 1000000);
 
   return ESP_OK;
+}
+
+void spi_dma_deinit(void)
+{
+  if (!ctx.initialized) {
+    return;
+  }
+
+  spi_bus_remove_device(ctx.spi);
+  spi_bus_free(SPI_MASTER_HOST);
+
+  if (ctx.transfer_complete) {
+    vSemaphoreDelete(ctx.transfer_complete);
+    ctx.transfer_complete = NULL;
+  }
+
+  ctx.initialized = false;
+  ESP_LOGI(TAG, "SPI DMA deinitialized");
 }
 
 static esp_err_t spi_dma_transmit(const uint8_t *data, size_t length)
@@ -174,9 +199,9 @@ void spi_transmit_task(void *pvParameters)
       esp_err_t ret = spi_dma_send_image(img_data.buffer, img_data.size);
 
       if (ret == ESP_OK) {
-        LOG_DEBUG("✓ SPI transmission successful");
+        LOG_DEBUG("SPI transmission successful");
       } else {
-        ESP_LOGE(TAG, "✗ SPI transmission failed");
+        ESP_LOGE(TAG, "SPI transmission failed");
       }
 
       // Return buffer to PSRAM pool

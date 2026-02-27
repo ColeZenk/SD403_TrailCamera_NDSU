@@ -23,34 +23,31 @@
 
 /**
  * Initialize SD card and mount filesystem
- * 
- * @return ESP_OK on success, error code otherwise
  */
 esp_err_t sd_card_init(void);
 
 /**
- * Save image buffer to SD card with automatic filename generation
- * 
- * @param buffer Pointer to image data
- * @param length Size of image data in bytes
- * @return ESP_OK on success, error code otherwise
+ * Unmount SD card and release resources
+ */
+void sd_card_deinit(void);
+
+/**
+ * Save image buffer to SD card as .jpg with auto filename
  */
 esp_err_t sd_save_image(const uint8_t *buffer, size_t length);
 
 /**
+ * Save raw buffer to SD card as .raw with auto filename
+ */
+esp_err_t sd_save_raw(const uint8_t *buffer, size_t length);
+
+/**
  * Save image buffer to SD card with specific filename
- * 
- * @param buffer Pointer to image data
- * @param length Size of image data in bytes
- * @param filename Full path to save file (e.g., "/sdcard/img_0001.jpg")
- * @return ESP_OK on success, error code otherwise
  */
 esp_err_t sd_save_image_named(const uint8_t *buffer, size_t length, const char *filename);
 
 /**
  * Get current image counter value
- * 
- * @return Current image counter
  */
 int sd_get_image_counter(void);
 

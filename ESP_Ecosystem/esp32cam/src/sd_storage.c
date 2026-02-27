@@ -67,6 +67,18 @@ esp_err_t sd_card_init(void)
     return ESP_OK;
 }
 
+void sd_card_deinit(void)
+{
+    if (!initialized) {
+        return;
+    }
+
+    esp_vfs_fat_sdcard_unmount("/sdcard", card);
+    card = NULL;
+    initialized = false;
+    ESP_LOGI(TAG, "SD card unmounted");
+}
+
 esp_err_t sd_save_image(const uint8_t *buffer, size_t length)
 {
     if (!initialized) {
@@ -76,6 +88,19 @@ esp_err_t sd_save_image(const uint8_t *buffer, size_t length)
 
     char filename[32];
     snprintf(filename, sizeof(filename), "/sdcard/img_%04d.jpg", image_counter++);
+
+    return sd_save_image_named(buffer, length, filename);
+}
+
+esp_err_t sd_save_raw(const uint8_t *buffer, size_t length)
+{
+    if (!initialized) {
+        ESP_LOGE(TAG, "SD card not initialized!");
+        return ESP_FAIL;
+    }
+
+    char filename[32];
+    snprintf(filename, sizeof(filename), "/sdcard/img_%04d.raw", image_counter++);
 
     return sd_save_image_named(buffer, length, filename);
 }

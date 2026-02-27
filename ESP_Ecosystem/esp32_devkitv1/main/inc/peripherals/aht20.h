@@ -18,6 +18,6 @@ typedef struct {
 
 esp_err_t aht20_init(aht20_t *dev, uint8_t dev_addr);
 
-esp_err_t aht20_read_temperature_humidity(aht20_t *dev,
-                                          float *temp_c,
-                                          float *rh_percent);
+esp_err_t aht20_read(aht20_t *dev,
+                     float *temp_c,
+                     float *rh_percent);

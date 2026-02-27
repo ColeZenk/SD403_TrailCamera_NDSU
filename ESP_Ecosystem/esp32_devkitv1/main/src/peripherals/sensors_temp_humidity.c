@@ -138,7 +138,7 @@ void sensors_task(void *pvParameters)
 
         if (s_sensor_ok) {
             float t_c = 0, rh = 0;
-            if (aht20_read_temperature_humidity(&s_aht20, &t_c, &rh) == ESP_OK) {
+            if (aht20_read(&s_aht20, &t_c, &rh) == ESP_OK) {
                 ESP_LOGI(TAG, "PIR%d | %.1f F | %.0f%% RH", trig, c_to_f(t_c), rh);
             } else {
                 ESP_LOGW(TAG, "PIR%d | AHT20 read failed", trig);

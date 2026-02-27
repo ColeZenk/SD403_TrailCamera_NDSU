@@ -26,6 +26,7 @@
 #define MAX_TRANSFER_SIZE  (4092)
 
 esp_err_t spi_dma_init(void);
+void spi_dma_deinit(void);
 esp_err_t spi_dma_send_image(const uint8_t *image_data, size_t image_size);
 void spi_transmit_task(void *pvParameters);
 

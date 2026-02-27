@@ -1,19 +1,9 @@
 /**
- * @file lora_uart.c
- * @brief LoRa UART Interface - ESP32 DevKitV1 Receiver
- * @author ESP32 Image Pipeline Team
+ * lora_uart.c — LoRa UART interface (REYAX RYLR896)
  *
- * Implements UART communication with LoRa module for wireless trigger reception.
- * Configures module parameters and handles incoming trigger messages.
- *
- * @scope
- * File covers LoRa module initialization, AT command configuration, and
- * message reception with optional LED feedback for testing.
+ * AT command config at init, then listens for trigger messages.
  */
 
-/*************************************************************************
- INCLUDES
- *************************************************************************/
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/uart.h"
@@ -22,287 +12,169 @@
 
 #include "isr_signals.h"
 #include "lora_uart.h"
-
 #include <string.h>
-
-/*************************************************************************
- CONFIGURATION
- *************************************************************************/
-#define DEV_TEST_LORA_UART    1
-
-#define LORA_UART             UART_NUM_2
-#define LORA_TX_PIN           GPIO_NUM_17
-#define LORA_RX_PIN           GPIO_NUM_16
-#define LORA_BAUD             115200
-
-#define AT_RESPONSE_BUF_SIZE  64
-#define AT_CMD_TIMEOUT_MS     500
-#define AT_CMD_DELAY_MS       300
-
-#ifdef DEV_TEST_LORA_UART
-  #define LED_PIN             GPIO_NUM_2
-  #define LED_BLINK_COUNT     3
-  #define LED_BLINK_ON_MS     200
-  #define LED_BLINK_OFF_MS    200
-#endif
 
 static const char *TAG = "LORA";
 
-/*************************************************************************
- FILE SCOPED FUNCTIONS
- *************************************************************************/
-static esp_err_t sendATCommand(const char *command, const char *description);
-static esp_err_t queryATParameter(const char *query, const char *param_name);
-static void handleTriggerReceived(void);
+/*******************************************************************************
+ * Config
+ ******************************************************************************/
 
-#ifdef DEV_TEST_LORA_UART
-static esp_err_t initTestLED(void);
-static void blinkLED(void);
-static void lora_uart_devtest(const uint8_t *buf);
+#define LORA_UART       UART_NUM_2
+#define LORA_TX         GPIO_NUM_17
+#define LORA_RX         GPIO_NUM_16
+#define LORA_BAUD       115200
+
+#define AT_BUF_SIZE     64
+#define AT_TIMEOUT_MS   500
+#define AT_DELAY_MS     300
+
+#define DEV_TEST_LORA   1
+
+#ifdef DEV_TEST_LORA
+#define LED_PIN         GPIO_NUM_2
+#define BLINK_COUNT     3
+#define BLINK_ON_MS     200
+#define BLINK_OFF_MS    200
 #endif
 
-/*************************************************************************
- AT COMMAND HELPERS
- *************************************************************************/
+/*******************************************************************************
+ * AT Commands
+ ******************************************************************************/
 
-/**
- * @brief Send AT command to LoRa module and log response
- *
- * @param command AT command string (must include \r\n)
- * @param description Human-readable description for logging
- * @return ESP_OK on success, error code otherwise
- */
-static esp_err_t sendATCommand(const char *command, const char *description)
+static void at_send(const char *cmd, const char *label)
 {
-    uint8_t buf[AT_RESPONSE_BUF_SIZE];
-    int len;
+    uint8_t buf[AT_BUF_SIZE];
 
     uart_flush(LORA_UART);
-    uart_write_bytes(LORA_UART, command, strlen(command));
-    vTaskDelay(pdMS_TO_TICKS(AT_CMD_DELAY_MS));
+    uart_write_bytes(LORA_UART, cmd, strlen(cmd));
+    vTaskDelay(pdMS_TO_TICKS(AT_DELAY_MS));
 
-    len = uart_read_bytes(LORA_UART, buf, sizeof(buf) - 1,
-                          pdMS_TO_TICKS(AT_CMD_TIMEOUT_MS));
-
+    int len = uart_read_bytes(LORA_UART, buf, sizeof(buf) - 1,
+                              pdMS_TO_TICKS(AT_TIMEOUT_MS));
     if (len > 0) {
         buf[len] = '\0';
-        ESP_LOGI(TAG, "%s: %s", description, buf);
-        return ESP_OK;
+        ESP_LOGI(TAG, "%s: %s", label, buf);
+    } else {
+        ESP_LOGW(TAG, "%s: no response", label);
     }
-
-    ESP_LOGW(TAG, "%s: No response", description);
-    return ESP_ERR_TIMEOUT;
 }
 
-/**
- * @brief Query AT parameter and log result
- *
- * @param query AT query string (must include \r\n)
- * @param param_name Parameter name for logging
- * @return ESP_OK on success, error code otherwise
- */
-static esp_err_t queryATParameter(const char *query, const char *param_name)
+/*******************************************************************************
+ * Test LED
+ ******************************************************************************/
+
+#ifdef DEV_TEST_LORA
+
+static void led_init(void)
 {
-    uint8_t buf[AT_RESPONSE_BUF_SIZE];
-    int len;
-
-    uart_flush(LORA_UART);
-    uart_write_bytes(LORA_UART, query, strlen(query));
-    vTaskDelay(pdMS_TO_TICKS(AT_CMD_DELAY_MS));
-
-    len = uart_read_bytes(LORA_UART, buf, sizeof(buf) - 1,
-                          pdMS_TO_TICKS(AT_CMD_TIMEOUT_MS));
-
-    if (len > 0) {
-        buf[len] = '\0';
-        ESP_LOGI(TAG, "%s: %s", param_name, buf);
-        return ESP_OK;
-    }
-
-    ESP_LOGW(TAG, "%s: Query failed", param_name);
-    return ESP_ERR_TIMEOUT;
-}
-
-/*************************************************************************
- TRIGGER HANDLING
- *************************************************************************/
-
-/**
- * @brief Handle received trigger message
- *
- * Processes trigger reception and provides visual feedback in test mode.
- */
-static void handleTriggerReceived(void)
-{
-    ESP_LOGI(TAG, "TRIGGER RECEIVED!");
-    ISR_OnLoRaTrigger();
-}
-
-/*************************************************************************
- TEST MODE SUPPORT
- *************************************************************************/
-
-#ifdef DEV_TEST_LORA_UART
-
-static esp_err_t initTestLED(void)
-{
-    gpio_config_t led_conf = {
-        .pin_bit_mask = (1ULL << LED_PIN),
-        .mode = GPIO_MODE_OUTPUT,
-        .pull_up_en = GPIO_PULLUP_DISABLE,
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_DISABLE,
+    gpio_config_t cfg = {
+        .pin_bit_mask  = (1ULL << LED_PIN),
+        .mode          = GPIO_MODE_OUTPUT,
+        .pull_up_en    = GPIO_PULLUP_DISABLE,
+        .pull_down_en  = GPIO_PULLDOWN_DISABLE,
+        .intr_type     = GPIO_INTR_DISABLE,
     };
-
-    esp_err_t ret = gpio_config(&led_conf);
-    if (ret == ESP_OK) {
-        gpio_set_level(LED_PIN, 0);
-    }
-
-    return ret;
+    gpio_config(&cfg);
+    gpio_set_level(LED_PIN, 0);
 }
 
-static void blinkLED(void)
+static void led_blink(void)
 {
-    for (int i = 0; i < LED_BLINK_COUNT; i++) {
+    for (int i = 0; i < BLINK_COUNT; i++) {
         gpio_set_level(LED_PIN, 1);
-        vTaskDelay(pdMS_TO_TICKS(LED_BLINK_ON_MS));
+        vTaskDelay(pdMS_TO_TICKS(BLINK_ON_MS));
         gpio_set_level(LED_PIN, 0);
-        vTaskDelay(pdMS_TO_TICKS(LED_BLINK_OFF_MS));
+        vTaskDelay(pdMS_TO_TICKS(BLINK_OFF_MS));
     }
 }
 
-#endif // DEV_TEST_LORA_UART
+#endif
 
-/*************************************************************************
- PUBLIC INTERFACE
- *************************************************************************/
+/*******************************************************************************
+ * Public Interface
+ ******************************************************************************/
 
-/**
- * @brief Initialize LoRa UART interface and configure module
- *
- * Configures UART peripheral, sets up LoRa module parameters via AT commands,
- * and optionally initializes test LED.
- *
- * @return ESP_OK on success, error code otherwise
- */
 esp_err_t lora_init(void)
 {
-    esp_err_t ret;
-
-#ifdef DEV_TEST_LORA_UART
-    ret = initTestLED();
-    if (ret != ESP_OK) {
-        ESP_LOGW(TAG, "LED init failed: %s", esp_err_to_name(ret));
-    }
+#ifdef DEV_TEST_LORA
+    led_init();
 #endif
 
-    // Configure UART
     uart_config_t cfg = {
-        .baud_rate = LORA_BAUD,
-        .data_bits = UART_DATA_8_BITS,
-        .parity = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .baud_rate  = LORA_BAUD,
+        .data_bits  = UART_DATA_8_BITS,
+        .parity     = UART_PARITY_DISABLE,
+        .stop_bits  = UART_STOP_BITS_1,
+        .flow_ctrl  = UART_HW_FLOWCTRL_DISABLE,
         .source_clk = UART_SCLK_DEFAULT,
     };
 
+    esp_err_t ret;
+
     ret = uart_driver_install(LORA_UART, 2048, 2048, 0, NULL, 0);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "UART driver install failed: %s", esp_err_to_name(ret));
-        return ret;
-    }
+    if (ret != ESP_OK) return ret;
 
     ret = uart_param_config(LORA_UART, &cfg);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "UART param config failed: %s", esp_err_to_name(ret));
-        return ret;
-    }
+    if (ret != ESP_OK) return ret;
 
-    ret = uart_set_pin(LORA_UART, LORA_TX_PIN, LORA_RX_PIN, -1, -1);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "UART pin config failed: %s", esp_err_to_name(ret));
-        return ret;
-    }
+    ret = uart_set_pin(LORA_UART, LORA_TX, LORA_RX, -1, -1);
+    if (ret != ESP_OK) return ret;
 
-    // Allow module to boot
     vTaskDelay(pdMS_TO_TICKS(500));
 
-    // Configure LoRa module via AT commands
-    ESP_LOGI(TAG, "Configuring LoRa module...");
+    /* Configure module */
+    at_send("AT+ADDRESS=2\r\n",   "ADDRESS set");
+    at_send("AT+NETWORKID=6\r\n", "NETWORKID set");
 
-    sendATCommand("AT+ADDRESS=2\r\n", "ADDRESS set");
-    sendATCommand("AT+NETWORKID=6\r\n", "NETWORKID set");
+    /* Verify */
+    at_send("AT+ADDRESS?\r\n",   "ADDRESS");
+    at_send("AT+NETWORKID?\r\n", "NETWORKID");
+    at_send("AT+PARAMETER?\r\n", "PARAMETER");
+    at_send("AT+BAND?\r\n",      "BAND");
 
-    // Verify configuration
-    queryATParameter("AT+ADDRESS?\r\n", "ADDRESS");
-    queryATParameter("AT+NETWORKID?\r\n", "NETWORKID");
-    queryATParameter("AT+PARAMETER?\r\n", "PARAMETER");
-    queryATParameter("AT+BAND?\r\n", "BAND");
-
-    ESP_LOGI(TAG, "LoRa init complete");
+    ESP_LOGI(TAG, "init complete");
     return ESP_OK;
 }
 
-/**
- * @brief Send trigger command to remote LoRa device
- *
- * Sends a trigger message to address 1 (ESP32-S3 camera module).
- */
 void lora_send_trigger(void)
 {
-    const char *cmd = "AT+SEND=1,1,T\r\n";  // Send to S3 (addr 1)
+    const char *cmd = "AT+SEND=1,1,T\r\n";
     uart_write_bytes(LORA_UART, cmd, strlen(cmd));
-    ESP_LOGI(TAG, "Trigger sent");
+    ESP_LOGI(TAG, "trigger sent");
 }
 
-/**
- * @brief LoRa receive task - monitors for incoming trigger messages
- *
- * Continuously polls UART for LoRa messages and processes trigger commands.
- * Provides periodic status logging.
- *
- * @param arg Unused task parameter
- */
 void lora_receive_task(void *arg)
 {
     uint8_t buf[256];
-    int poll_count = 0;
+    int polls = 0;
 
-    ESP_LOGI(TAG, "LoRa RX task started, waiting for triggers...");
+    ESP_LOGI(TAG, "RX task started");
 
     for (;;) {
         int len = uart_read_bytes(LORA_UART, buf, sizeof(buf) - 1,
                                   pdMS_TO_TICKS(100));
 
-        // Periodic status update
-        poll_count++;
-        if (poll_count % 100 == 0) {  // Every 10 seconds
-            ESP_LOGI(TAG, "RX task alive - %d polls, listening...", poll_count);
+        if (++polls % 100 == 0) {
+            ESP_LOGI(TAG, "listening... (%d polls)", polls);
         }
 
-        if (len > 0) {
-            buf[len] = '\0';
-            ESP_LOGI(TAG, "RX raw (%d bytes): [%s]", len, buf);
+        if (len <= 0) continue;
 
-#ifdef DEV_TEST_LORA_UART
-            lora_uart_devtest(buf);
+        buf[len] = '\0';
+        ESP_LOGI(TAG, "RX (%d bytes): [%s]", len, buf);
+
+#ifdef DEV_TEST_LORA
+        if (strstr((const char *)buf, "+RCV=")) {
+            if (strstr((const char *)buf, ",T,") ||
+                strstr((const char *)buf, ",0,") ||
+                strstr((const char *)buf, ",01,"))
+            {
+                ESP_LOGI(TAG, "TRIGGER RECEIVED");
+                ISR_OnLoRaTrigger();
+                led_blink();
+            }
+        }
 #endif
-        }
     }
 }
-
-#ifdef DEV_TEST_LORA_UART
-static void lora_uart_devtest(const uint8_t *buf)
-{
-    if (strstr((const char*)buf, "+RCV=") != NULL) {
-        ESP_LOGI(TAG, "GOT +RCV MESSAGE!");
-
-        if (strstr((const char*)buf, ",T,") != NULL ||
-            strstr((const char*)buf, ",0,") != NULL ||
-            strstr((const char*)buf, ",01,") != NULL) {
-            handleTriggerReceived();
-        }
-    }
-}
-#endif

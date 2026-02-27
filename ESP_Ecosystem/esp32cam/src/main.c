@@ -1,7 +1,13 @@
 /*
  * ESP32-CAM Main Application
- * Camera capture → SPI DMA to DevKit (every frame)
- *                → JPEG to SD card (every 3 seconds)
+ *
+ * Production mode:
+ *   Camera capture → SPI DMA to DevKit (every frame)
+ *                  → JPEG to SD card (every 3 seconds)
+ *
+ * Test burst mode (define TEST_BURST_CAPTURE):
+ *   Camera capture → raw frames to SD at max rate
+ *   No SPI, no buffer pool — SD stays mounted
  */
 
 #include "freertos/FreeRTOS.h"
@@ -12,6 +18,7 @@
 #include "image_buffer_pool.h"
 #include "image_data.h"
 #include "DMA_SPI_master.h"
+#include "sd_storage.h"
 
 static const char *TAG = "MAIN";
 
@@ -20,6 +27,29 @@ static const char *TAG = "MAIN";
 void app_main(void)
 {
     ESP_LOGI(TAG, "ESP32-CAM Starting...");
+
+#ifdef TEST_BURST_CAPTURE
+
+    ESP_LOGI(TAG, "*** TEST BURST CAPTURE MODE ***");
+
+    /* Mount SD once — stays mounted for entire burst */
+    if (sd_card_init() != ESP_OK) {
+        ESP_LOGE(TAG, "SD card init failed — halting");
+        return;
+    }
+
+    /* Camera with locked exposure/gain */
+    if (camera_init() != ESP_OK) {
+        ESP_LOGE(TAG, "Camera init failed — halting");
+        return;
+    }
+
+    /* Fire — burst_capture_task handles everything */
+    camera_start_capture();
+
+    ESP_LOGI(TAG, "Burst capture running");
+
+#else
 
     /* PSRAM buffer pool for DMA transfers */
     if (image_buffer_pool_init() != ESP_OK) {
@@ -55,4 +85,6 @@ void app_main(void)
     camera_start_capture();
 
     ESP_LOGI(TAG, "Pipeline running");
+
+#endif
 }
