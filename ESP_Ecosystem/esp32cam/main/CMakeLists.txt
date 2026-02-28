@@ -1,6 +1,7 @@
 idf_component_register(
   SRCS "../src/main.c"
        "../src/camera_control.c"
+       "../src/ov2640_config.c"
        "../src/DMA_SPI_master.c"
        "../src/image_buffer_pool.c"
        "../src/sd_storage.c"

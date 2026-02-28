@@ -54,7 +54,7 @@ flowchart LR
 - [Software Design Documents](./Documentation/SDDs/SDD000.md)
 - [Test Documents](./Documentation/TPD.md)
 - [BOM Summary](./Documentation/BOM/BOM000.md)
-
+- [Simulation](./sim/doc/SDD500.md)
 ## Project Info
 - **Budget** <$300
 - **Goal Range** 2 miles
@@ -62,6 +62,11 @@ flowchart LR
   - Cole Zenk
   - Rhett Hudoba
   - Collin Lunde
+
+## Issues
+- [gpio extender](./issues/gpio_expander.md)
+- [WHT compression](./issues/WHT_compression.md)
+- [Power switching](./issues/power_switching.md)
 
 ## Todos and Timeline
 

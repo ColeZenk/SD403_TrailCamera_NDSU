@@ -18,11 +18,27 @@ def bit_not(x):
     """Fixed-width bitwise complement. In HDL this is implicit via signal width."""
     return ~x & W
 
+# =============================================================================
+# Image data aquesition
+# =============================================================================
+
+def load_frame(data_path):
+    PIXELS_X = 320
+    PIXELS_Y = 240
+    with open(data_path, 'rb') as f:
+        data = f.read()
+        assert len(data) == PIXELS_X * PIXELS_Y
+
+        sample_frame = []
+        for y in range(PIXELS_Y):
+            row = data[y*PIXELS_X : y*PIXELS_X + PIXELS_X]
+            sample_frame.append(row)
+    return sample_frame
+
 
 # =============================================================================
 # Reference implementation (loop-based, for validation)
 # =============================================================================
-
 def fwht_reference(data):
     """Standard FWHT with explicit loops. O(N log N)."""
     x = data[:]
@@ -98,6 +114,23 @@ class FWHT:
         return index.x
 
 
+def wht_2D(block):
+    # step 1: row pass
+    result = []
+    for row in block:
+        result.append(FWHT(list(row)).run())
+
+    # step 2: column pass
+    for c in range(8):
+        col = [result[r][c] for r in range(8)]  # extract column
+        col = FWHT(col).run()                    # transform it
+        for r in range(8):
+            result[r][c] = col[r]               # write it back
+
+    return result
+
+
+
 # =============================================================================
 # Matrix form (for triple validation)
 # =============================================================================
@@ -131,6 +164,12 @@ def fwht_matrix(data):
 # =============================================================================
 # Validation
 # =============================================================================
+def diff_frames(frame_a, frame_b):
+    diff = []
+    for y in range(240):
+        row = [int(frame_b[y][x]) - int(frame_a[y][x]) for x in range(320)]
+        diff.append(row)
+    return diff
 
 def validate(N):
     """Cross-validate all three implementations."""
@@ -154,8 +193,45 @@ def validate(N):
 
     print(f"N={N:4d} | cycles={hw.cycle:5d} | expected={(N >> 1) * N.bit_length() - 1:5d} | PASS")
 
+def analyze_compression(diff, threshold=100, keep_n=4):
+    changed_blocks = 0
+    total_blocks = 0
+    total_coeffs_sent = 0
+
+    for by in range(0, 240, 8):
+        for bx in range(0, 320, 8):
+            block = [diff[y][bx:bx+8] for y in range(by, by+8)]
+            total_blocks += 1
+
+            coeffs = wht_2D(block)
+
+            # skip DC (coeffs[0][0]), only look at AC
+            ac_coeffs = [abs(coeffs[r][c]) for r in range(8) for c in range(8) if not (r==0 and c==0)]
+
+            if max(ac_coeffs) < threshold:
+                continue
+
+            changed_blocks += 1
+            significant = sum(1 for v in ac_coeffs if v > threshold)
+            total_coeffs_sent += min(significant, keep_n)
+
+    raw_diff_bytes = 320 * 240
+    # each coeff = 1 byte index + 2 bytes value = 3 bytes, plus 3 byte block header
+    compressed_bytes = changed_blocks * 3 + total_coeffs_sent * 3
+
+    print(f"\n  Total blocks:       {total_blocks}")
+    print(f"  Changed blocks:     {changed_blocks} ({100*changed_blocks/total_blocks:.1f}%)")
+    print(f"  Raw diff size:      {raw_diff_bytes} bytes")
+    print(f"  Compressed size:    {compressed_bytes} bytes")
+    print(f"  Compression ratio:  {raw_diff_bytes/max(compressed_bytes,1):.1f}x")
+    print(f"  SF7 FPS:            {683/max(compressed_bytes,1):.2f}")
+
 
 def main():
+    BLOCK_WIDTH = 320 // 8
+    BLOCK_LENGTH = 240 // 8
+    row = 100
+    x = 160
     print("Walsh-Hadamard Transform Validation")
     print("=" * 60)
 
@@ -163,16 +239,35 @@ def main():
         N = 1 << exp
         validate(N)
 
+
     print("=" * 60)
-    print("All tests passed.")
 
     # demo with small input
     print("\nDemo: N=8")
-    data = [1, 2, 3, 4, 5, 6, 7, 8]
-    print(f"  Input:   {data}")
-    print(f"  WHT:     {fwht_reference(data)}")
-    print(f"  Inverse: {ifwht_reference(fwht_reference(data))}")
+    frame_a = load_frame("../ESP_Ecosystem/esp32cam/docs/testing/artifact/test4/img_0000.raw")
+    frame_b = load_frame("../ESP_Ecosystem/esp32cam/docs/testing/artifact/test4/img_0003.raw")
+    diff = diff_frames(frame_a, frame_b)
+    block = [diff[y][x:x+8] for y in range(row, row+8)]
+    coeffs = wht_2D(block)
 
+    print(f"\n{'Row':<4} {'--- Input 8x8 (pixels) ---':<50} {'--- WHT Coefficients ---'}")
+    print("-" * 100)
+    for r in range(8):
+        pixels = [int(b) for b in block[r]]
+        coeff_row = coeffs[r]
+        px_str = "  ".join(f"{v:4d}" for v in pixels)
+        co_str = "  ".join(f"{v:6d}" for v in coeff_row)
+        print(f"{r:<4} {px_str}    {co_str}")
+
+    flat = [coeffs[r][c] for r in range(8) for c in range(8)]
+    flat_abs = sorted([abs(v) for v in flat], reverse=True)
+    print(f"\n  DC coefficient:      {coeffs[0][0]}")
+    print(f"  Top 5 magnitudes:    {flat_abs[:5]}")
+    print(f"  Bottom 5 magnitudes: {flat_abs[-5:]}")
+    total_energy = sum(v*v for v in flat)
+    dc_energy = coeffs[0][0] ** 2
+    print(f"  DC energy fraction:  {dc_energy/total_energy*100:.1f}%")
+    analyze_compression(diff)
 
 if __name__ == "__main__":
     main()

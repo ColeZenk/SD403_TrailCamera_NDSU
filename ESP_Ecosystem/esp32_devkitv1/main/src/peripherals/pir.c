@@ -24,7 +24,7 @@ esp_err_t pir_init(int pir1, int pir2, int pir3)
     return gpio_config(&io);
 }
 
-int pir_read(pir_id_t pir)
+bool pir_read(pir_id_t pir)
 {
     int idx = (int)pir;
     if (idx < 0 || idx > 2 || pins[idx] < 0) return 0;
