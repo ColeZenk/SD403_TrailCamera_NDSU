@@ -5,6 +5,7 @@ Implements both reference (loop) and branchless (hardware) FWHT
 for cross-validation.
 """
 
+import math
 
 # =============================================================================
 # Fixed-width integer helpers (simulates HDL signal width)
@@ -130,7 +131,6 @@ def wht_2D(block):
     return result
 
 
-
 # =============================================================================
 # Matrix form (for triple validation)
 # =============================================================================
@@ -193,10 +193,48 @@ def validate(N):
 
     print(f"N={N:4d} | cycles={hw.cycle:5d} | expected={(N >> 1) * N.bit_length() - 1:5d} | PASS")
 
-def analyze_compression(diff, threshold=100, keep_n=4):
+
+# =============================================================================
+# Adaptive per-block noise estimator
+#
+# Each block maintains a running RMS estimate of its AC energy. The threshold
+# is k*sigma above that estimate. Blocks that are always noisy adapt upward;
+# blocks that are always clean stay low. No static calibration required.
+#
+# alpha: learning rate. 0.05 = ~20 frames to adapt to scene change.
+# k:     sigma multiplier. 3.0 = 99.7% of pure noise rejected.
+# =============================================================================
+
+class BlockNoiseEstimator:
+    def __init__(self, alpha=0.05, k=3.0):
+        self.alpha = alpha
+        self.k = k
+        # initialize conservatively high — adapts down on static scene
+        self.noise_est = [[100.0] * (320 // 8) for _ in range(240 // 8)]
+
+    def update_and_threshold(self, by, bx, ac_coeffs):
+        idx_y = by // 8
+        idx_x = bx // 8
+
+        # RMS of AC coefficients as energy proxy
+        rms = math.sqrt(sum(v * v for v in ac_coeffs) / len(ac_coeffs))
+
+        # exponential moving average update
+        self.noise_est[idx_y][idx_x] = (
+            self.alpha * rms +
+            (1 - self.alpha) * self.noise_est[idx_y][idx_x]
+        )
+
+        threshold = self.k * self.noise_est[idx_y][idx_x]
+        return max(abs(v) for v in ac_coeffs) > threshold
+
+
+def analyze_compression(diff, keep_n=4, use_adaptive=True, fixed_threshold=100):
     changed_blocks = 0
     total_blocks = 0
     total_coeffs_sent = 0
+
+    estimator = BlockNoiseEstimator() if use_adaptive else None
 
     for by in range(0, 240, 8):
         for bx in range(0, 320, 8):
@@ -208,18 +246,32 @@ def analyze_compression(diff, threshold=100, keep_n=4):
             # skip DC (coeffs[0][0]), only look at AC
             ac_coeffs = [abs(coeffs[r][c]) for r in range(8) for c in range(8) if not (r==0 and c==0)]
 
-            if max(ac_coeffs) < threshold:
+            if use_adaptive:
+                block_changed = estimator.update_and_threshold(by, bx, ac_coeffs)
+            else:
+                block_changed = max(ac_coeffs) >= fixed_threshold
+
+            if not block_changed:
                 continue
 
             changed_blocks += 1
-            significant = sum(1 for v in ac_coeffs if v > threshold)
+            if use_adaptive:
+                idx_y = by // 8
+                idx_x = bx // 8
+                threshold = estimator.k * estimator.noise_est[idx_y][idx_x]
+                significant = sum(1 for v in ac_coeffs if v > threshold)
+            else:
+                significant = sum(1 for v in ac_coeffs if v > fixed_threshold)
+
             total_coeffs_sent += min(significant, keep_n)
 
     raw_diff_bytes = 320 * 240
     # each coeff = 1 byte index + 2 bytes value = 3 bytes, plus 3 byte block header
     compressed_bytes = changed_blocks * 3 + total_coeffs_sent * 3
 
-    print(f"\n  Total blocks:       {total_blocks}")
+    mode = "adaptive" if use_adaptive else f"fixed threshold={fixed_threshold}"
+    print(f"\n  Mode:               {mode}")
+    print(f"  Total blocks:       {total_blocks}")
     print(f"  Changed blocks:     {changed_blocks} ({100*changed_blocks/total_blocks:.1f}%)")
     print(f"  Raw diff size:      {raw_diff_bytes} bytes")
     print(f"  Compressed size:    {compressed_bytes} bytes")
@@ -228,8 +280,6 @@ def analyze_compression(diff, threshold=100, keep_n=4):
 
 
 def main():
-    BLOCK_WIDTH = 320 // 8
-    BLOCK_LENGTH = 240 // 8
     row = 100
     x = 160
     print("Walsh-Hadamard Transform Validation")
@@ -239,10 +289,8 @@ def main():
         N = 1 << exp
         validate(N)
 
-
     print("=" * 60)
 
-    # demo with small input
     print("\nDemo: N=8")
     frame_a = load_frame("../ESP_Ecosystem/esp32cam/docs/testing/artifact/test4/img_0000.raw")
     frame_b = load_frame("../ESP_Ecosystem/esp32cam/docs/testing/artifact/test4/img_0003.raw")
@@ -267,7 +315,10 @@ def main():
     total_energy = sum(v*v for v in flat)
     dc_energy = coeffs[0][0] ** 2
     print(f"  DC energy fraction:  {dc_energy/total_energy*100:.1f}%")
-    analyze_compression(diff)
+
+    print("\n--- Compression Analysis ---")
+    analyze_compression(diff, use_adaptive=True)
+    analyze_compression(diff, use_adaptive=False, fixed_threshold=100)
 
 if __name__ == "__main__":
     main()
