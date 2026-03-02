@@ -11,7 +11,7 @@ idf_component_register(
          "./src/peripherals/motor.c"
          "./src/peripherals/pir.c"
          "./src/peripherals/sensors_temp_humidity.c"
-
+         "./src/peripherals/motor_i2c.c"
     INCLUDE_DIRS "./inc"
     PRIV_REQUIRES driver
 )
