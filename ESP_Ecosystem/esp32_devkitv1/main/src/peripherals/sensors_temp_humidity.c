@@ -21,7 +21,7 @@ static const char *TAG = "sensors";
 #define PIR1_GPIO        35
 #define PIR2_GPIO        34
 #define PIR3_GPIO         4
-
+//
 #define STEPS_90         1024
 #define HOLD_MS          3000
 #define PIR_SETTLE_MS    30000
