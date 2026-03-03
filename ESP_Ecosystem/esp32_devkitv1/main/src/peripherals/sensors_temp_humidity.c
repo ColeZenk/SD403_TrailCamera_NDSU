@@ -1,15 +1,11 @@
 #include "peripherals/sensors_temp_humidity.h"
-
 #include <stdio.h>
 #include <stdbool.h>
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-
 #include "esp_log.h"
 #include "esp_err.h"
 #include "driver/gpio.h"
-
 #include "peripherals/i2c_bus.h"
 #include "peripherals/aht20.h"
 #include "peripherals/motor_i2c.h"
@@ -21,7 +17,7 @@ static const char *TAG = "sensors";
 #define PIR1_GPIO        35
 #define PIR2_GPIO        34
 #define PIR3_GPIO         4
-//
+
 #define STEPS_90         1024
 #define HOLD_MS          3000
 #define PIR_SETTLE_MS    30000
@@ -110,6 +106,10 @@ esp_err_t sensors_init(void)
     s_sensor_ok = (aht20_init(&s_aht20, AHT20_I2C_ADDR_DEFAULT) == ESP_OK);
     if (!s_sensor_ok)
         ESP_LOGW(TAG, "AHT20 unavailable — continuing without temp/humidity");
+
+    esp_err_t err = motor_i2c_init();
+    if (err != ESP_OK)
+        ESP_LOGW(TAG, "motor_i2c_init failed — FPGA not connected?");
 
     ESP_LOGI(TAG, "sensor subsystem initialised");
     return ESP_OK;
