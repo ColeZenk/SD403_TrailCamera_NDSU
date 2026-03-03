@@ -22,7 +22,8 @@ TOP_MODULE = top
 VERILOG_SOURCES = $(SRC_DIR)/top.v \
                   $(SRC_DIR)/esp_interface.v \
 									$(SRC_DIR)/bram_image_buffer.v\
-                  $(SRC_DIR)/lcd_controller.v
+                  $(SRC_DIR)/lcd_controller.v\
+									$(SRC_DIR)/i2c_gpio_expander.v
 
 CONSTRAINTS = $(CONSTR_DIR)/pins.cst
 
