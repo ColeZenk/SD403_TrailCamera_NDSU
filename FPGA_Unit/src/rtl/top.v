@@ -37,7 +37,7 @@ module top (
     output wire step_3,         // Pin 27
     output wire step_4,         // Pin 28
 
-    // UI buttons: input (DIR_REG bits [7:4] = 1 on reset)
+    // Joystick buttons: input (DIR_REG bits [7:4] = 1 on reset)
     input  wire button_L,       // Pin 79
     input  wire button_R,       // Pin 80
     input  wire button_U,       // Pin 83
