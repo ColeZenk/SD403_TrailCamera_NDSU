@@ -1,33 +1,51 @@
+/**
+ * @file sensors_temp_humidity.c
+ * @brief Sensor subsystem — AHT20 + PIR + stepper motor
+ */
+
 #include "peripherals/sensors_temp_humidity.h"
+
 #include <stdio.h>
 #include <stdbool.h>
+#include <inttypes.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+
 #include "esp_log.h"
 #include "esp_err.h"
 #include "driver/gpio.h"
+
 #include "peripherals/i2c_bus.h"
 #include "peripherals/aht20.h"
-#include "peripherals/motor_i2c.h"
+#include "peripherals/motor.h"
 
 static const char *TAG = "sensors";
 
-#define I2C_SDA_GPIO     21
-#define I2C_SCL_GPIO     22
-#define PIR1_GPIO        35
-#define PIR2_GPIO        34
+#define I2C_SDA_GPIO      21
+#define I2C_SCL_GPIO      22
+
+#define PIR1_GPIO         35
+#define PIR2_GPIO         34
 #define PIR3_GPIO         4
 
-#define STEPS_90         1024
-#define HOLD_MS          3000
-#define PIR_SETTLE_MS    30000
+#define STEP_IN1_GPIO     13
+#define STEP_IN2_GPIO     12
+#define STEP_IN3_GPIO     14
+#define STEP_IN4_GPIO     27
 
-#define FPGA_ADDR        0x27
-#define FPGA_REG_TEMP    0x02
-#define FPGA_REG_RH      0x03
+// FPGA + camera enable pins
+#define FPGA_EN_GPIO      2
+#define CAM_EN_GPIO       15
 
-static aht20_t s_aht20;
-static bool    s_sensor_ok;
+#define STEPS_90                1024
+#define HOLD_MS                 3000
+#define PIR_SETTLE_TIMEOUT_MS   30000
+#define PIR3_ACTIVE_MS          (HOLD_MS + 2000)
+
+static aht20_t          s_aht20;
+static bool             s_sensor_ok;
+static motor_stepper_t  s_motor;
 
 static void pir_init_pin(gpio_num_t pin, bool input_only)
 {
@@ -35,10 +53,33 @@ static void pir_init_pin(gpio_num_t pin, bool input_only)
         .pin_bit_mask  = (1ULL << pin),
         .mode          = GPIO_MODE_INPUT,
         .pull_up_en    = GPIO_PULLUP_DISABLE,
-        .pull_down_en  = input_only ? GPIO_PULLDOWN_DISABLE : GPIO_PULLDOWN_ENABLE,
+        .pull_down_en  = input_only ? GPIO_PULLDOWN_DISABLE
+                                    : GPIO_PULLDOWN_ENABLE,
         .intr_type     = GPIO_INTR_DISABLE,
     };
     ESP_ERROR_CHECK(gpio_config(&io));
+}
+
+static void enable_outputs_init(void)
+{
+    gpio_config_t io = {
+        .pin_bit_mask  = (1ULL << FPGA_EN_GPIO) | (1ULL << CAM_EN_GPIO),
+        .mode          = GPIO_MODE_OUTPUT,
+        .pull_up_en    = GPIO_PULLUP_DISABLE,
+        .pull_down_en  = GPIO_PULLDOWN_DISABLE,
+        .intr_type     = GPIO_INTR_DISABLE,
+    };
+    ESP_ERROR_CHECK(gpio_config(&io));
+
+    gpio_set_level((gpio_num_t)FPGA_EN_GPIO, 0);
+    gpio_set_level((gpio_num_t)CAM_EN_GPIO, 0);
+}
+
+static inline void enable_outputs_set(bool on)
+{
+    int level = on ? 1 : 0;
+    gpio_set_level((gpio_num_t)FPGA_EN_GPIO, level);
+    gpio_set_level((gpio_num_t)CAM_EN_GPIO, level);
 }
 
 static int detect_triggered_pir(void)
@@ -52,64 +93,77 @@ static int detect_triggered_pir(void)
 static void wait_for_all_pirs_low(void)
 {
     int elapsed = 0;
+
     while (gpio_get_level((gpio_num_t)PIR1_GPIO) ||
            gpio_get_level((gpio_num_t)PIR2_GPIO) ||
            gpio_get_level((gpio_num_t)PIR3_GPIO))
     {
-        if (elapsed >= PIR_SETTLE_MS) break;
+        if (elapsed >= PIR_SETTLE_TIMEOUT_MS) {
+            break;
+        }
+
         vTaskDelay(pdMS_TO_TICKS(100));
         elapsed += 100;
     }
+
     vTaskDelay(pdMS_TO_TICKS(200));
 }
 
-static void fpga_send_sensor_data(float temp_f, float rh)
+static inline float c_to_f(float c)
 {
-    uint8_t t_byte = (uint8_t)(temp_f < 0 ? 0 : temp_f > 255 ? 255 : temp_f);
-    uint8_t r_byte = (uint8_t)(rh < 0 ? 0 : rh > 100 ? 100 : rh);
-
-    uint8_t buf_t[2] = { FPGA_REG_TEMP, t_byte };
-    uint8_t buf_r[2] = { FPGA_REG_RH,   r_byte };
-
-    esp_err_t err;
-    err = i2c_bus_write(FPGA_ADDR, buf_t, sizeof(buf_t), 100);
-    if (err != ESP_OK)
-        ESP_LOGW(TAG, "FPGA temp write failed: %s", esp_err_to_name(err));
-
-    err = i2c_bus_write(FPGA_ADDR, buf_r, sizeof(buf_r), 100);
-    if (err != ESP_OK)
-        ESP_LOGW(TAG, "FPGA RH write failed: %s", esp_err_to_name(err));
+    return c * 9.0f / 5.0f + 32.0f;
 }
-
-static inline float c_to_f(float c) { return c * 9.0f / 5.0f + 32.0f; }
 
 esp_err_t sensors_init(void)
 {
+    // PIR pins
     pir_init_pin((gpio_num_t)PIR1_GPIO, true);
     pir_init_pin((gpio_num_t)PIR2_GPIO, true);
     pir_init_pin((gpio_num_t)PIR3_GPIO, false);
 
+    // FPGA + camera enable pins
+    enable_outputs_init();
+
+    // Stepper configuration
+    s_motor = (motor_stepper_t){
+        .in1_gpio = STEP_IN1_GPIO,
+        .in2_gpio = STEP_IN2_GPIO,
+        .in3_gpio = STEP_IN3_GPIO,
+        .in4_gpio = STEP_IN4_GPIO,
+        .wire_map = {1, 0, 3, 2},
+        .phase    = 0,
+    };
+
+    esp_err_t err = motor_stepper_init(&s_motor);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "motor_stepper_init failed: %s", esp_err_to_name(err));
+        return err;
+    }
+
+    motor_stepper_set_phase(&s_motor, 0);
+    motor_stepper_release(&s_motor);
+
+    // I2C bus
     if (!i2c_bus_is_init()) {
         const i2c_bus_config_t bus_cfg = {
-            .port                   = I2C_NUM_0,
-            .sda_gpio               = I2C_SDA_GPIO,
-            .scl_gpio               = I2C_SCL_GPIO,
+            .port     = I2C_NUM_0,
+            .sda_gpio = I2C_SDA_GPIO,
+            .scl_gpio = I2C_SCL_GPIO,
             .enable_internal_pullup = true,
         };
-        esp_err_t err = i2c_bus_init(&bus_cfg);
+
+        err = i2c_bus_init(&bus_cfg);
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "I2C bus init failed: %s", esp_err_to_name(err));
             return err;
         }
     }
 
+    // AHT20
     s_sensor_ok = (aht20_init(&s_aht20, AHT20_I2C_ADDR_DEFAULT) == ESP_OK);
-    if (!s_sensor_ok)
+    if (!s_sensor_ok) {
         ESP_LOGW(TAG, "AHT20 unavailable — continuing without temp/humidity");
-
-    esp_err_t err = motor_i2c_init();
-    if (err != ESP_OK)
-        ESP_LOGW(TAG, "motor_i2c_init failed — FPGA not connected?");
+    }
 
     ESP_LOGI(TAG, "sensor subsystem initialised");
     return ESP_OK;
@@ -117,6 +171,8 @@ esp_err_t sensors_init(void)
 
 void sensors_task(void *pvParameters)
 {
+    (void)pvParameters;
+
     ESP_LOGI(TAG, "sensor task started — polling PIRs");
 
     for (;;) {
@@ -127,13 +183,12 @@ void sensors_task(void *pvParameters)
             continue;
         }
 
-        float t_f = 0, rh = 0;
         if (s_sensor_ok) {
-            float t_c = 0;
+            float t_c = 0.0f;
+            float rh   = 0.0f;
+
             if (aht20_read(&s_aht20, &t_c, &rh) == ESP_OK) {
-                t_f = c_to_f(t_c);
-                ESP_LOGI(TAG, "PIR%d | %.1f F | %.0f%% RH", trig, t_f, rh);
-                fpga_send_sensor_data(t_f, rh);
+                ESP_LOGI(TAG, "PIR%d | %.1f F | %.0f%% RH", trig, c_to_f(t_c), rh);
             } else {
                 ESP_LOGW(TAG, "PIR%d | AHT20 read failed", trig);
             }
@@ -141,11 +196,29 @@ void sensors_task(void *pvParameters)
             ESP_LOGI(TAG, "PIR%d | sensor unavailable", trig);
         }
 
+        // Turn on FPGA and camera together
+        enable_outputs_set(true);
+
         switch (trig) {
-            case 1: motor_i2c_swing_cw (STEPS_90, HOLD_MS); break;
-            case 2: motor_i2c_swing_ccw(STEPS_90, HOLD_MS); break;
-            case 3: break;
+            case 1:
+                motor_stepper_swing_cw(&s_motor, STEPS_90, HOLD_MS);
+                break;
+
+            case 2:
+                motor_stepper_swing_ccw(&s_motor, STEPS_90, HOLD_MS);
+                break;
+
+            case 3:
+                // No motor motion; keep both outputs on for similar action time
+                vTaskDelay(pdMS_TO_TICKS(PIR3_ACTIVE_MS));
+                break;
+
+            default:
+                break;
         }
+
+        motor_stepper_release(&s_motor);
+        enable_outputs_set(false);
 
         wait_for_all_pirs_low();
     }
