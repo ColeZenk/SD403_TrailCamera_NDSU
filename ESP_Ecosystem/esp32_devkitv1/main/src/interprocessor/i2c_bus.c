@@ -2,14 +2,27 @@
  * i2c_bus.c — Shared I2C bus manager
  *
  * Mutex-protected bus access. All I2C peripherals go through here.
+ *
+ * Includes:
+ *  - init/deinit
+ *  - write/read/write_read
+ *  - probe (address ACK check)
+ *  - scan (log all ACKing addresses)
+ *
+ * NOTE: Uses legacy ESP-IDF I2C driver (driver/i2c.h). Works fine on IDF v5.2.
  */
 
 #include "peripherals/i2c_bus.h"
 
 #include <string.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
+
 #include "esp_log.h"
+#include "esp_err.h"
+
+#include "driver/i2c.h"
 
 static const char *TAG = "I2C";
 
@@ -20,6 +33,10 @@ static struct {
     SemaphoreHandle_t mutex;
     bool              initialized;
 } bus;
+
+/* =========================
+ * Public: init / state
+ * ========================= */
 
 esp_err_t i2c_bus_init(const i2c_bus_config_t *cfg)
 {
@@ -57,11 +74,16 @@ esp_err_t i2c_bus_init(const i2c_bus_config_t *cfg)
     ESP_LOGI(TAG, "ready — port %d, SDA=%d SCL=%d, %lu Hz",
              cfg->port, cfg->sda_gpio, cfg->scl_gpio,
              cfg->clk_speed_hz ? cfg->clk_speed_hz : (uint32_t)DEFAULT_CLK);
+
     return ESP_OK;
 }
 
-i2c_port_t i2c_bus_get_port(void)        { return bus.port; }
-bool       i2c_bus_is_init(void)          { return bus.initialized; }
+i2c_port_t i2c_bus_get_port(void)  { return bus.port; }
+bool       i2c_bus_is_init(void)   { return bus.initialized; }
+
+/* =========================
+ * Public: lock / unlock
+ * ========================= */
 
 esp_err_t i2c_bus_lock(uint32_t timeout_ms)
 {
@@ -75,8 +97,11 @@ void i2c_bus_unlock(void)
     if (bus.mutex) xSemaphoreGive(bus.mutex);
 }
 
-esp_err_t i2c_bus_write(uint8_t addr, const uint8_t *data,
-                        size_t len, uint32_t timeout_ms)
+/* =========================
+ * Public: probe / scan
+ * ========================= */
+
+esp_err_t i2c_bus_probe(uint8_t addr, uint32_t timeout_ms)
 {
     if (!bus.initialized) return ESP_ERR_INVALID_STATE;
 
@@ -84,10 +109,68 @@ esp_err_t i2c_bus_write(uint8_t addr, const uint8_t *data,
     if (err != ESP_OK) return err;
 
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    if (!cmd) {
+        i2c_bus_unlock();
+        return ESP_ERR_NO_MEM;
+    }
+
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
-    i2c_master_write(cmd, data, len, true);
     i2c_master_stop(cmd);
+
+    err = i2c_master_cmd_begin(bus.port, cmd, pdMS_TO_TICKS(timeout_ms));
+    i2c_cmd_link_delete(cmd);
+
+    i2c_bus_unlock();
+    return err;
+}
+
+void i2c_bus_scan(uint32_t timeout_ms)
+{
+    if (!bus.initialized) {
+        ESP_LOGW(TAG, "scan requested but bus not initialized");
+        return;
+    }
+
+    ESP_LOGI(TAG, "scan start (port %d)...", (int)bus.port);
+
+    int found = 0;
+    for (uint8_t addr = 0x08; addr < 0x78; addr++) {
+        esp_err_t err = i2c_bus_probe(addr, timeout_ms);
+        if (err == ESP_OK) {
+            ESP_LOGI(TAG, "ACK at 0x%02X", addr);
+            found++;
+        }
+    }
+
+    if (!found) ESP_LOGW(TAG, "no I2C devices ACKed");
+    ESP_LOGI(TAG, "scan done");
+}
+
+/* =========================
+ * Public: write / read / write_read
+ * ========================= */
+
+esp_err_t i2c_bus_write(uint8_t addr, const uint8_t *data,
+                        size_t len, uint32_t timeout_ms)
+{
+    if (!bus.initialized) return ESP_ERR_INVALID_STATE;
+    if (len > 0 && !data) return ESP_ERR_INVALID_ARG;
+
+    esp_err_t err = i2c_bus_lock(timeout_ms);
+    if (err != ESP_OK) return err;
+
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    if (!cmd) {
+        i2c_bus_unlock();
+        return ESP_ERR_NO_MEM;
+    }
+
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
+    if (len > 0) i2c_master_write(cmd, data, len, true);
+    i2c_master_stop(cmd);
+
     err = i2c_master_cmd_begin(bus.port, cmd, pdMS_TO_TICKS(timeout_ms));
     i2c_cmd_link_delete(cmd);
 
@@ -99,16 +182,25 @@ esp_err_t i2c_bus_read(uint8_t addr, uint8_t *data,
                        size_t len, uint32_t timeout_ms)
 {
     if (!bus.initialized) return ESP_ERR_INVALID_STATE;
+    if (!data || len == 0) return ESP_ERR_INVALID_ARG;
 
     esp_err_t err = i2c_bus_lock(timeout_ms);
     if (err != ESP_OK) return err;
 
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    if (!cmd) {
+        i2c_bus_unlock();
+        return ESP_ERR_NO_MEM;
+    }
+
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_READ, true);
+
     if (len > 1) i2c_master_read(cmd, data, len - 1, I2C_MASTER_ACK);
     i2c_master_read_byte(cmd, &data[len - 1], I2C_MASTER_NACK);
+
     i2c_master_stop(cmd);
+
     err = i2c_master_cmd_begin(bus.port, cmd, pdMS_TO_TICKS(timeout_ms));
     i2c_cmd_link_delete(cmd);
 
@@ -122,25 +214,40 @@ esp_err_t i2c_bus_write_read(uint8_t addr,
                              uint32_t timeout_ms)
 {
     if (!bus.initialized) return ESP_ERR_INVALID_STATE;
+    if (!wr || wr_len == 0) return ESP_ERR_INVALID_ARG;
+    if (!rd || rd_len == 0) return ESP_ERR_INVALID_ARG;
 
     esp_err_t err = i2c_bus_lock(timeout_ms);
     if (err != ESP_OK) return err;
 
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    if (!cmd) {
+        i2c_bus_unlock();
+        return ESP_ERR_NO_MEM;
+    }
+
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
     i2c_master_write(cmd, wr, wr_len, true);
+
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_READ, true);
+
     if (rd_len > 1) i2c_master_read(cmd, rd, rd_len - 1, I2C_MASTER_ACK);
     i2c_master_read_byte(cmd, &rd[rd_len - 1], I2C_MASTER_NACK);
+
     i2c_master_stop(cmd);
+
     err = i2c_master_cmd_begin(bus.port, cmd, pdMS_TO_TICKS(timeout_ms));
     i2c_cmd_link_delete(cmd);
 
     i2c_bus_unlock();
     return err;
 }
+
+/* =========================
+ * Public: deinit
+ * ========================= */
 
 esp_err_t i2c_bus_deinit(void)
 {
@@ -149,7 +256,11 @@ esp_err_t i2c_bus_deinit(void)
     esp_err_t err = i2c_driver_delete(bus.port);
     if (err != ESP_OK) return err;
 
-    if (bus.mutex) { vSemaphoreDelete(bus.mutex); bus.mutex = NULL; }
+    if (bus.mutex) {
+        vSemaphoreDelete(bus.mutex);
+        bus.mutex = NULL;
+    }
+
     bus.initialized = false;
     return ESP_OK;
 }
