@@ -10,6 +10,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "esp_log.h"
+#include "esp_rom_sys.h"    /* esp_rom_delay_us() — tick-independent µs delay */
 
 static const char *TAG = "I2C";
 
@@ -17,9 +18,59 @@ static const char *TAG = "I2C";
 
 static struct {
     i2c_port_t        port;
+    i2c_config_t      conf;      /* stored for bus recovery after timeout */
     SemaphoreHandle_t mutex;
     bool              initialized;
 } bus;
+
+/* Recover a stuck I2C bus.
+ * Toggles SCL up to 9 times (advances any slave state machine), then
+ * generates a STOP condition so the bus is clean before reinstalling
+ * the driver. Must be called with bus.mutex already held. */
+static void bus_recover(void)
+{
+    ESP_LOGW(TAG, "I2C timeout — recovering bus (port %d)", bus.port);
+    i2c_driver_delete(bus.port);
+
+    /* After i2c_driver_delete the GPIO matrix still routes the I2C peripheral
+     * output to the pins (possibly frozen low).  gpio_reset_pin() reconnects
+     * the software GPIO register to the physical pin before we pulse SCL. */
+    gpio_reset_pin(bus.conf.scl_io_num);
+    gpio_reset_pin(bus.conf.sda_io_num);
+
+    /* Clock recovery: release SCL, then pulse until SDA goes high.
+     * esp_rom_delay_us gives real µs delays independent of tick rate. */
+    gpio_set_direction(bus.conf.scl_io_num, GPIO_MODE_OUTPUT_OD);
+    gpio_set_direction(bus.conf.sda_io_num, GPIO_MODE_INPUT_OUTPUT_OD);
+    gpio_set_level(bus.conf.scl_io_num, 1);
+    esp_rom_delay_us(5);
+
+    ESP_LOGW(TAG, "SDA before recovery: %d", gpio_get_level(bus.conf.sda_io_num));
+
+    int pulses = 0;
+    for (; pulses < 9 && !gpio_get_level(bus.conf.sda_io_num); pulses++) {
+        gpio_set_level(bus.conf.scl_io_num, 0);
+        esp_rom_delay_us(5);
+        gpio_set_level(bus.conf.scl_io_num, 1);
+        esp_rom_delay_us(5);
+    }
+    ESP_LOGW(TAG, "SCL pulses: %d, SDA after: %d", pulses, gpio_get_level(bus.conf.sda_io_num));
+
+    /* STOP: SDA low → SCL high → SDA high */
+    gpio_set_level(bus.conf.sda_io_num, 0);
+    esp_rom_delay_us(5);
+    gpio_set_level(bus.conf.scl_io_num, 1);
+    esp_rom_delay_us(5);
+    gpio_set_level(bus.conf.sda_io_num, 1);
+    esp_rom_delay_us(5);
+
+    i2c_param_config(bus.port, &bus.conf);
+    esp_err_t err = i2c_driver_install(bus.port, I2C_MODE_MASTER, 0, 0, 0);
+    if (err != ESP_OK)
+        ESP_LOGE(TAG, "bus recovery failed: %s", esp_err_to_name(err));
+    else
+        ESP_LOGI(TAG, "bus recovered");
+}
 
 esp_err_t i2c_bus_init(const i2c_bus_config_t *cfg)
 {
@@ -52,6 +103,7 @@ esp_err_t i2c_bus_init(const i2c_bus_config_t *cfg)
     }
 
     bus.port = cfg->port;
+    bus.conf = conf;
     bus.initialized = true;
 
     ESP_LOGI(TAG, "ready — port %d, SDA=%d SCL=%d, %lu Hz",
@@ -91,6 +143,8 @@ esp_err_t i2c_bus_write(uint8_t addr, const uint8_t *data,
     err = i2c_master_cmd_begin(bus.port, cmd, pdMS_TO_TICKS(timeout_ms));
     i2c_cmd_link_delete(cmd);
 
+    if (err == ESP_ERR_TIMEOUT) bus_recover();
+
     i2c_bus_unlock();
     return err;
 }
@@ -111,6 +165,8 @@ esp_err_t i2c_bus_read(uint8_t addr, uint8_t *data,
     i2c_master_stop(cmd);
     err = i2c_master_cmd_begin(bus.port, cmd, pdMS_TO_TICKS(timeout_ms));
     i2c_cmd_link_delete(cmd);
+
+    if (err == ESP_ERR_TIMEOUT) bus_recover();
 
     i2c_bus_unlock();
     return err;
@@ -137,6 +193,8 @@ esp_err_t i2c_bus_write_read(uint8_t addr,
     i2c_master_stop(cmd);
     err = i2c_master_cmd_begin(bus.port, cmd, pdMS_TO_TICKS(timeout_ms));
     i2c_cmd_link_delete(cmd);
+
+    if (err == ESP_ERR_TIMEOUT) bus_recover();
 
     i2c_bus_unlock();
     return err;

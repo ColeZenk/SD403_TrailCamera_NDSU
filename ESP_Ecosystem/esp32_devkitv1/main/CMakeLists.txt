@@ -8,6 +8,7 @@ idf_component_register(
          "./src/interprocessor/lora_uart.c"
          "./src/interprocessor/i2c_bus.c"
          "./src/peripherals/aht20.c"
+         "./src/peripherals/fpga_gpio.c"
          "./src/peripherals/motor.c"
          "./src/peripherals/pir.c"
          "./src/peripherals/sensors_temp_humidity.c"

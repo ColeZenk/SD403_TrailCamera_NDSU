@@ -13,6 +13,7 @@
 #include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 #include <string.h>
 
 static const char *TAG = "FPGA_SPI";
@@ -23,6 +24,7 @@ static const char *TAG = "FPGA_SPI";
 
 static struct {
     spi_device_handle_t device;
+    SemaphoreHandle_t   mutex;
     bool                initialized;
 } ctx;
 
@@ -44,14 +46,27 @@ typedef enum {
 
 static void generate_pattern(uint8_t *buf, size_t size, test_pattern_t pat)
 {
+    static const int W = 480;   /* LCD active width */
+
     switch (pat) {
-    case PAT_WHITE:   memset(buf, 0xFF, size); break;
-    case PAT_BLACK:   memset(buf, 0x00, size); break;
+    case PAT_WHITE:
+        memset(buf, 0xFF, size);
+        break;
+    case PAT_BLACK:
+        memset(buf, 0x00, size);
+        break;
     case PAT_GRADIENT:
-        for (size_t i = 0; i < size; i++) buf[i] = (i / 16) & 0xFF;
+        /* Horizontal gradient: left=black, right=white, same every row */
+        for (size_t i = 0; i < size; i++)
+            buf[i] = (uint8_t)((int)(i % W) * 255 / (W - 1));
         break;
     case PAT_CHECKER:
-        for (size_t i = 0; i < size; i++) buf[i] = (i & 1) ? 0xAA : 0x55;
+        /* 32×32 pixel checkerboard blocks */
+        for (size_t i = 0; i < size; i++) {
+            int col = i % W;
+            int row = i / W;
+            buf[i] = (((col / 32) + (row / 32)) & 1) ? 0xFF : 0x00;
+        }
         break;
     default:
         memset(buf, 0xFF, size);
@@ -89,9 +104,13 @@ esp_err_t fpga_spi_transmit(const uint8_t *data, size_t size)
     if (!ctx.initialized) return ESP_ERR_INVALID_STATE;
     if (!data || size == 0) return ESP_ERR_INVALID_ARG;
 
+    if (xSemaphoreTake(ctx.mutex, portMAX_DELAY) != pdTRUE)
+        return ESP_ERR_TIMEOUT;
+
     size_t offset    = 0;
     size_t in_flight = 0;
     size_t pool_idx  = 0;
+    esp_err_t ret    = ESP_OK;
 
     while (offset < size || in_flight > 0) {
 
@@ -101,12 +120,13 @@ esp_err_t fpga_spi_transmit(const uint8_t *data, size_t size)
 
             spi_transaction_t *t = &trans_pool[pool_idx % FPGA_SPI_QUEUE_SIZE];
             t->length    = chunk * 8;
+            t->rxlength  = 0;           /* reset: driver may set this on previous use */
             t->tx_buffer = data + offset;
             t->rx_buffer = NULL;
             t->flags     = 0;
 
-            esp_err_t ret = spi_device_queue_trans(ctx.device, t, portMAX_DELAY);
-            if (ret != ESP_OK) return ret;
+            ret = spi_device_queue_trans(ctx.device, t, portMAX_DELAY);
+            if (ret != ESP_OK) goto drain;
 
             offset += chunk;
             in_flight++;
@@ -115,13 +135,23 @@ esp_err_t fpga_spi_transmit(const uint8_t *data, size_t size)
 
         /* Collect one completed transfer */
         spi_transaction_t *result;
-        esp_err_t ret = spi_device_get_trans_result(ctx.device, &result,
-                                                     portMAX_DELAY);
-        if (ret != ESP_OK) return ret;
+        ret = spi_device_get_trans_result(ctx.device, &result, portMAX_DELAY);
+        if (ret != ESP_OK) goto drain;
+        in_flight--;
+    }
+    goto done;
+
+drain:
+    /* Drain any in-flight transactions to leave the SPI queue clean */
+    while (in_flight > 0) {
+        spi_transaction_t *result;
+        spi_device_get_trans_result(ctx.device, &result, portMAX_DELAY);
         in_flight--;
     }
 
-    return ESP_OK;
+done:
+    xSemaphoreGive(ctx.mutex);
+    return ret;
 }
 
 /*******************************************************************************
@@ -131,6 +161,9 @@ esp_err_t fpga_spi_transmit(const uint8_t *data, size_t size)
 esp_err_t fpga_spi_init(void)
 {
     if (ctx.initialized) return ESP_OK;
+
+    ctx.mutex = xSemaphoreCreateMutex();
+    if (!ctx.mutex) return ESP_ERR_NO_MEM;
 
     spi_bus_config_t bus = {
         .mosi_io_num     = FPGA_PIN_MOSI,
@@ -180,7 +213,9 @@ void fpga_spi_deinit(void)
 
     spi_bus_remove_device(ctx.device);
     spi_bus_free(FPGA_SPI_HOST);
+    vSemaphoreDelete(ctx.mutex);
     ctx.device = NULL;
+    ctx.mutex = NULL;
     ctx.initialized = false;
 }
 

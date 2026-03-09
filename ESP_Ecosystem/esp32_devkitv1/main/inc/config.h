@@ -17,6 +17,7 @@
 #define TEST_MODE_FPGA_PATTERNS
 /* #define TEST_MODE_LORA_LOOPBACK */
 /* #define TEST_MODE_CAMERA_INJECT */
+#define TEST_MODE_FPGA_GPIO
 
 // Verify only one test mode is active
 #if defined(TEST_MODE_FPGA_PATTERNS) && defined(TEST_MODE_LORA_LOOPBACK)
@@ -86,7 +87,34 @@
 #define FPGA_SPI_CLOCK_HZ           (FPGA_SPI_CLOCK_MHZ * 1000000)
 #define FPGA_SPI_MODE               0
 #define FPGA_SPI_QUEUE_SIZE         3
-#define FPGA_MAX_TRANSFER_SIZE      4092
+#define FPGA_MAX_TRANSFER_SIZE      32768  /* full BRAM — single CS transaction, no mid-frame resets */
+
+/*******************************************************************************
+ * FPGA I2C GPIO Expander Configuration (PCA9534-compatible at 0x27)
+ ******************************************************************************/
+
+#define FPGA_I2C_PORT               I2C_NUM_0
+#define FPGA_I2C_SDA_PIN            GPIO_NUM_21
+#define FPGA_I2C_SCL_PIN            GPIO_NUM_22
+#define FPGA_I2C_CLK_HZ             100000      /* 100 kHz — safe for LVCMOS18 */
+#define FPGA_I2C_ADDR               0x27
+#define FPGA_I2C_TIMEOUT_MS         100
+
+/* Register map (PCA9534-compatible) */
+#define FPGA_GPIO_REG_OUT           0x00
+#define FPGA_GPIO_REG_IN            0x01
+#define FPGA_GPIO_REG_DIR           0x02
+#define FPGA_GPIO_REG_INV           0x03
+
+/* Boot config: bits[7:4]=inputs(unused), bits[3:0]=outputs(steppers) */
+#define FPGA_GPIO_DIR_BOOT          0xF0
+/* Invert bits[2:0] so button reads 1=pressed (active-low with pull-up) */
+#define FPGA_GPIO_INV_BOOT          0x07
+
+/* Button bit positions in INPUT_PORT after invert applied */
+#define FPGA_BTN_L_BIT              0   /* gpio_in[0] = button_L, pin 84 */
+#define FPGA_BTN_R_BIT              1   /* gpio_in[1] = button_R, pin 83 */
+#define FPGA_BTN_S_BIT              2   /* gpio_in[2] = button_S, pin 85 */
 
 /*******************************************************************************
  * LoRa UART Configuration
@@ -117,7 +145,7 @@
 
 #define TEST_BUTTON_PIN             GPIO_NUM_0
 #define TEST_LED_PIN                GPIO_NUM_2
-#define TEST_IMAGE_SIZE             76800  // 320x240 (computed: 320 * 240)
+#define TEST_IMAGE_SIZE             32768  // FPGA BRAM size (Tang Nano 9K)
 
 // Test pattern configuration
 #ifdef TEST_MODE_FPGA_PATTERNS
