@@ -71,6 +71,10 @@ flash:
 	@echo "=== Flashing Existing Bitstream ==="
 	$(PROGRAMMER) -b $(BOARD) $(BITSTREAM)
 
+flash-persist: $(BITSTREAM)
+	@echo "=== Writing to External Flash ==="
+	$(PROGRAMMER) -b $(BOARD) -f --verify $(BITSTREAM)
+
 # Clean build artifacts
 clean:
 	@echo "=== Cleaning Build Directory ==="

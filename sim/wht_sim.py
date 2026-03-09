@@ -407,6 +407,245 @@ def analyze_frame_sequence(frames, q_step=32, top_k=5, seq_thresh=2,
 
 
 # =============================================================================
+# Motion-Compensated Compression
+#
+# TRANSMITTER:
+#   1. Block matching: for each 8x8 block in B, find best match in A within
+#      search_radius pixels (SAD). If best_sad < sad_threshold → inter block.
+#   2. Inter blocks: transmit motion vector (bx, by, dx, dy) — 4 bytes.
+#      Compute residual (block_B - warped_block_A), WHT it. If residual is
+#      above block_threshold, transmit residual patch too.
+#   3. Intra blocks (no good match): same as encode_frame — WHT of raw diff.
+#
+# PACKET FORMAT:
+#   Frame header:  [2B] n_mv  [2B] n_intra  [2B] n_mv_residual
+#   MV section:    n_mv × [bx(1) by(1) dx(1) dy(1)]           = n_mv × 4B
+#   Intra section: n_intra × [bx(1) by(1) coeffs EOB(1)]      = variable
+#   MV residuals:  n_mv_residual × [bx(1) by(1) coeffs EOB(1)]= variable
+#
+# RECEIVER:
+#   1. Warp reference frame A using motion vectors.
+#   2. Accumulate residual diff (MV residuals + intra patches).
+#   3. Gaussian smooth the diff.
+#   4. frame_B_recon = clip(warped_A + smoothed_diff, 0, 255)
+# =============================================================================
+
+def motion_estimate(frame_a, frame_b, search_radius=8, sad_threshold=256):
+    """
+    Block matching motion estimation. O(blocks × search_window).
+
+    For each 8x8 block in frame_b, search frame_a within search_radius pixels
+    using Sum of Absolute Differences (SAD). Returns:
+      mv_field: dict (by, bx) -> (dy, dx, best_sad)
+      fa_np, fb_np: numpy arrays (240x320) for downstream use
+    """
+    import numpy as np
+    fa_np = np.array([[float(frame_a[y][x]) for x in range(320)]
+                       for y in range(240)], dtype=np.float32)
+    fb_np = np.array([[float(frame_b[y][x]) for x in range(320)]
+                       for y in range(240)], dtype=np.float32)
+
+    mv_field = {}
+    for by in range(0, 240, 8):
+        for bx in range(0, 320, 8):
+            fb_block  = fb_np[by:by+8, bx:bx+8]
+            best_sad  = float('inf')
+            best_dy, best_dx = 0, 0
+
+            for dy in range(-search_radius, search_radius + 1):
+                ry = by + dy
+                if ry < 0 or ry + 8 > 240:
+                    continue
+                for dx in range(-search_radius, search_radius + 1):
+                    rx = bx + dx
+                    if rx < 0 or rx + 8 > 320:
+                        continue
+                    sad = float(np.sum(np.abs(fa_np[ry:ry+8, rx:rx+8] - fb_block)))
+                    if sad < best_sad:
+                        best_sad  = sad
+                        best_dy, best_dx = dy, dx
+
+            mv_field[(by, bx)] = (best_dy, best_dx, best_sad)
+
+    return mv_field, fa_np, fb_np
+
+
+def encode_frame_mc(mv_field, fa_np, fb_np,
+                    q_step=32, top_k=5, seq_thresh=2,
+                    block_threshold=400, sad_threshold=256):
+    """
+    Motion-compensated encoder.
+
+    Returns (total_bytes, mv_blocks, intra_blocks, mv_residuals).
+      mv_blocks:    [(by, bx, dy, dx), ...]
+      intra_blocks: [(by, bx, [(q,r,c), ...]), ...]   — same format as encode_frame
+      mv_residuals: [(by, bx, [(q,r,c), ...]), ...]   — residual patches for inter blocks
+    """
+    total_bytes  = 6   # frame header: n_mv(2) + n_intra(2) + n_mv_residual(2)
+    mv_blocks    = []
+    intra_blocks = []
+    mv_residuals = []
+
+    for by in range(0, 240, 8):
+        for bx in range(0, 320, 8):
+            best_dy, best_dx, best_sad = mv_field[(by, bx)]
+
+            if best_sad < sad_threshold:
+                # Inter block — transmit motion vector
+                mv_blocks.append((by, bx, best_dy, best_dx))
+                total_bytes += 4   # bx(1) by(1) dx(1) dy(1)
+
+                # Check residual
+                ry, rx   = by + best_dy, bx + best_dx
+                residual = [[float(fb_np[by+r, bx+c]) - float(fa_np[ry+r, rx+c])
+                             for c in range(8)] for r in range(8)]
+                coeffs   = wht_2D(residual)
+                masked   = sequency_mask(coeffs, seq_thresh)
+                ac_max   = max(abs(masked[r][c])
+                               for r in range(8) for c in range(8)
+                               if not (r == 0 and c == 0))
+
+                if ac_max >= block_threshold:
+                    quantized = [(round(masked[r][c] / q_step), r, c)
+                                 for r in range(8) for c in range(8)]
+                    nonzero   = sorted([(q, r, c) for q, r, c in quantized if q != 0],
+                                       key=lambda x: abs(x[0]), reverse=True)
+                    selected  = nonzero[:top_k]
+                    if selected:
+                        mv_residuals.append((by, bx, selected))
+                        total_bytes += 2 + len(selected) + 1  # coords + coeffs + EOB
+            else:
+                # Intra block — WHT of raw diff, same as encode_frame
+                diff_block = [[float(fb_np[by+r, bx+c]) - float(fa_np[by+r, bx+c])
+                               for c in range(8)] for r in range(8)]
+                coeffs = wht_2D(diff_block)
+                masked = sequency_mask(coeffs, seq_thresh)
+                ac_max = max(abs(masked[r][c])
+                             for r in range(8) for c in range(8)
+                             if not (r == 0 and c == 0))
+                if ac_max < block_threshold:
+                    continue
+                quantized = [(round(masked[r][c] / q_step), r, c)
+                             for r in range(8) for c in range(8)]
+                nonzero   = sorted([(q, r, c) for q, r, c in quantized if q != 0],
+                                   key=lambda x: abs(x[0]), reverse=True)
+                selected  = nonzero[:top_k]
+                if not selected:
+                    continue
+                intra_blocks.append((by, bx, selected))
+                total_bytes += 2 + len(selected) + 1  # coords + coeffs + EOB
+
+    return min(total_bytes, 76800), mv_blocks, intra_blocks, mv_residuals
+
+
+def decode_frame_mc(frame_a, mv_blocks, intra_blocks, mv_residuals,
+                    q_step=32, gauss_sigma=4.0):
+    """
+    Motion-compensated decoder.
+
+    1. Start from reference frame A.
+    2. Warp MC blocks from A using motion vectors.
+    3. Accumulate residual diff (MV residuals + intra patches).
+    4. Gaussian smooth the diff, add to warped frame.
+    """
+    import numpy as np
+    from scipy.ndimage import gaussian_filter
+
+    fa_np = np.array([[float(frame_a[y][x]) for x in range(320)]
+                       for y in range(240)], dtype=np.float64)
+    recon = fa_np.copy()
+
+    # Apply motion vectors: copy matched block from reference
+    for by, bx, dy, dx in mv_blocks:
+        ry, rx = by + dy, bx + dx
+        recon[by:by+8, bx:bx+8] = fa_np[ry:ry+8, rx:rx+8]
+
+    # Accumulate all residual diffs (MC residuals + intra) before smoothing
+    diff_recon = np.zeros((240, 320), dtype=np.float64)
+
+    for by, bx, selected in mv_residuals:
+        coeffs = [[0.0] * 8 for _ in range(8)]
+        for q, r, c in selected:
+            coeffs[r][c] = float(q * q_step)
+        patch = iwht_2D(coeffs)
+        for r in range(8):
+            for c in range(8):
+                diff_recon[by+r, bx+c] = patch[r][c]
+
+    for by, bx, selected in intra_blocks:
+        coeffs = [[0.0] * 8 for _ in range(8)]
+        for q, r, c in selected:
+            coeffs[r][c] = float(q * q_step)
+        patch = iwht_2D(coeffs)
+        for r in range(8):
+            for c in range(8):
+                diff_recon[by+r, bx+c] = patch[r][c]
+
+    if gauss_sigma > 0:
+        diff_recon = gaussian_filter(diff_recon, sigma=gauss_sigma)
+
+    return np.clip(recon + diff_recon, 0, 255)
+
+
+def encode_decode_mc(frame_a, frame_b, q_step=32, top_k=5, seq_thresh=2,
+                     block_threshold=400, gauss_sigma=4.0,
+                     search_radius=8, sad_threshold=256):
+    """
+    Full motion-compensated round-trip: estimate -> encode -> decode -> PSNR.
+    Returns same metrics dict as encode_decode, plus mv/intra split.
+    """
+    import numpy as np
+
+    mv_field, fa_np, fb_np = motion_estimate(
+        frame_a, frame_b, search_radius, sad_threshold)
+
+    total_bytes, mv_blocks, intra_blocks, mv_residuals = encode_frame_mc(
+        mv_field, fa_np, fb_np,
+        q_step=q_step, top_k=top_k, seq_thresh=seq_thresh,
+        block_threshold=block_threshold, sad_threshold=sad_threshold)
+
+    recon = decode_frame_mc(
+        frame_a, mv_blocks, intra_blocks, mv_residuals,
+        q_step=q_step, gauss_sigma=gauss_sigma)
+
+    mse  = float(np.mean((fb_np.astype(np.float64) - recon) ** 2))
+    psnr = 10 * math.log10(255**2 / mse) if mse > 0 else float('inf')
+
+    n_changed = len(mv_blocks) + len(intra_blocks)
+    return {
+        'compressed_bytes': total_bytes,
+        'ratio':            76800 / max(total_bytes, 1),
+        'sf7_fps':          683   / max(total_bytes, 1),
+        'psnr':             psnr,
+        'changed_blocks':   n_changed,
+        'mv_blocks':        len(mv_blocks),
+        'intra_blocks':     len(intra_blocks),
+        'mv_residuals':     len(mv_residuals),
+        'pct_changed':      100 * n_changed / 1200,
+        'recon':            recon,
+        'fb_np':            fb_np.astype(np.float64),
+    }
+
+
+def analyze_frame_sequence_mc(frames, q_step=32, top_k=5, seq_thresh=2,
+                               block_threshold=400, gauss_sigma=4.0,
+                               search_radius=8, sad_threshold=256):
+    results = []
+    for fi in range(len(frames) - 1):
+        name_a, fa = frames[fi]
+        name_b, fb = frames[fi + 1]
+        r = encode_decode_mc(fa, fb, q_step=q_step, top_k=top_k,
+                             seq_thresh=seq_thresh,
+                             block_threshold=block_threshold,
+                             gauss_sigma=gauss_sigma,
+                             search_radius=search_radius,
+                             sad_threshold=sad_threshold)
+        r['pair'] = f"{name_a}->>{name_b}"
+        results.append(r)
+    return results
+
+
+# =============================================================================
 # PDF report
 # =============================================================================
 
@@ -657,11 +896,17 @@ def main():
                         help='Max coefficients per block patch (default: 5)')
     parser.add_argument('--seq-thresh', type=int,   default=2,
                         help='Sequency LPF threshold (default: 2 = 6 coeffs)')
-    parser.add_argument('--gauss-sigma',type=float, default=4.0,
+    parser.add_argument('--gauss-sigma',  type=float, default=4.0,
                         help='Receiver Gaussian smooth sigma (default: 4.0)')
-    parser.add_argument('--row',        type=int,   default=100)
-    parser.add_argument('--col',        type=int,   default=160)
-    parser.add_argument('--out',        default='wht_report.pdf')
+    parser.add_argument('--mc',           action='store_true',
+                        help='Run motion-compensated pipeline and compare to baseline')
+    parser.add_argument('--search-radius',type=int,   default=8,
+                        help='MC block search radius in pixels (default: 8)')
+    parser.add_argument('--sad-threshold',type=int,   default=256,
+                        help='SAD threshold for inter vs intra decision (default: 256)')
+    parser.add_argument('--row',          type=int,   default=100)
+    parser.add_argument('--col',          type=int,   default=160)
+    parser.add_argument('--out',          default='wht_report.pdf')
     args = parser.parse_args()
 
     cfg = {
@@ -797,6 +1042,37 @@ def main():
               f"p75={nf['p75']:.0f}  p95={nf['p95']:.0f}")
         print(f"  Threshold {cfg['block_threshold']} is "
               f"{'above' if cfg['block_threshold'] > nf['p95'] else 'BELOW'} p95")
+
+        if args.mc:
+            mc_cfg = {**cfg,
+                      'search_radius': args.search_radius,
+                      'sad_threshold': args.sad_threshold}
+            print(f"\n--- Motion-Compensated  radius={args.search_radius}"
+                  f"  SAD_thr={args.sad_threshold} ---\n")
+            mc_results = analyze_frame_sequence_mc(frames, **mc_cfg)
+
+            print(f"{'Pair':<35} {'Base B':>7} {'MC B':>7} {'Saving':>7} "
+                  f"{'MC Ratio':>9} {'MC FPS':>7} {'MC PSNR':>8} "
+                  f"{'MVs':>5} {'Intra':>6}")
+            print("-" * 100)
+            for base, mc in zip(seq_results, mc_results):
+                saving   = base['compressed_bytes'] - mc['compressed_bytes']
+                psnr_s   = f"{mc['psnr']:.1f}dB" if mc['psnr'] != float('inf') else "   inf"
+                print(f"{mc['pair']:<35} {base['compressed_bytes']:>7} "
+                      f"{mc['compressed_bytes']:>7} {saving:>+7} "
+                      f"{mc['ratio']:>9.1f}x {mc['sf7_fps']:>7.2f} "
+                      f"{psnr_s:>8} {mc['mv_blocks']:>5} {mc['intra_blocks']:>6}")
+
+            mc_b    = [r['compressed_bytes'] for r in mc_results]
+            mean_mc = sum(mc_b) / len(mc_b)
+            hits_mc = sum(1 for r in mc_results if r['ratio'] >= 220)
+            base_b  = [r['compressed_bytes'] for r in seq_results]
+            mean_base = sum(base_b) / len(base_b)
+            print(f"\n  Baseline:  mean={mean_base:.0f}B  ratio={76800/mean_base:.1f}x  "
+                  f">=220:1: {sum(1 for r in seq_results if r['ratio'] >= 220)}/{len(seq_results)}")
+            print(f"  MC:        mean={mean_mc:.0f}B  ratio={76800/mean_mc:.1f}x  "
+                  f">=220:1: {hits_mc}/{len(mc_results)}")
+            print(f"  Reduction: {(1 - mean_mc/mean_base)*100:.1f}% fewer bytes on average")
 
         if args.report:
             print(f"\nGenerating PDF -> {args.out}")

@@ -11,13 +11,12 @@
  *   0x03  INVERT_REG    Input polarity invert mask (default 0x00)
  *
  * Usage for trail camera:
- *   gpio_in[4:0]  -> button_L, button_R, button_U, button_D, button_S
- *   gpio_out[3:0] -> step_1, step_2, step_3, step_4
- *   DIR_REG       -> ESP32 writes 0x1F on boot (lower 5 = inputs, upper 3 = outputs[2:0] unused, [3:0] outputs)
- *                    i.e. 0b00001111 = step pins out, button pins in → 0x0F... actually:
- *                    DIR[4:0]=1 (inputs=buttons), DIR[3:0]=0 (outputs=steppers) → 0b11100000 | wait
- *                    DIR=0x00 for outputs, 0xFF for inputs.
- *                    For step_1..4 on [3:0] output, buttons on [7:4] input: write 0xF0 to DIR_REG
+ *   gpio_in[2:0]  -> button_L, button_R, button_S  (pins 84, 83, 85)
+ *   gpio_in[7:3]  -> unused (read as 0)
+ *   gpio_out[3:0] -> step_1, step_2, step_3, step_4 (pins 25-28)
+ *   DIR_REG       -> ESP32 writes 0xF0 on boot:
+ *                    bits[7:4]=1 unused inputs, bits[3:0]=0 stepper outputs
+ *                    i.e. 0b11110000 = 0xF0
  *
  * Electrical:
  *   SDA -> pin 82 (IOT11A) LVCMOS18, external 4.7k pull-up to 3.3V
@@ -156,24 +155,26 @@ module i2c_gpio_expander #(
                     end
 
                     // ------------------------------------------------
-                    // Drive ACK low during SCL low phase after address
-                    // Release before SCL rises so master sees stable high after ACK
+                    // Drive ACK low during SCL low phase after address.
+                    // Hold sda_oe through SCL high — releasing here would let
+                    // SDA rise while SCL is still high, which stop_det would
+                    // misread as a STOP condition.  The destination state
+                    // (S_REG / S_READ) releases sda_oe on its first scl_fall
+                    // (SCL low), so no false STOP is generated.
                     S_ADDR_ACK: begin
                         if (scl_fall) begin
                             if (shift_reg[7:1] == DEVICE_ADDR) begin
                                 sda_oe <= 1'b1;  // ACK — pull low
-                                // pre-load tx_byte now so it's ready when we enter S_READ
                                 tx_byte <= read_reg(reg_addr);
-                                // direction set after SCL goes high (S_ADDR_ACK_RELEASE)
                             end else begin
                                 sda_oe <= 1'b0;  // NACK — not our address
                                 state  <= S_IDLE;
                             end
                         end
                         if (scl_rise & (shift_reg[7:1] == DEVICE_ADDR)) begin
-                            // release SDA now — ACK was held through SCL high
-                            sda_oe <= 1'b0;
-                            state  <= rw_bit ? S_READ : S_REG;
+                            // Do NOT release sda_oe here — hold ACK low through
+                            // SCL high; next state releases on its first scl_fall
+                            state <= rw_bit ? S_READ : S_REG;
                         end
                     end
 
@@ -195,8 +196,8 @@ module i2c_gpio_expander #(
                     S_REG_ACK: begin
                         if (scl_fall) sda_oe <= 1'b1;  // ACK
                         if (scl_rise) begin
-                            sda_oe <= 1'b0;  // release
-                            state  <= S_WRITE;
+                            // Hold sda_oe — S_WRITE releases on its first scl_fall
+                            state <= S_WRITE;
                         end
                     end
 
@@ -228,8 +229,8 @@ module i2c_gpio_expander #(
                             sda_oe   <= 1'b1;             // ACK
                         end
                         if (scl_rise) begin
-                            sda_oe <= 1'b0;  // release
-                            state  <= S_WRITE;
+                            // Hold sda_oe — S_WRITE releases on its first scl_fall
+                            state <= S_WRITE;
                         end
                     end
 

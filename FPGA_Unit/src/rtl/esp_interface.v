@@ -16,7 +16,9 @@ module esp_interface (
 
     output reg  [7:0]  rx_data,
     output reg         rx_valid,
-    input  wire        rx_ready
+    input  wire        rx_ready,
+
+    output wire        cs_active_sync   // synchronized CS active level for top.v
 );
 
     // ==========================================================
@@ -43,6 +45,8 @@ module esp_interface (
     wire sclk_rise = (sclk_sync[2:1] == 2'b01);
     wire sclk_fall = (sclk_sync[2:1] == 2'b10);
     wire cs_active = ~cs_sync[2];
+
+    assign cs_active_sync = cs_active;
 
     // ==========================================================
     // Shift register + bit counter

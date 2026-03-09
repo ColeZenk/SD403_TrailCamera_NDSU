@@ -17,14 +17,14 @@ module bram_image_buffer (
 
 );
 
-    // 2KB RAM
-    reg [7:0] mem [0:2047];
+    // 32KB RAM — 14.6x Tang Nano 9K BSRAMs, fits in 26 available
+    reg [7:0] mem [0:32767];
     // Single clock for both ports
     always @(posedge clk_wr) begin
         if (we) begin
-            mem[addr_wr[10:0]] <= data_wr;
+            mem[addr_wr[14:0]] <= data_wr;
         end
-        data_rd <= mem[addr_rd[10:0]];
+        data_rd <= mem[addr_rd[14:0]];
     end
 endmodule
 

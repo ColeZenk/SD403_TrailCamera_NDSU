@@ -2,8 +2,8 @@
  * ESP32-CAM Main Application
  *
  * Production mode:
- *   Camera capture → SPI DMA to DevKit (every frame)
- *                  → JPEG to SD card (every 3 seconds)
+ *   Camera capture → SPI DMA to DevKit (every frame, 30 fps)
+ *                  → JPEG to SD card (every 10 frames)
  *
  * Test burst mode (define TEST_BURST_CAPTURE):
  *   Camera capture → raw frames to SD at max rate
@@ -81,7 +81,7 @@ void app_main(void)
     /* SPI transmit task — dequeues frames, sends via DMA */
     xTaskCreate(spi_transmit_task, "spi_tx", 4096, (void *)image_queue, 5, NULL);
 
-    /* Capture loop — max fps to SPI, JPEG to SD every 3s */
+    /* Capture loop — 30 fps to SPI, JPEG to SD every 10 frames */
     camera_start_capture();
 
     ESP_LOGI(TAG, "Pipeline running");

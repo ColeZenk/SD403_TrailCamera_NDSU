@@ -37,11 +37,9 @@ module top (
     output wire step_3,         // Pin 27
     output wire step_4,         // Pin 28
 
-    // Joystick buttons: input (DIR_REG bits [7:4] = 1 on reset)
-    input  wire button_L,       // Pin 79
-    input  wire button_R,       // Pin 80
-    input  wire button_U,       // Pin 83
-    input  wire button_D,       // Pin 84
+    // Joystick buttons: input (DIR_REG bits [2:0] = 1 on reset)
+    input  wire button_L,       // Pin 84
+    input  wire button_R,       // Pin 83
     input  wire button_S,       // Pin 85
 
     // Debug LEDs
@@ -72,6 +70,7 @@ module top (
     wire [7:0] esp_rx_data;
     wire       esp_rx_valid;
     wire       esp_rx_ready = 1'b1;
+    wire       esp_cs_active;   // 3-stage synchronized CS from esp_interface
 
     reg  [BRAM_ADDR_WIDTH-1:0] bram_write_addr;
     reg  [7:0]                 bram_write_data;
@@ -99,37 +98,32 @@ module top (
     wire [7:0] i2c_gpio_invert;
 
     // Button inputs registered for metastability before feeding into expander
-    // Packed: [7:4] = buttons [4:0] mapped to [7:3], [3:0] = stepper feedback (unused)
-    // Layout: gpio_in[4]=button_S, [3]=button_D, [2]=button_U, [1]=button_R, [0]=button_L
-    reg [4:0] btn_sync_0, btn_sync_1;
+    // Layout: gpio_in[2]=button_S, [1]=button_R, [0]=button_L
+    reg [2:0] btn_sync_0, btn_sync_1;
     always @(posedge sys_clk or negedge sys_rst_n) begin
         if (!sys_rst_n) begin
-            btn_sync_0 <= 5'b11111;
-            btn_sync_1 <= 5'b11111;
+            btn_sync_0 <= 3'b111;
+            btn_sync_1 <= 3'b111;
         end else begin
-            btn_sync_0 <= {button_S, button_D, button_U, button_R, button_L};
+            btn_sync_0 <= {button_S, button_R, button_L};
             btn_sync_1 <= btn_sync_0;
         end
     end
 
-    wire [7:0] i2c_gpio_in = {3'b000, btn_sync_1};  // upper 3 bits unused
+    wire [7:0] i2c_gpio_in = {5'b00000, btn_sync_1};  // upper 5 bits unused
 
     // ==========================================================
     // I2C GPIO Expander
     //
     // Register convention (ESP32 sets on boot):
-    //   DIR_REG    = 0xF8  (bits[7:3]=1 inputs, bits[2:0] unused outputs)
-    //                       wait — steppers on [3:0], buttons on [7:3]:
-    //   DIR_REG    = 0xF8  → bits[7:3] input (buttons on [4:0] = gpio_in[4:0])
-    //                         bits[2:0] output... but steppers are 4 bits
-    //   Actual:
-    //   gpio_out[3:0] -> step_1..4  (DIR bits[3:0] = 0 = output)
-    //   gpio_in[4:0]  -> buttons    (DIR bits[4:0] = 1 = input, but these are IN wires)
-    //   DIR_REG = 0xE0  (bits[7:5]=1 unused inputs, bits[4:0] don't matter for in,
-    //                    bits[3:0]=0 output for steppers)
-    //   Simplest: ESP32 writes DIR=0xF0 on boot
-    //     [7:4]=1 → inputs (buttons on gpio_in[4:0], mapped to [4:0])
-    //     [3:0]=0 → outputs (steppers on gpio_out[3:0])
+    //   gpio_out[3:0] -> step_1..4   (DIR bits[3:0] = 0 = output)
+    //   gpio_in[2:0]  -> L, R, S     (DIR bits[2:0] = 1 = input)
+    //   gpio_in[7:3]  -> unused
+    //   ESP32 writes DIR_REG = 0xF0 on boot:
+    //     bits[7:4] = 1 → unused inputs
+    //     bits[3:0] = 0 → stepper outputs (step gates: step_N = out[N] & ~dir[N])
+    //   Buttons are on gpio_in port (separate wires), DIR does not gate them
+    //   i.e. 0b11110000 = 0xF0
     // ==========================================================
     i2c_gpio_expander #(
         .DEVICE_ADDR(7'h27)
@@ -156,15 +150,16 @@ module top (
     // ESP SPI Interface
     // ==========================================================
     esp_interface esp_slave (
-        .clk        (sys_clk),
-        .rst_n      (sys_rst_n),
-        .esp_mosi   (esp_mosi),
-        .esp_miso   (esp_miso),
-        .esp_sclk   (esp_sclk),
-        .esp_cs_n   (esp_cs_n),
-        .rx_data    (esp_rx_data),
-        .rx_valid   (esp_rx_valid),
-        .rx_ready   (esp_rx_ready)
+        .clk            (sys_clk),
+        .rst_n          (sys_rst_n),
+        .esp_mosi       (esp_mosi),
+        .esp_miso       (esp_miso),
+        .esp_sclk       (esp_sclk),
+        .esp_cs_n       (esp_cs_n),
+        .rx_data        (esp_rx_data),
+        .rx_valid       (esp_rx_valid),
+        .rx_ready       (esp_rx_ready),
+        .cs_active_sync (esp_cs_active)
     );
 
     // ==========================================================
@@ -183,26 +178,31 @@ module top (
     // ==========================================================
     // SPI Receive Logic — branchless
     // ==========================================================
-    reg esp_cs_n_prev;
+    reg esp_cs_active_prev;
 
-    wire cs_sync    = esp_cs_n;
-    wire cs_falling = esp_cs_n_prev & ~cs_sync;
-    wire cs_rising  = ~esp_cs_n_prev & cs_sync;
-    wire cs_active  = ~cs_sync;
+    // cs_start: CS just asserted  (rising edge of cs_active = falling edge of cs_n)
+    // cs_end:   CS just deasserted (falling edge of cs_active = rising edge of cs_n)
+    wire cs_start = ~esp_cs_active_prev & esp_cs_active;
+    wire cs_end   =  esp_cs_active_prev & ~esp_cs_active;
 
-    wire rx_write     = esp_rx_valid & cs_active;
+    always @(posedge sys_clk or negedge sys_rst_n) begin
+        if (!sys_rst_n) esp_cs_active_prev <= 1'b0;
+        else            esp_cs_active_prev <= esp_cs_active;
+    end
+
+    wire rx_write     = esp_rx_valid & esp_cs_active;
     wire addr_last    = (bram_write_addr == BRAM_SIZE - 1);
     wire [14:0] addr_inc = (bram_write_addr + 15'd1) & {15{~addr_last}};
 
-    wire [14:0] addr_on_write = (addr_inc        & {15{rx_write & ~cs_falling}});
-    wire [14:0] addr_on_hold  = (bram_write_addr & {15{~rx_write & ~cs_falling}});
+    wire [14:0] addr_on_write = (addr_inc        & {15{rx_write & ~cs_start}});
+    wire [14:0] addr_on_hold  = (bram_write_addr & {15{~rx_write & ~cs_start}});
     wire [14:0] addr_next     = addr_on_write | addr_on_hold;
 
-    wire next_receiving   = receiving   ^ ((receiving   ^ 1'b1) & cs_falling)
-                                        ^ ((receiving   ^ 1'b0) & (cs_rising & receiving));
+    wire next_receiving   = receiving   ^ ((receiving   ^ 1'b1) & cs_start)
+                                        ^ ((receiving   ^ 1'b0) & (cs_end & receiving));
 
-    wire next_frame_ready = frame_ready ^ ((frame_ready ^ 1'b0) & cs_falling)
-                                        ^ ((frame_ready ^ 1'b1) & (cs_rising & receiving));
+    wire next_frame_ready = frame_ready ^ ((frame_ready ^ 1'b0) & cs_start)
+                                        ^ ((frame_ready ^ 1'b1) & (cs_end & receiving));
 
     always @(posedge sys_clk or negedge sys_rst_n) begin
         if (!sys_rst_n) begin
@@ -211,9 +211,7 @@ module top (
             bram_write_en   <= 1'b0;
             receiving       <= 1'b0;
             frame_ready     <= 1'b0;
-            esp_cs_n_prev   <= 1'b1;
         end else begin
-            esp_cs_n_prev   <= cs_sync;
             bram_write_addr <= addr_next;
             bram_write_data <= esp_rx_data;
             bram_write_en   <= rx_write;
@@ -245,9 +243,9 @@ module top (
     // ==========================================================
     assign led[0] = receiving;
     assign led[1] = frame_ready;
-    assign led[2] = cs_active;
+    assign led[2] = esp_cs_active;
     assign led[3] = esp_rx_valid;
     assign led[4] = |i2c_gpio_out[3:0];   // any stepper active
-    assign led[5] = |btn_sync_1;           // any button pressed
+    assign led[5] = |btn_sync_1[2:0];      // any button pressed
 
 endmodule

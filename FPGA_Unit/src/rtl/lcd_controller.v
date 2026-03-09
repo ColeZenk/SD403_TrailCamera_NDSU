@@ -138,10 +138,11 @@ module lcd_controller (
 
     // ==========================================================
     // Pattern selector — increment masked by btn_pressed
+    // Start at 7 (BRAM display) so SPI data shows on boot
     // ==========================================================
     reg [2:0] pat;
     always @(posedge clk or negedge rst_n)
-        if (!rst_n) pat <= 3'd0;
+        if (!rst_n) pat <= 3'd7;
         else        pat <= pat + {2'd0, btn_pressed};
 
     // ==========================================================
