@@ -14,14 +14,18 @@
  * Test mode configuration - similar to WarblingWire pattern
  * Uncomment ONE of these to enable specific test modes
  */
-#define TEST_MODE_FPGA_PATTERNS
+/* #define TEST_MODE_FPGA_PATTERNS */
 /* #define TEST_MODE_LORA_LOOPBACK */
 /* #define TEST_MODE_CAMERA_INJECT */
-#define TEST_MODE_FPGA_GPIO
+/* #define TEST_MODE_FPGA_GPIO */
+#define TEST_MODE_LORA_BENCH
 
 // Verify only one test mode is active
 #if defined(TEST_MODE_FPGA_PATTERNS) && defined(TEST_MODE_LORA_LOOPBACK)
     #error "Multiple test modes enabled - choose only one"
+#endif
+#if defined(TEST_MODE_LORA_BENCH) && (defined(TEST_MODE_FPGA_PATTERNS) || defined(TEST_MODE_LORA_LOOPBACK))
+    #error "LORA_BENCH is standalone — disable other test modes"
 #endif
 
 // Performance optimization level
@@ -138,6 +142,43 @@
 #define LORA_POLL_INTERVAL_MS       100
 #define LORA_POLL_INTERVAL_TICKS    MS_TO_TICKS(LORA_POLL_INTERVAL_MS)
 #define LORA_HEARTBEAT_COUNT        100  // Log every N polls
+
+/*******************************************************************************
+ * LoRa Bench Test Configuration (TEST_MODE_LORA_BENCH)
+ *
+ * MUST match the values in ESP_Ecosystem/esp32s3_wroom/main/inc/config.h.
+ *
+ * RYLR998 AT+PARAMETER: AT+PARAMETER=<SF>,<BW>,<CR>,<Preamble>
+ *   BW: 7=125 kHz  8=250 kHz  9=500 kHz
+ *   SF: 7-12  (lower = faster, less range)
+ *
+ * Start with SF=9/BW=7 (defaults) to confirm link, then switch to SF=7/BW=9
+ * to test 6-FPS throughput target.  Both boards must be reflashed each time.
+ ******************************************************************************/
+
+#ifdef TEST_MODE_LORA_BENCH
+    /* RF parameters — set identically on S3 side */
+    #define BENCH_SF                7       /* spreading factor (7-12) */
+    #define BENCH_BW                9       /* 7=125kHz 8=250kHz 9=500kHz */
+    #define BENCH_CR                1       /* coding rate: 1=4/5 */
+    #define BENCH_PREAMBLE          12
+
+    /* Destination address (S3 receiver).
+     * Use 0 = factory default (AT+ADDRESS set commands fail with ERR=15 until resolved) */
+    #define BENCH_DEST_ADDR         1       /* S3 module address */
+
+    /* Packet parameters */
+    #define BENCH_PKT_SIZE          115     /* target SDD502 compressed frame */
+    #define BENCH_N                 50      /* packets per trial */
+    #define BENCH_TIMEOUT_MS        2000    /* per-packet echo timeout */
+    #define BENCH_INTER_PACKET_MS   10      /* gap between sends (ms) */
+
+    /* Burst test */
+    #define BENCH_BURST_SECS        10      /* duration of sustained burst */
+    #define BENCH_BURST_TIMEOUT_MS  500     /* shorter timeout for burst */
+
+    #warning "LoRa bench mode — DevKitV1 is TX master, S3 must be echo slave"
+#endif
 
 /*******************************************************************************
  * Test/Debug Configuration

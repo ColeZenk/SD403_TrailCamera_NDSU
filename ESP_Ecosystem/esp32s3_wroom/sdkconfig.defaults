@@ -1,0 +1,34 @@
+# WebSocket support in esp_http_server
+CONFIG_HTTPD_WS_SUPPORT=y
+
+# PSRAM (ESP32-S3 has 8MB octal PSRAM on WROOM module)
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+
+# Unicore mode: required for bench (lora_task only, no WiFi).
+# Root cause of previous WDT crashes: SMP spinlock deadlock — Core 0 lora_task
+# held a FreeRTOS lock inside uart_write_bytes while Core 1 tick ISR spun on it.
+# REMOVE before re-enabling WiFi/WebSocket in production (dual-core required).
+CONFIG_FREERTOS_UNICORE=y
+
+# ESP_LOGI calls esp_log_timestamp() -> esp_timer_get_time() -> SYSTIMER read.
+# On ESP32-S3, SYSTIMER stalls the CPU (no interrupts) when UART RX ISR fires
+# continuously. tick ISR starved >300ms -> IWDT. Use FreeRTOS tick instead.
+CONFIG_LOG_TIMESTAMP_SOURCE_RTOS=y
+
+# ESP32-S3 + PSRAM: WAITI in esp_vApplicationIdleHook deadlocks MSPI.
+# There is NO Kconfig option to suppress it — esp_cpu_wait_for_intr() is
+# called unconditionally when CONFIG_PM_ENABLE=n.  The workaround is
+# registering a custom idle hook that returns false (see lora_start in lora.c),
+# which keeps can_go_idle=false so WAITI is never reached.
+
+# Place UART ISR in IRAM so it can execute even when flash cache is busy
+# (MSPI/PSRAM contention on ESP32-S3). Without this, UART RX ISR is blocked
+# during cache miss → ring buffer fills → uart_read_bytes returns instantly
+# on every call → tick ISR starved > 300ms → IWDT reset.
+CONFIG_UART_ISR_IN_IRAM=y
+
+# Don't let TWDT monitor IDLE — our no_waiti_idle_hook keeps IDLE spinning (busy-wait
+# instead of WAITI), so IDLE legitimately doesn't call idle_hook_cb in a timely way.
+CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0=n

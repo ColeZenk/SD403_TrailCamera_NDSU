@@ -19,6 +19,9 @@
 #include "peripherals/sensors_temp_humidity.h"
 #include "peripherals/fpga_gpio.h"
 #include "peripherals/i2c_bus.h"
+#ifdef TEST_MODE_LORA_BENCH
+#include "lora_bench.h"
+#endif
 
 static const char *TAG = "MAIN";
 
@@ -87,11 +90,17 @@ static void monitor_heap(void)
 
 void app_main(void)
 {
+#ifdef TEST_MODE_LORA_BENCH
+    /* Bench mode: only LoRa bench task runs — no camera/FPGA/sensor init */
+    xTaskCreate(lora_bench_task, "lora_bench", STACK_SIZE_LARGE, NULL,
+                TASK_PRIORITY_MEDIUM, NULL);
+    monitor_heap();
+#else
     if (init_system() != ESP_OK) {
         ESP_LOGE(TAG, "init failed — halted");
         return;
     }
-
     create_tasks();
     monitor_heap();
+#endif
 }

@@ -63,6 +63,30 @@ flowchart LR
   - Rhett Hudoba
   - Collin Lunde
 
+## Current Status (2026-03-10)
+
+### LoRa Link — **WORKING** ✓
+- SF7 / 500 kHz / CR 4/5 / Preamble 12 confirmed on both modules
+- RTT ~160 ms for 115-byte packets at bench distance → **~6 FPS throughput verified**
+- RSSI –44 dBm / SNR 13 at close range (high loss at this range is expected LoRa behavior — will improve at deployment distance)
+- Module flash state: DevKitV1 = ADDRESS 2, S3 = ADDRESS 1, both NETWORKID 6
+
+### Known Quirks
+- RYLR998 reports `+CPIN=No Password!` — no PIN set, AT+CPIN fails with ERR=5 (harmless)
+- Module must receive AT+RESET on each boot before AT+SEND works reliably
+- **S3 LoRa wiring**: TX=GPIO17 → module RX, RX=GPIO18 ← module TX. Swapping these silently kills all S3 comms.
+- S3 echo needs 15 ms delay after +RCV before sending AT+SEND (module RX→TX transition time)
+
+### Next Steps
+1. Walk-test LoRa at real distance (50 m → 2 miles), rerun bench
+2. Flutter app — WebSocket client + frame display
+3. FPGA PSRAM controller for full-frame buffering
+4. 2D WHT compression engine in RTL (wht8.v exists, pipeline not integrated)
+5. DevKitV1 compressed TX — SDD502 encode → LoRa
+6. Disable `TEST_MODE_LORA_BENCH` on both boards when moving to production
+
+---
+
 ## Issues
 - [gpio extender](./issues/gpio_expander.md)
 - [WHT compression](./issues/WHT_compression.md)

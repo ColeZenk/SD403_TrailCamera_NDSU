@@ -6,6 +6,7 @@ idf_component_register(
          "./src/interprocessor/cam_spi.c"
          "./src/interprocessor/fpga_spi.c"
          "./src/interprocessor/lora_uart.c"
+         "./src/interprocessor/lora_bench.c"
          "./src/interprocessor/i2c_bus.c"
          "./src/peripherals/aht20.c"
          "./src/peripherals/fpga_gpio.c"
@@ -14,5 +15,5 @@ idf_component_register(
          "./src/peripherals/sensors_temp_humidity.c"
 
     INCLUDE_DIRS "./inc"
-    PRIV_REQUIRES driver
+    PRIV_REQUIRES driver esp_timer
 )
