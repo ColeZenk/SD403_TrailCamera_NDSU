@@ -50,10 +50,14 @@
 #define TASK_PRIORITY_MEDIUM        4
 #define TASK_PRIORITY_LOW           3
 
+#define STACK_SIZE_BIT_WIDTH_S      11
+#define STACK_SIZE_BIT_WIDTH_M      12
+#define STACK_SIZE_BIT_WIDTH_L      13
+
 // Task stack sizes
-#define STACK_SIZE_SMALL            2048
-#define STACK_SIZE_MEDIUM           4096
-#define STACK_SIZE_LARGE            8192
+#define STACK_SIZE_SMALL            (1 << STACK_SIZE_BIT_WIDTH_S)        // 2048
+#define STACK_SIZE_MEDIUM           (1 << STACK_SIZE_BIT_WIDTH_M)        // 4096
+#define STACK_SIZE_LARGE            (1 << STACK_SIZE_BIT_WIDTH_L)        // 8192
 
 /*******************************************************************************
  * Camera SPI Slave Configuration (receiving from ESP32-CAM)
@@ -142,6 +146,9 @@
 #define LORA_POLL_INTERVAL_MS       100
 #define LORA_POLL_INTERVAL_TICKS    MS_TO_TICKS(LORA_POLL_INTERVAL_MS)
 #define LORA_HEARTBEAT_COUNT        100  // Log every N polls
+
+// Trivial constants
+#define NUM_BITS_RXTX_BUF           11
 
 /*******************************************************************************
  * LoRa Bench Test Configuration (TEST_MODE_LORA_BENCH)

@@ -36,11 +36,11 @@
  * LoRa UART
  ******************************************************************************/
 #define LORA_UART_NUM       UART_NUM_1
-#define LORA_TX_PIN         GPIO_NUM_17
-#define LORA_RX_PIN         GPIO_NUM_18
-#define LORA_BAUD           115200
+#define LORA_PIN_TX         GPIO_NUM_17
+#define LORA_PIN_RX         GPIO_NUM_18
+#define LORA_BAUD_RATE           115200
 #define LORA_BUF_SIZE       1024
-#define LORA_ADDRESS        1               /* this receiver */
+#define LORA_ADDRESS_RECEIVER        1               /* this receiver */
 #define LORA_NETWORK_ID     6
 
 /*******************************************************************************
@@ -69,3 +69,31 @@
 #define PRIO_WS             4
 #define CORE_LORA           0
 #define CORE_WS             1
+
+/*******************************************************************************
+ * System Configuration - Computed Constants
+ ******************************************************************************/
+
+// Memory allocation
+#define LW_BYTES                    (10 << 1)              // (10 * 2)
+#define IMAGE_MAX_SIZE_BYTES        (1 << LW_BYTES)        // (1024 * 1024)
+#define IMAGE_QUEUE_LENGTH          3
+#define UART_BUFFER_SIZE            2048
+
+// Computed timeout values (compile-time calculations)
+#define MS_TO_TICKS(ms)             pdMS_TO_TICKS(ms)
+#define SECONDS_TO_TICKS(s)         pdMS_TO_TICKS((s) * 1000)
+
+// Task priorities
+#define TASK_PRIORITY_HIGH          5
+#define TASK_PRIORITY_MEDIUM        4
+#define TASK_PRIORITY_LOW           3
+
+#define STACK_SIZE_BIT_WIDTH_S      11
+#define STACK_SIZE_BIT_WIDTH_M      12
+#define STACK_SIZE_BIT_WIDTH_L      13
+
+// Task stack sizes
+#define STACK_SIZE_SMALL            (1 << STACK_SIZE_BIT_WIDTH_S)        // 2048
+#define STACK_SIZE_MEDIUM           (1 << STACK_SIZE_BIT_WIDTH_M)        // 4096
+#define STACK_SIZE_LARGE            (1 << STACK_SIZE_BIT_WIDTH_L)        // 8192

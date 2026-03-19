@@ -1,0 +1,24 @@
+SD403 Trail Camera NDSU — Toolchain Versions
+=============================================
+
+ESP32 / Firmware
+----------------
+ESP-IDF:                  v5.1.4
+xtensa-esp32-elf-gcc:     12.2.0 (crosstool-NG esp-12.2.0_20230208)
+riscv32-esp-elf-gcc:      12.2.0 (crosstool-NG esp-12.2.0_20230208)
+esptool.py:               v4.10.0
+CMake:                    4.2.2
+Ninja:                    1.13.2
+
+FPGA
+----
+Yosys:                    0.47 (git sha1 647d61dd9212365a3cd44db219660b8f90b95cbd)
+nextpnr-himbaechel:       0.9-75-g1f4d3fdc (built from source: ~/Repos/srcfiles/nextpnr)
+openFPGALoader:           v1.0.0
+
+Simulation / Scripting
+----------------------
+Python (system):          3.14.3
+Python (sim venv):        3.14.2
+numpy:                    2.4.2
+scipy:                    1.17.0

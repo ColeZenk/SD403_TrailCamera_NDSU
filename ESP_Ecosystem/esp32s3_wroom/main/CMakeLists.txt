@@ -3,7 +3,8 @@ idf_component_register(
         "src/main.c"
         "src/wifi_ap.c"
         "src/ws_server.c"
-        "src/lora.c"
+        "src/lora_bench.c"
+        "src/lora_uart.c"
     INCLUDE_DIRS
         "inc"
     REQUIRES

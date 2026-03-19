@@ -10,7 +10,6 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 
-#include "isr_signals.h"
 #include "lora_uart.h"
 #include <string.h>
 
@@ -22,23 +21,13 @@ static const char *TAG = "LORA";
 
 #define LORA_UART       UART_NUM_2
 #define LORA_TX         GPIO_NUM_17
-#define LORA_RX         GPIO_NUM_16
-#define LORA_BAUD       115200
+#define LORA_RX         GPIO_NUM_18
+#define LORA_BAUD_RATE       115200
 
 #define AT_BUF_SIZE     64
-#define RX_BUF_SIZE     1 << 11
-#define TX_BUF_SIZE     1 << 11
 #define AT_TIMEOUT_MS   500
 #define AT_DELAY_MS     300
 
-#define DEV_TEST_LORA   1
-
-#ifdef DEV_TEST_LORA
-#define LED_PIN         GPIO_NUM_2
-#define BLINK_COUNT     3
-#define BLINK_ON_MS     200
-#define BLINK_OFF_MS    200
-#endif
 
 /*******************************************************************************
  * AT Commands
@@ -61,50 +50,14 @@ static void at_send(const char *cmd, const char *label)
         ESP_LOGW(TAG, "%s: no response", label);
     }
 }
-
-/*******************************************************************************
- * Test LED
- ******************************************************************************/
-
-#ifdef DEV_TEST_LORA
-
-static void led_init(void)
-{
-    gpio_config_t cfg = {
-        .pin_bit_mask  = (1ULL << LED_PIN),
-        .mode          = GPIO_MODE_OUTPUT,
-        .pull_up_en    = GPIO_PULLUP_DISABLE,
-        .pull_down_en  = GPIO_PULLDOWN_DISABLE,
-        .intr_type     = GPIO_INTR_DISABLE,
-    };
-    gpio_config(&cfg);
-    gpio_set_level(LED_PIN, 0);
-}
-
-static void led_blink(void)
-{
-    for (int i = 0; i < BLINK_COUNT; i++) {
-        gpio_set_level(LED_PIN, 1);
-        vTaskDelay(pdMS_TO_TICKS(BLINK_ON_MS));
-        gpio_set_level(LED_PIN, 0);
-        vTaskDelay(pdMS_TO_TICKS(BLINK_OFF_MS));
-    }
-}
-
-#endif
-
 /*******************************************************************************
  * Public Interface
  ******************************************************************************/
 
 esp_err_t lora_init(void)
 {
-#ifdef DEV_TEST_LORA
-    led_init();
-#endif
-
     uart_config_t cfg = {
-        .baud_rate  = LORA_BAUD,
+        .baud_rate  = LORA_BAUD_RATE,
         .data_bits  = UART_DATA_8_BITS,
         .parity     = UART_PARITY_DISABLE,
         .stop_bits  = UART_STOP_BITS_1,
@@ -148,7 +101,7 @@ void lora_send_trigger(void)
 
 void lora_receive_task(void *arg)
 {
-    uint8_t buf[256];
+    uint8_t buf[UINT8_MAX + 1];
     int polls = 0;
 
     ESP_LOGI(TAG, "RX task started");
@@ -157,7 +110,7 @@ void lora_receive_task(void *arg)
         int len = uart_read_bytes(LORA_UART, buf, sizeof(buf) - 1,
                                   pdMS_TO_TICKS(100));
 
-        if (++polls % 100 == 0) {
+        if (!(++polls & 0x64)) {
             ESP_LOGI(TAG, "listening... (%d polls)", polls);
         }
 
@@ -166,17 +119,5 @@ void lora_receive_task(void *arg)
         buf[len] = '\0';
         ESP_LOGI(TAG, "RX (%d bytes): [%s]", len, buf);
 
-#ifdef DEV_TEST_LORA
-        if (strstr((const char *)buf, "+RCV=")) {
-            if (strstr((const char *)buf, ",T,") ||
-                strstr((const char *)buf, ",0,") ||
-                strstr((const char *)buf, ",01,"))
-            {
-                ESP_LOGI(TAG, "TRIGGER RECEIVED");
-                ISR_OnLoRaTrigger();
-                led_blink();
-            }
-        }
-#endif
     }
 }

@@ -131,10 +131,10 @@ static void bench_module_init(void)
 
     /* Step 3: query current state */
     ESP_LOGI(TAG, "--- Current module config ---");
-    at_cmd("AT+ADDRESS?\r\n",   NULL, 600);
-    at_cmd("AT+NETWORKID?\r\n", NULL, 600);
-    at_cmd("AT+PARAMETER?\r\n", NULL, 600);
-    at_cmd("AT+BAND?\r\n",      NULL, 600);
+    at_cmd("AT+ADDRESS?\r\n",   "+ADDRESS=",   600);
+    at_cmd("AT+NETWORKID?\r\n", "+NETWORKID=", 600);
+    at_cmd("AT+PARAMETER?\r\n", "+PARAMETER=", 600);
+    at_cmd("AT+BAND?\r\n",      "+BAND=",      600);
 
     /* Step 4: minimal ASCII send test */
     ESP_LOGI(TAG, "--- ASCII send test ---");
@@ -162,9 +162,9 @@ static void bench_module_init(void)
 
     /* Confirm final state */
     ESP_LOGI(TAG, "--- Final config ---");
-    at_cmd("AT+ADDRESS?\r\n",   NULL, 600);
-    at_cmd("AT+NETWORKID?\r\n", NULL, 600);
-    at_cmd("AT+PARAMETER?\r\n", NULL, 600);
+    at_cmd("AT+ADDRESS?\r\n",   "+ADDRESS=",   600);
+    at_cmd("AT+NETWORKID?\r\n", "+NETWORKID=", 600);
+    at_cmd("AT+PARAMETER?\r\n", "+PARAMETER=", 600);
 }
 
 /* -----------------------------------------------------------------------
@@ -321,6 +321,61 @@ static void run_burst(int pkt_size)
 }
 
 /* -----------------------------------------------------------------------
+ * Flood test: fire packets one-way as fast as possible.
+ * S3 counts +RCV arrivals and prints its own stats — no echo needed.
+ * First payload byte = 0xFF is the flood marker; S3 skips echo on these.
+ * --------------------------------------------------------------------- */
+
+static void run_flood(int n, int pkt_size)
+{
+    uint8_t payload[240];
+    payload[0] = 0xFF;                     /* flood marker */
+    memset(payload + 1, 0xAA, pkt_size - 1);
+
+    char hdr[32];
+    int  hdr_len = snprintf(hdr, sizeof(hdr), "AT+SEND=%d,%d,",
+                            BENCH_DEST_ADDR, pkt_size);
+
+    ESP_LOGI(TAG, "");
+    ESP_LOGI(TAG, "--- Flood TX: %d x %dB (SF=%d BW_code=%d) ---",
+             n, pkt_size, BENCH_SF, BENCH_BW);
+    ESP_LOGI(TAG, "    (S3 RX stats on S3 serial — one-way throughput)");
+
+    char    line[128];
+    int     sent = 0;
+    int64_t t0   = esp_timer_get_time() / 1000;
+
+    for (int i = 0; i < n; i++) {
+        uart_flush_input(LORA_UART_NUM);
+        uart_write_bytes(LORA_UART_NUM, hdr,     hdr_len);
+        uart_write_bytes(LORA_UART_NUM, payload,  pkt_size);
+        uart_write_bytes(LORA_UART_NUM, "\r\n",   2);
+
+        /* Wait for +OK — module has transmitted the packet */
+        bool ok        = false;
+        int  remaining = 2000;
+        while (remaining > 0 && !ok) {
+            int step = remaining < 50 ? remaining : 50;
+            if (readline(line, sizeof(line), step)) {
+                if (strstr(line, "+OK"))
+                    ok = true;
+                else
+                    ESP_LOGI("FLOOD_TX", "  [%d] %s", i, line);
+            }
+            remaining -= step;
+        }
+        if (ok) sent++;
+        else    ESP_LOGW("FLOOD_TX", "  [%d] no +OK (module busy?)", i);
+    }
+
+    int64_t elapsed = esp_timer_get_time() / 1000 - t0;
+    float   pps     = 1000.0f * sent  / (float)elapsed;
+    float   kbps    = pps * pkt_size * 8.0f / 1000.0f;
+    ESP_LOGI(TAG, "FLOOD TX: sent=%d/%d  %"PRId64"ms  %.1f pkt/s  %.1f kbps",
+             sent, n, elapsed, pps, kbps);
+}
+
+/* -----------------------------------------------------------------------
  * Main bench task
  * --------------------------------------------------------------------- */
 
@@ -365,16 +420,19 @@ void lora_bench_task(void *arg)
     run_trial(BENCH_N, BENCH_PKT_SIZE, BENCH_TIMEOUT_MS);
 
     /* Trial: larger packet (worst-case compressed frame) */
-    if (BENCH_PKT_SIZE < 200)
-        run_trial(BENCH_N / 2, 200, BENCH_TIMEOUT_MS);
+    if (BENCH_PKT_SIZE < 200) run_trial(BENCH_N / 2, 200, BENCH_TIMEOUT_MS);
 
-    /* Burst: measure max sustainable rate */
+    /* Burst: echo-based max sustained rate (RTT-limited) */
     run_burst(BENCH_PKT_SIZE);
+
+    /* Flood: pure one-way TX throughput — S3 counts arrivals, no echo */
+    run_flood(BENCH_N * 2, BENCH_PKT_SIZE);
 
     ESP_LOGI(TAG, "");
     ESP_LOGI(TAG, "=== Bench complete ===");
     ESP_LOGI(TAG, "Rule of thumb for 6 FPS: need avg RTT < 167ms (1000/6)");
-    ESP_LOGI(TAG, "Accounting for one-way: TX airtime < 83ms per 115B packet");
+    ESP_LOGI(TAG, "One-way flood rate should be ~2x the burst echo rate");
+    ESP_LOGI(TAG, "Check S3 serial for flood RX stats");
 
     vTaskDelete(NULL);
 }
