@@ -134,7 +134,7 @@
 #define LORA_BAUD_RATE              115200
 
 #define LORA_ADDRESS_RECEIVER       2
-#define LORA_ADDRESS_SENDER         1
+#define LORA_ADDRESS_SENDER         2
 #define LORA_NETWORK_ID             6
 
 #define LORA_AT_TIMEOUT_MS          500
@@ -175,9 +175,9 @@
     #define BENCH_DEST_ADDR         1       /* S3 module address */
 
     /* Packet parameters */
-    #define BENCH_PKT_SIZE          115     /* target SDD502 compressed frame */
+    #define BENCH_PKT_SIZE          16     /* target SDD502 compressed frame */
     #define BENCH_N                 50      /* packets per trial */
-    #define BENCH_TIMEOUT_MS        2000    /* per-packet echo timeout */
+    #define BENCH_TIMEOUT_MS        10000    /* per-packet echo timeout */
     #define BENCH_INTER_PACKET_MS   10      /* gap between sends (ms) */
 
     /* Burst test */

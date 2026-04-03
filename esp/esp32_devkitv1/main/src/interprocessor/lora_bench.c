@@ -1,444 +1,208 @@
 /**
- * lora_bench.c — LoRa link quality test bench (TX/master on DevKitV1)
+ * lora_bench.c - DevKit V1 (TX master)
  *
- * Sends packets, waits for echoes from the S3, reports:
- *   - per-packet RTT, RSSI, SNR
- *   - summary: delivery rate, RTT min/avg/max, mean RSSI/SNR
- *   - burst test: max sustained packet rate
- *
- * SETUP:
- *   1. Define TEST_MODE_LORA_BENCH in config.h on BOTH DevKitV1 and S3.
- *   2. Set BENCH_SF and BENCH_BW identically on both sides.
- *   3. Flash DevKitV1 first, then S3.
- *   4. Open serial monitor on DevKitV1 — results print there.
- *
- * RYLR998 AT+PARAMETER: AT+PARAMETER=<SF>,<BW>,<CR>,<Preamble>
- *   BW encoding (SX1262): 7=125kHz  8=250kHz  9=500kHz
- *   CR: 1=4/5  (best for data, slightly less overhead than 4/8)
- *
- * Typical airtime for 115-byte payload:
- *   SF9 / 125kHz: ~630 ms  →  1.6 FPS max
- *   SF7 / 250kHz: ~100 ms  → 10   FPS max
- *   SF7 / 500kHz: ~50  ms  → 20   FPS max  ← 6FPS target needs this
+ * Send N packets -> wait for echo -> measure RTT/loss.
+ * S3 must be running echo slave with matching RF config.
  */
-
 #include "config.h"
-#include "lora_bench.h"
-
 #ifdef TEST_MODE_LORA_BENCH
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <math.h>
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/uart.h"
-#include "driver/gpio.h"
 #include "esp_log.h"
 #include "esp_timer.h"
-#include "esp_system.h"
-
 static const char *TAG = "BENCH";
 
-/* -----------------------------------------------------------------------
- * Internal UART helpers
- * --------------------------------------------------------------------- */
+static const uint16_t LORA_BUF_SIZE = (1 << 9);  // 10 bits (512)
 
+/* ----------------------------------------------------- */
 static void uart_init_bench(void)
 {
     uart_config_t cfg = {
-        .baud_rate  = LORA_BAUD_RATE,
-        .data_bits  = UART_DATA_8_BITS,
-        .parity     = UART_PARITY_DISABLE,
-        .stop_bits  = UART_STOP_BITS_1,
-        .flow_ctrl  = UART_HW_FLOWCTRL_DISABLE,
-        .source_clk = UART_SCLK_DEFAULT,
+        .baud_rate = LORA_BAUD_RATE,
+        .data_bits = UART_DATA_8_BITS,
+        .parity    = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .source_clk= UART_SCLK_DEFAULT,
     };
-    uart_driver_install(LORA_UART_NUM, 2048, 2048, 0, NULL, 0);
+    uart_driver_install(LORA_UART_NUM, LORA_BUF_SIZE,
+                        LORA_BUF_SIZE, 0, NULL, 0);
     uart_param_config(LORA_UART_NUM, &cfg);
-    uart_set_pin(LORA_UART_NUM, LORA_PIN_TX, LORA_PIN_RX, -1, -1);
-    vTaskDelay(pdMS_TO_TICKS(300));
+    uart_set_pin(LORA_UART_NUM, LORA_PIN_TX, LORA_PIN_RX,
+                 -1, -1);
+    vTaskDelay(pdMS_TO_TICKS(LORA_INIT_DELAY_MS));
 }
 
-/**
- * Read one \n-terminated line from UART into buf (null-terminated).
- * Returns true if a line was read before timeout_ms elapsed.
- */
-static bool readline(char *buf, int maxlen, int timeout_ms)
+static bool readline(char *buf, int lenmax, int timeout_ms)
 {
     int pos = 0;
-    int64_t t_start = esp_timer_get_time() / 1000;
-
-    while ((esp_timer_get_time() / 1000 - t_start) < timeout_ms) {
+    int64_t deadline = esp_timer_get_time() + (int64_t)timeout_ms * 1000;
+    while (esp_timer_get_time() < deadline) {
         uint8_t b;
-        /* Short per-byte wait so we don't burn CPU, but use wall time for timeout */
-        int n = uart_read_bytes(LORA_UART_NUM, &b, 1, pdMS_TO_TICKS(10));
-        if (n <= 0) continue;
-
+        if (uart_read_bytes(LORA_UART_NUM, &b, 1, pdMS_TO_TICKS(10)) <= 0)
+            continue;
         if (b == '\n') {
             if (pos > 0 && buf[pos - 1] == '\r') pos--;
             buf[pos] = '\0';
             return pos > 0;
         }
-        if (pos < maxlen - 1) buf[pos++] = (char)b;
+        if (pos < lenmax - 1) buf[pos++] = (char)b;
     }
     buf[pos] = '\0';
     return false;
 }
-
-/**
- * Send an AT command string and wait for a line containing expect_str.
- * Returns true if expected response seen within timeout_ms.
- */
-static bool at_cmd(const char *cmd, const char *expect_str, int timeout_ms)
+static bool at_cmd(const char *cmd, const char *expect,
+                   int timeout_ms)
 {
-    uart_flush_input(LORA_UART_NUM);  /* clear RX (uart_flush only flushes TX) */
+    static const int POLL_MS = 50;
+    uart_flush_input(LORA_UART_NUM);
     uart_write_bytes(LORA_UART_NUM, cmd, strlen(cmd));
-
-    char line[128];
+    char line[INT8_MAX+1];
     int elapsed = 0;
     while (elapsed < timeout_ms) {
-        int t0 = 50;
-        if (readline(line, sizeof(line), t0)) {
-            ESP_LOGI(TAG, "AT resp: %s", line);
-            if (expect_str && strstr(line, expect_str)) return true;
+        if (readline(line, sizeof(line), POLL_MS)) {
+            ESP_LOGI(TAG, " %s", line);
+            if (expect && strstr(line, expect)) return true;
         }
-        elapsed += t0;
+        elapsed += POLL_MS;
     }
     return false;
 }
-
-/* -----------------------------------------------------------------------
- * Module init + parameter set
- * --------------------------------------------------------------------- */
-
-static void bench_module_init(void)
+/* ------------------------------------------------------------------ */
+static void module_init(void)
 {
-    /* Step 1: basic liveness check */
-    ESP_LOGI(TAG, "--- AT liveness ---");
-    bool alive = at_cmd("AT\r\n", "+OK", 1000);
-    if (!alive) ESP_LOGW(TAG, "No +OK to bare AT — check wiring/baud");
-
-    /* Step 2: reset module — required on each boot before AT+SEND works reliably.
-     * Without this, module may be in a stuck state that returns ERR=15. */
-    ESP_LOGI(TAG, "--- AT+RESET ---");
     at_cmd("AT+RESET\r\n", "+RESET", 1000);
-    vTaskDelay(pdMS_TO_TICKS(1500));  /* wait for module to reboot */
-    at_cmd("AT\r\n", "+OK", 1000);   /* confirm alive after reset */
+    vTaskDelay(pdMS_TO_TICKS(1500));
 
-    /* Step 3: query current state */
-    ESP_LOGI(TAG, "--- Current module config ---");
-    at_cmd("AT+ADDRESS?\r\n",   "+ADDRESS=",   600);
-    at_cmd("AT+NETWORKID?\r\n", "+NETWORKID=", 600);
-    at_cmd("AT+PARAMETER?\r\n", "+PARAMETER=", 600);
-    at_cmd("AT+BAND?\r\n",      "+BAND=",      600);
-
-    /* Step 4: minimal ASCII send test */
-    ESP_LOGI(TAG, "--- ASCII send test ---");
-    bool send_ok = at_cmd("AT+SEND=0,4,TEST\r\n", "+OK", 3000);
-    if (send_ok)
-        ESP_LOGI(TAG, "AT+SEND accepted — module CAN transmit");
-    else
-        ESP_LOGE(TAG, "AT+SEND rejected — check module state (ERR=15?)");
-
-    /* Step 5: set address, network, RF parameters */
-    ESP_LOGI(TAG, "--- Configuring ---");
     char cmd[64];
-    snprintf(cmd, sizeof(cmd), "AT+ADDRESS=%d\r\n", LORA_ADDRESS_RECEIVER);
-    if (!at_cmd(cmd, "+OK", 600))
-        ESP_LOGW(TAG, "ADDRESS set failed");
+    snprintf(cmd, sizeof(cmd), "AT+ADDRESS=%d\r\n", LORA_ADDRESS_SENDER);
+    at_cmd(cmd, "+OK", LORA_AT_TIMEOUT_MS);
 
     snprintf(cmd, sizeof(cmd), "AT+NETWORKID=%d\r\n", LORA_NETWORK_ID);
-    if (!at_cmd(cmd, "+OK", 600))
-        ESP_LOGW(TAG, "NETWORKID set failed");
+    at_cmd(cmd, "+OK", LORA_AT_TIMEOUT_MS);
 
     snprintf(cmd, sizeof(cmd), "AT+PARAMETER=%d,%d,%d,%d\r\n",
              BENCH_SF, BENCH_BW, BENCH_CR, BENCH_PREAMBLE);
-    if (!at_cmd(cmd, "+OK", 600))
-        ESP_LOGW(TAG, "PARAMETER set failed — benching at module defaults");
+    at_cmd(cmd, "+OK", LORA_AT_TIMEOUT_MS);
 
-    /* Confirm final state */
-    ESP_LOGI(TAG, "--- Final config ---");
-    at_cmd("AT+ADDRESS?\r\n",   "+ADDRESS=",   600);
-    at_cmd("AT+NETWORKID?\r\n", "+NETWORKID=", 600);
-    at_cmd("AT+PARAMETER?\r\n", "+PARAMETER=", 600);
+    at_cmd("AT+ADDRESS?\r\n",   "+ADDRESS=",   LORA_AT_TIMEOUT_MS);
+    at_cmd("AT+NETWORKID?\r\n", "+NETWORKID=",  LORA_AT_TIMEOUT_MS);
+    at_cmd("AT+PARAMETER?\r\n", "+PARAMETER=",  LORA_AT_TIMEOUT_MS);
+    at_cmd("AT+BAND?\r\n",      "+BAND=",       LORA_AT_TIMEOUT_MS);
 }
 
-/* -----------------------------------------------------------------------
- * Single packet send + echo receive
- * Returns RTT in ms, or -1 on timeout.
- * -----------------------------------------------------------------------
- * Bench payload layout (binary, size = BENCH_PKT_SIZE bytes):
- *   [0-3]  seq  (uint32 BE)
- *   [4-7]  ms   (uint32 BE, tx timestamp from esp_timer)
- *   [8-N]  0xAA filler
- *
- * RYLR998 note: AT+SEND=<addr>,<len>,<data>\r\n sends raw bytes.
- * +RCV= response: +RCV=<addr>,<len>,<data>,<rssi>,<snr>\r\n
- * 0xAA (170) contains no commas (0x2C=44) so sscanf field parsing is safe.
- * --------------------------------------------------------------------- */
+/* ------------------------------------------------------------------ */
 
-static int64_t send_and_echo(uint32_t seq, int size, int timeout_ms,
-                              int *rssi_out, int *snr_out)
+/**
+ * Send one packet.
+ */
+static void send_msg(uint32_t seq, int size)
 {
-    /* All-0xAA payload: no null bytes (avoids sscanf truncation on S3),
-     * no commas (0x2C != 0xAA), safe for binary AT interface.
-     * RTT is measured by wall clock — no need to embed timestamp. */
-    uint8_t payload[240];
-    (void)seq;
-    memset(payload, 0xAA, size);
-
-    /* AT+SEND=<dest_addr>,<len>,<payload>\r\n */
-    char hdr[32];
-    snprintf(hdr, sizeof(hdr), "AT+SEND=%d,%d,", BENCH_DEST_ADDR, size);
-    uart_flush_input(LORA_UART_NUM);  /* discard any stale RX bytes */
-    uart_write_bytes(LORA_UART_NUM, hdr, strlen(hdr));
-    uart_write_bytes(LORA_UART_NUM, payload, size);
+    static const int IDEAL_PAYLOAD = 0xF0;
+    static const int MAX_HDR = 0x20;
+    uint8_t payload[IDEAL_PAYLOAD + 1];
+    /* size = (size > IDEAL_PAYLOAD) ? IDEAL_PAYLOAD : size; */
+    int mask = -(size > IDEAL_PAYLOAD);
+    size = size ^ (mask & (IDEAL_PAYLOAD ^ size));
+	memset(payload, 'A', size);
+	snprintf((char *)payload, 9, "%08lx", (unsigned long)seq);
+    /* AT+SEND=<dest>,<len>,<data>\r\n */
+    char hdr[MAX_HDR];
+    int hdr_len = snprintf(hdr, sizeof(hdr), "AT+SEND=%d,%d,",
+                           BENCH_DEST_ADDR, size);
+    uart_flush_input(LORA_UART_NUM);
+    uart_write_bytes(LORA_UART_NUM, hdr, hdr_len);
+    uart_write_bytes(LORA_UART_NUM, (char *)payload, size);
     uart_write_bytes(LORA_UART_NUM, "\r\n", 2);
-
-    int64_t t0 = esp_timer_get_time() / 1000;
-
-    /* Read lines until +RCV= arrives (echo) or timeout */
-    char line[512];
-    int remaining = timeout_ms;
-    while (remaining > 0) {
-        int step = (remaining < 50) ? remaining : 50;
-        if (!readline(line, sizeof(line), step)) {
-            remaining -= step;
-            continue;
-        }
-        remaining -= step;
-
-        if (strncmp(line, "+RCV=", 5) == 0) {
-            int64_t rtt = esp_timer_get_time() / 1000 - t0;
-
-            /* Parse RSSI and SNR from end of +RCV line.
-             * Format: +RCV=<addr>,<len>,<data...>,<rssi>,<snr>
-             * Since data is all 0xAA (no commas), sscanf correctly
-             * identifies the two trailing comma-separated fields. */
-            int addr, plen, rssi = 0, snr = 0;
-            char data_buf[242];
-            sscanf(line + 5, "%d,%d,%241[^,],%d,%d",
-                   &addr, &plen, data_buf, &rssi, &snr);
-            *rssi_out = rssi;
-            *snr_out  = snr;
-            return rtt;
-        }
-        /* Log +OK/+ERR/+SENDING so we can see if AT+SEND is being accepted */
-        ESP_LOGI("BENCH_TX", "  module: %s", line);
-    }
-    return -1; /* timeout */
 }
 
-/* -----------------------------------------------------------------------
- * One test run: N packets at current SF/BW, print stats
- * --------------------------------------------------------------------- */
-
-static void run_trial(int n, int pkt_size, int timeout_ms)
+static int64_t wait_echo(int timeout_ms, int *rssi_out, int *snr_out)
 {
-    int   rcvd = 0;
-    int64_t rtt_min = INT64_MAX, rtt_max = 0, rtt_sum = 0;
-    int   rssi_sum = 0, snr_sum = 0;
+    int64_t t0 = esp_timer_get_time() >> 10;
+    char line[300];
+    /* consume +OK from send */
+    if (!readline(line, sizeof(line), timeout_ms)) {
+        ESP_LOGW(TAG, "AT+SEND: no response");
+        return -1;
+    }
+    ESP_LOGI(TAG, "AT+SEND ack: %s", line);
 
-    ESP_LOGI(TAG, "");
-    ESP_LOGI(TAG, "--- Trial: SF=%d BW_code=%d pkt=%dB n=%d timeout=%dms ---",
-             BENCH_SF, BENCH_BW, pkt_size, n, timeout_ms);
-    ESP_LOGI(TAG, " seq   RTT(ms)  RSSI   SNR");
+    while ((esp_timer_get_time() >> 10) - t0 < timeout_ms) {
+        if (!readline(line, sizeof(line), 100)) continue;
+        ESP_LOGI(TAG, "rx: %s", line);
+        if (strncmp(line, "+RCV=", 5) != 0) continue;
 
-    for (int i = 0; i < n; i++) {
-        int rssi = 0, snr = 0;
-        int64_t rtt = send_and_echo(i, pkt_size, timeout_ms, &rssi, &snr);
+        int64_t rtt = (esp_timer_get_time() >> 10) - t0;
 
-        if (rtt < 0) {
-            ESP_LOGI(TAG, " %-4d  TIMEOUT", i);
-        } else {
-            ESP_LOGI(TAG, " %-4d  %-7"PRId64"  %-5d  %d", i, rtt, rssi, snr);
-            rcvd++;
-            rtt_sum  += rtt;
-            rssi_sum += rssi;
-            snr_sum  += snr;
-            if (rtt < rtt_min) rtt_min = rtt;
-            if (rtt > rtt_max) rtt_max = rtt;
+        /* parse RSSI/SNR from +RCV=<addr>,<len>,<data>,<rssi>,<snr> */
+        *rssi_out = 0;
+        *snr_out  = 0;
+        char *p = line + 5;
+        char *c1 = strchr(p, ',');
+        if (c1) {
+            char *c2 = strchr(c1 + 1, ',');
+            if (c2) {
+                int pkt_len = atoi(c1 + 1);
+                char *after = c2 + 1 + pkt_len;
+                if (*after == ',')
+                    sscanf(after + 1, "%d,%d", rssi_out, snr_out);
+            }
         }
+        return rtt;
+    }
+    return -1;
+}
 
-        /* Small gap between packets — gives module time to process */
+/* ------------------------------------------------------------------ */
+void lora_bench_task(void *arg)
+{
+    ESP_LOGI(TAG, "=== DevKit TX bench ===");
+    ESP_LOGI(TAG, "addr=%d dest=%d net=%d SF=%d BW=%d",
+             LORA_ADDRESS_SENDER, BENCH_DEST_ADDR,
+             LORA_NETWORK_ID, BENCH_SF, BENCH_BW);
+
+    uart_init_bench();
+    vTaskDelay(pdMS_TO_TICKS(500));
+    module_init();
+    vTaskDelay(pdMS_TO_TICKS(500));
+
+    int delivered   = 0;
+    int64_t rtt_sum = 0;
+
+    ESP_LOGI(TAG, "echo trial: %d packets, %d bytes", \
+	         BENCH_N, BENCH_PKT_SIZE);
+
+    for (int i = 0; i < BENCH_N; i++) {
+        int rssi, snr;
+        send_msg(i, BENCH_PKT_SIZE);
+        int64_t rtt = wait_echo(BENCH_TIMEOUT_MS, &rssi, &snr);
+
+        if (rtt >= 0) {
+            delivered++;
+            rtt_sum += rtt;
+            if (delivered % 10 == 0)
+                ESP_LOGI(TAG, "  [%d] RTT=%lldms RSSI=%d SNR=%d",
+                         i, rtt, rssi, snr);
+        } else {
+            ESP_LOGW(TAG, "  [%d] timeout", i);
+        }
         vTaskDelay(pdMS_TO_TICKS(BENCH_INTER_PACKET_MS));
     }
 
     ESP_LOGI(TAG, "");
-    if (rcvd == 0) {
-        ESP_LOGW(TAG, "SUMMARY: 0/%d received — link failure", n);
-        return;
-    }
-    float delivery = 100.0f * rcvd / n;
-    ESP_LOGI(TAG, "SUMMARY: %d/%d (%.1f%% delivery)  "
-                  "RTT min/avg/max=%"PRId64"/%"PRId64"/%"PRId64" ms  "
-                  "RSSI avg=%d  SNR avg=%d",
-             rcvd, n, delivery,
-             (int64_t)rtt_min, (int64_t)(rtt_sum / rcvd), (int64_t)rtt_max,
-             rssi_sum / rcvd, snr_sum / rcvd);
-
-    /* Effective throughput */
-    float fps = 1000.0f / (float)(rtt_sum / rcvd);
-    float kbps = fps * pkt_size * 8 / 1000.0f;
-    ESP_LOGI(TAG, "         effective ~%.1f pkt/s  %.1f kbps", fps, kbps);
-}
-
-/* -----------------------------------------------------------------------
- * Burst test: send as fast as possible for BENCH_BURST_SECS seconds,
- * count how many echoes arrive. Measures true max sustained rate.
- * --------------------------------------------------------------------- */
-
-static void run_burst(int pkt_size)
-{
-    ESP_LOGI(TAG, "");
-    ESP_LOGI(TAG, "--- Burst test: SF=%d BW_code=%d pkt=%dB for %ds ---",
-             BENCH_SF, BENCH_BW, pkt_size, BENCH_BURST_SECS);
-
-    int sent = 0, rcvd = 0;
-    int64_t t_start = esp_timer_get_time() / 1000;
-    int64_t t_end   = t_start + BENCH_BURST_SECS * 1000;
-
-    for (;;) {
-        int64_t now = esp_timer_get_time() / 1000;
-        if (now >= t_end) break;
-
-        int rssi, snr;
-        int64_t rtt = send_and_echo(sent, pkt_size,
-                                    BENCH_BURST_TIMEOUT_MS, &rssi, &snr);
-        sent++;
-        if (rtt >= 0) rcvd++;
-    }
-
-    int64_t elapsed = esp_timer_get_time() / 1000 - t_start;
-    float pps = 1000.0f * rcvd / elapsed;
-    float kbps = pps * pkt_size * 8 / 1000.0f;
-    ESP_LOGI(TAG, "BURST: sent=%d rcvd=%d  %.1f pkt/s  %.1f kbps  loss=%.1f%%",
-             sent, rcvd, pps, kbps, 100.0f * (sent - rcvd) / sent);
-}
-
-/* -----------------------------------------------------------------------
- * Flood test: fire packets one-way as fast as possible.
- * S3 counts +RCV arrivals and prints its own stats — no echo needed.
- * First payload byte = 0xFF is the flood marker; S3 skips echo on these.
- * --------------------------------------------------------------------- */
-
-static void run_flood(int n, int pkt_size)
-{
-    uint8_t payload[240];
-    payload[0] = 0xFF;                     /* flood marker */
-    memset(payload + 1, 0xAA, pkt_size - 1);
-
-    char hdr[32];
-    int  hdr_len = snprintf(hdr, sizeof(hdr), "AT+SEND=%d,%d,",
-                            BENCH_DEST_ADDR, pkt_size);
-
-    ESP_LOGI(TAG, "");
-    ESP_LOGI(TAG, "--- Flood TX: %d x %dB (SF=%d BW_code=%d) ---",
-             n, pkt_size, BENCH_SF, BENCH_BW);
-    ESP_LOGI(TAG, "    (S3 RX stats on S3 serial — one-way throughput)");
-
-    char    line[128];
-    int     sent = 0;
-    int64_t t0   = esp_timer_get_time() / 1000;
-
-    for (int i = 0; i < n; i++) {
-        uart_flush_input(LORA_UART_NUM);
-        uart_write_bytes(LORA_UART_NUM, hdr,     hdr_len);
-        uart_write_bytes(LORA_UART_NUM, payload,  pkt_size);
-        uart_write_bytes(LORA_UART_NUM, "\r\n",   2);
-
-        /* Wait for +OK — module has transmitted the packet */
-        bool ok        = false;
-        int  remaining = 2000;
-        while (remaining > 0 && !ok) {
-            int step = remaining < 50 ? remaining : 50;
-            if (readline(line, sizeof(line), step)) {
-                if (strstr(line, "+OK"))
-                    ok = true;
-                else
-                    ESP_LOGI("FLOOD_TX", "  [%d] %s", i, line);
-            }
-            remaining -= step;
-        }
-        if (ok) sent++;
-        else    ESP_LOGW("FLOOD_TX", "  [%d] no +OK (module busy?)", i);
-    }
-
-    int64_t elapsed = esp_timer_get_time() / 1000 - t0;
-    float   pps     = 1000.0f * sent  / (float)elapsed;
-    float   kbps    = pps * pkt_size * 8.0f / 1000.0f;
-    ESP_LOGI(TAG, "FLOOD TX: sent=%d/%d  %"PRId64"ms  %.1f pkt/s  %.1f kbps",
-             sent, n, elapsed, pps, kbps);
-}
-
-/* -----------------------------------------------------------------------
- * Main bench task
- * --------------------------------------------------------------------- */
-
-void lora_bench_task(void *arg)
-{
-    ESP_LOGI(TAG, "=== LoRa Bench starting ===");
-    ESP_LOGI(TAG, "DevKitV1 addr=%d  S3 addr=%d  net=%d",
-             LORA_ADDRESS_RECEIVER, BENCH_DEST_ADDR, LORA_NETWORK_ID);
-
-    uart_init_bench();
-    vTaskDelay(pdMS_TO_TICKS(500));
-    bench_module_init();
-    vTaskDelay(pdMS_TO_TICKS(500));
-
-    ESP_LOGI(TAG, "");
-    ESP_LOGI(TAG, "========================================");
-    ESP_LOGI(TAG, "  SF=%d  BW_code=%d  CR=%d  Preamble=%d",
-             BENCH_SF, BENCH_BW, BENCH_CR, BENCH_PREAMBLE);
-    ESP_LOGI(TAG, "  BW: 7=125kHz 8=250kHz 9=500kHz");
-    ESP_LOGI(TAG, "========================================");
-
-    /* Sanity check: 3 attempts to confirm link is up */
-    ESP_LOGI(TAG, "Sanity ping (dest addr=%d, 3 attempts)...", BENCH_DEST_ADDR);
-    {
-        int rssi = 0, snr = 0;
-        int64_t rtt = -1;
-        for (int attempt = 0; attempt < 3 && rtt < 0; attempt++) {
-            rtt = send_and_echo(0xDEAD, 32, 5000, &rssi, &snr);
-            if (rtt < 0)
-                ESP_LOGW(TAG, "  attempt %d timed out", attempt + 1);
-        }
-        if (rtt < 0) {
-            ESP_LOGE(TAG, "SANITY PING FAILED after 3 attempts");
-            ESP_LOGE(TAG, "  Check: correct dest addr? S3 booted in bench mode?");
-            ESP_LOGE(TAG, "  Module default addr is usually 0 — try BENCH_DEST_ADDR=0");
-            vTaskDelete(NULL);  /* errors already printed above */
-        }
-        ESP_LOGI(TAG, "Link UP  RTT=%"PRId64"ms  RSSI=%d  SNR=%d", rtt, rssi, snr);
-    }
-
-    /* Trial: target packet size at configured SF/BW */
-    run_trial(BENCH_N, BENCH_PKT_SIZE, BENCH_TIMEOUT_MS);
-
-    /* Trial: larger packet (worst-case compressed frame) */
-    if (BENCH_PKT_SIZE < 200) run_trial(BENCH_N / 2, 200, BENCH_TIMEOUT_MS);
-
-    /* Burst: echo-based max sustained rate (RTT-limited) */
-    run_burst(BENCH_PKT_SIZE);
-
-    /* Flood: pure one-way TX throughput — S3 counts arrivals, no echo */
-    run_flood(BENCH_N * 2, BENCH_PKT_SIZE);
-
-    ESP_LOGI(TAG, "");
-    ESP_LOGI(TAG, "=== Bench complete ===");
-    ESP_LOGI(TAG, "Rule of thumb for 6 FPS: need avg RTT < 167ms (1000/6)");
-    ESP_LOGI(TAG, "One-way flood rate should be ~2x the burst echo rate");
-    ESP_LOGI(TAG, "Check S3 serial for flood RX stats");
+    ESP_LOGI(TAG, "=== results ===");
+    ESP_LOGI(TAG, "delivered: %d/%d (%.1f%%)",
+             delivered, BENCH_N, 100.0f * delivered / BENCH_N);
+    if (delivered > 0)
+        ESP_LOGI(TAG, "avg RTT: %lld ms", rtt_sum / delivered);
 
     vTaskDelete(NULL);
 }
 
-#else /* TEST_MODE_LORA_BENCH not defined — provide empty stub so linker is happy */
-
+#else
 void lora_bench_task(void *arg) { (void)arg; }
-
-#endif /* TEST_MODE_LORA_BENCH */
+#endif

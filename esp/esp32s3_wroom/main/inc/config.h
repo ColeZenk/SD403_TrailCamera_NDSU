@@ -42,6 +42,9 @@
 #define LORA_BUF_SIZE       1024
 #define LORA_ADDRESS_RECEIVER        1               /* this receiver */
 #define LORA_NETWORK_ID     6
+#define LORA_AT_TIMEOUT_MS           500
+#define LORA_INIT_DELAY_MS           300
+#define LORA_MAX_PAYLOAD             240             /* RYLR998 max payload */
 
 /*******************************************************************************
  * Image / Frame Constants  (must match camera unit)
