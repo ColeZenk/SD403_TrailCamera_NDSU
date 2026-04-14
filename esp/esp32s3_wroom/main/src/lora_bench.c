@@ -216,13 +216,8 @@ void lora_bench_task(void *arg) {
                 // we will completely reinstall it. This is the software
                 // equivalent of "resetting the slave" for the communication
                 // part.
-                ESP_LOGI(TAG, "Re-initializing UART driver before echo...");
-                uart_driver_delete(LORA_UART_NUM);
-                vTaskDelay(
-                    pdMS_TO_TICKS(10)); // Small delay to let things settle.
-                uart_init_bench();
-                vTaskDelay(pdMS_TO_TICKS(10));
 
+		vTaskDelay(pdMS_TO_TICKS(15));
                 // Now, with a pristine driver state, send the echo.
                 send_echo(src, data, len);
 

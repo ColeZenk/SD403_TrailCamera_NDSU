@@ -96,15 +96,19 @@ static void module_init(void) {
 /**
  * Send one packet.
  */
-static void send_msg(uint32_t seq, int size) {
+static void send_msg(uint32_t seq, int size) 
+{
         static const int IDEAL_PAYLOAD = 0xF0;
         static const int MAX_HDR = 0x20;
+	static const int num_hold = 9;
         uint8_t payload[IDEAL_PAYLOAD + 1];
         /* size = (size > IDEAL_PAYLOAD) ? IDEAL_PAYLOAD : size; */
         int mask = -(size > IDEAL_PAYLOAD);
         size = size ^ (mask & (IDEAL_PAYLOAD ^ size));
         memset(payload, 'A', size);
-        snprintf((char *)payload, 9, "%08lx", (unsigned long)seq);
+        char seq_str[num_hold];
+	 snprintf(seq_str, num_hold, "%08lx", (unsigned long)seq);
+	memcpy(payload, seq_str, num_hold-1);
         /* AT+SEND=<dest>,<len>,<data>\r\n */
         char hdr[MAX_HDR];
         int hdr_len = snprintf(hdr, sizeof(hdr), "AT+SEND=%d,%d,",
