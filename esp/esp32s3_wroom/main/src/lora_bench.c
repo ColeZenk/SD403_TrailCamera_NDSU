@@ -185,7 +185,6 @@ void lora_bench_task(void *arg) {
                 // --- STATE: LISTENING ---
                 // At the start of every loop, ensure the UART driver is clean.
                 // This is a more robust way to "flush".
-                uart_flush_input(LORA_UART_NUM);
 
                 // Wait for a line to arrive. This is our blocking call.
                 if (!readline(line, sizeof(line),
@@ -221,17 +220,6 @@ void lora_bench_task(void *arg) {
                 // Now, with a pristine driver state, send the echo.
                 send_echo(src, data, len);
 
-                // And wait for the "+OK" from our own module.
-                if (readline(line, sizeof(line), LORA_AT_TIMEOUT_MS)) {
-                        ESP_LOGI(TAG, "Echo ack: %s", line);
-                } else {
-                        ESP_LOGW(TAG, "No +OK after sending echo.");
-                }
-
-                // The loop will now repeat, ready for the next packet.
-                ESP_LOGI(
-                    TAG,
-                    "Transaction complete. Returning to listening state.");
         }
 }
 
