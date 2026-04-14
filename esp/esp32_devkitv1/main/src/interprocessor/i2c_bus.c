@@ -19,306 +19,300 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 
-#include "esp_log.h"
 #include "esp_err.h"
-#include "esp_rom_sys.h"    /* esp_rom_delay_us() — tick-independent µs delay */
+#include "esp_log.h"
+#include "esp_rom_sys.h" /* esp_rom_delay_us() — tick-independent µs delay */
 
 #include "driver/i2c.h"
 
 static const char *TAG = "I2C";
 
-#define DEFAULT_CLK  100000
+#define DEFAULT_CLK 100000
 
 static struct {
-    i2c_port_t        port;
-    i2c_config_t      conf;      /* stored for bus recovery after timeout */
-    SemaphoreHandle_t mutex;
-    bool              initialized;
+        i2c_port_t port;
+        i2c_config_t conf; /* stored for bus recovery after timeout */
+        SemaphoreHandle_t mutex;
+        bool initialized;
 } bus;
 
 /* Recover a stuck I2C bus.
  * Toggles SCL up to 9 times (advances any slave state machine), then
  * generates a STOP condition so the bus is clean before reinstalling
  * the driver. Must be called with bus.mutex already held. */
-static void bus_recover(void)
-{
-    ESP_LOGW(TAG, "I2C timeout — recovering bus (port %d)", bus.port);
-    i2c_driver_delete(bus.port);
+static void bus_recover(void) {
+        ESP_LOGW(TAG, "I2C timeout — recovering bus (port %d)", bus.port);
+        i2c_driver_delete(bus.port);
 
-    /* After i2c_driver_delete the GPIO matrix still routes the I2C peripheral
-     * output to the pins (possibly frozen low).  gpio_reset_pin() reconnects
-     * the software GPIO register to the physical pin before we pulse SCL. */
-    gpio_reset_pin(bus.conf.scl_io_num);
-    gpio_reset_pin(bus.conf.sda_io_num);
+        /* After i2c_driver_delete the GPIO matrix still routes the I2C
+         * peripheral output to the pins (possibly frozen low).
+         * gpio_reset_pin() reconnects the software GPIO register to the
+         * physical pin before we pulse SCL. */
+        gpio_reset_pin(bus.conf.scl_io_num);
+        gpio_reset_pin(bus.conf.sda_io_num);
 
-    /* Clock recovery: release SCL, then pulse until SDA goes high.
-     * esp_rom_delay_us gives real µs delays independent of tick rate. */
-    gpio_set_direction(bus.conf.scl_io_num, GPIO_MODE_OUTPUT_OD);
-    gpio_set_direction(bus.conf.sda_io_num, GPIO_MODE_INPUT_OUTPUT_OD);
-    gpio_set_level(bus.conf.scl_io_num, 1);
-    esp_rom_delay_us(5);
+        /* Clock recovery: release SCL, then pulse until SDA goes high.
+         * esp_rom_delay_us gives real µs delays independent of tick rate. */
+        gpio_set_direction(bus.conf.scl_io_num, GPIO_MODE_OUTPUT_OD);
+        gpio_set_direction(bus.conf.sda_io_num, GPIO_MODE_INPUT_OUTPUT_OD);
+        gpio_set_level(bus.conf.scl_io_num, 1);
+        esp_rom_delay_us(5);
 
-    ESP_LOGW(TAG, "SDA before recovery: %d", gpio_get_level(bus.conf.sda_io_num));
+        ESP_LOGW(TAG, "SDA before recovery: %d",
+                 gpio_get_level(bus.conf.sda_io_num));
 
-    int pulses = 0;
-    for (; pulses < 9 && !gpio_get_level(bus.conf.sda_io_num); pulses++) {
-        gpio_set_level(bus.conf.scl_io_num, 0);
+        int pulses = 0;
+        for (; pulses < 9 && !gpio_get_level(bus.conf.sda_io_num); pulses++) {
+                gpio_set_level(bus.conf.scl_io_num, 0);
+                esp_rom_delay_us(5);
+                gpio_set_level(bus.conf.scl_io_num, 1);
+                esp_rom_delay_us(5);
+        }
+        ESP_LOGW(TAG, "SCL pulses: %d, SDA after: %d", pulses,
+                 gpio_get_level(bus.conf.sda_io_num));
+
+        /* STOP: SDA low → SCL high → SDA high */
+        gpio_set_level(bus.conf.sda_io_num, 0);
         esp_rom_delay_us(5);
         gpio_set_level(bus.conf.scl_io_num, 1);
         esp_rom_delay_us(5);
-    }
-    ESP_LOGW(TAG, "SCL pulses: %d, SDA after: %d", pulses, gpio_get_level(bus.conf.sda_io_num));
+        gpio_set_level(bus.conf.sda_io_num, 1);
+        esp_rom_delay_us(5);
 
-    /* STOP: SDA low → SCL high → SDA high */
-    gpio_set_level(bus.conf.sda_io_num, 0);
-    esp_rom_delay_us(5);
-    gpio_set_level(bus.conf.scl_io_num, 1);
-    esp_rom_delay_us(5);
-    gpio_set_level(bus.conf.sda_io_num, 1);
-    esp_rom_delay_us(5);
-
-    i2c_param_config(bus.port, &bus.conf);
-    esp_err_t err = i2c_driver_install(bus.port, I2C_MODE_MASTER, 0, 0, 0);
-    if (err != ESP_OK)
-        ESP_LOGE(TAG, "bus recovery failed: %s", esp_err_to_name(err));
-    else
-        ESP_LOGI(TAG, "bus recovered");
+        i2c_param_config(bus.port, &bus.conf);
+        esp_err_t err = i2c_driver_install(bus.port, I2C_MODE_MASTER, 0, 0, 0);
+        if (err != ESP_OK)
+                ESP_LOGE(TAG, "bus recovery failed: %s", esp_err_to_name(err));
+        else
+                ESP_LOGI(TAG, "bus recovered");
 }
 
 /* =========================
  * Public: init / state
  * ========================= */
 
-esp_err_t i2c_bus_init(const i2c_bus_config_t *cfg)
-{
-    if (!cfg) return ESP_ERR_INVALID_ARG;
-    if (bus.initialized) return ESP_ERR_INVALID_STATE;
+esp_err_t i2c_bus_init(const i2c_bus_config_t *cfg) {
+        if (!cfg) return ESP_ERR_INVALID_ARG;
+        if (bus.initialized) return ESP_ERR_INVALID_STATE;
 
-    i2c_config_t conf = {
-        .mode             = I2C_MODE_MASTER,
-        .sda_io_num       = cfg->sda_gpio,
-        .scl_io_num       = cfg->scl_gpio,
-        .sda_pullup_en    = cfg->enable_internal_pullup ? GPIO_PULLUP_ENABLE
-                                                        : GPIO_PULLUP_DISABLE,
-        .scl_pullup_en    = cfg->enable_internal_pullup ? GPIO_PULLUP_ENABLE
-                                                        : GPIO_PULLUP_DISABLE,
-        .master.clk_speed = cfg->clk_speed_hz ? cfg->clk_speed_hz : DEFAULT_CLK,
-    };
+        i2c_config_t conf = {
+            .mode = I2C_MODE_MASTER,
+            .sda_io_num = cfg->sda_gpio,
+            .scl_io_num = cfg->scl_gpio,
+            .sda_pullup_en = cfg->enable_internal_pullup ? GPIO_PULLUP_ENABLE
+                                                         : GPIO_PULLUP_DISABLE,
+            .scl_pullup_en = cfg->enable_internal_pullup ? GPIO_PULLUP_ENABLE
+                                                         : GPIO_PULLUP_DISABLE,
+            .master.clk_speed =
+                cfg->clk_speed_hz ? cfg->clk_speed_hz : DEFAULT_CLK,
+        };
 
-    esp_err_t err;
+        esp_err_t err;
 
-    err = i2c_param_config(cfg->port, &conf);
-    if (err != ESP_OK) return err;
+        err = i2c_param_config(cfg->port, &conf);
+        if (err != ESP_OK) return err;
 
-    err = i2c_driver_install(cfg->port, I2C_MODE_MASTER, 0, 0, 0);
-    if (err != ESP_OK) return err;
+        err = i2c_driver_install(cfg->port, I2C_MODE_MASTER, 0, 0, 0);
+        if (err != ESP_OK) return err;
 
-    bus.mutex = xSemaphoreCreateMutex();
-    if (!bus.mutex) {
-        i2c_driver_delete(cfg->port);
-        return ESP_ERR_NO_MEM;
-    }
+        bus.mutex = xSemaphoreCreateMutex();
+        if (!bus.mutex) {
+                i2c_driver_delete(cfg->port);
+                return ESP_ERR_NO_MEM;
+        }
 
-    bus.port = cfg->port;
-    bus.conf = conf;
-    bus.initialized = true;
+        bus.port = cfg->port;
+        bus.conf = conf;
+        bus.initialized = true;
 
-    ESP_LOGI(TAG, "ready — port %d, SDA=%d SCL=%d, %lu Hz",
-             cfg->port, cfg->sda_gpio, cfg->scl_gpio,
-             cfg->clk_speed_hz ? cfg->clk_speed_hz : (uint32_t)DEFAULT_CLK);
+        ESP_LOGI(TAG, "ready — port %d, SDA=%d SCL=%d, %lu Hz", cfg->port,
+                 cfg->sda_gpio, cfg->scl_gpio,
+                 cfg->clk_speed_hz ? cfg->clk_speed_hz
+                                   : (uint32_t)DEFAULT_CLK);
 
-    return ESP_OK;
+        return ESP_OK;
 }
 
-i2c_port_t i2c_bus_get_port(void)  { return bus.port; }
-bool       i2c_bus_is_init(void)   { return bus.initialized; }
+i2c_port_t i2c_bus_get_port(void) { return bus.port; }
+bool i2c_bus_is_init(void) { return bus.initialized; }
 
 /* =========================
  * Public: lock / unlock
  * ========================= */
 
-esp_err_t i2c_bus_lock(uint32_t timeout_ms)
-{
-    if (!bus.initialized) return ESP_ERR_INVALID_STATE;
-    return (xSemaphoreTake(bus.mutex, pdMS_TO_TICKS(timeout_ms)) == pdTRUE)
-           ? ESP_OK : ESP_ERR_TIMEOUT;
+esp_err_t i2c_bus_lock(uint32_t timeout_ms) {
+        if (!bus.initialized) return ESP_ERR_INVALID_STATE;
+        return (xSemaphoreTake(bus.mutex, pdMS_TO_TICKS(timeout_ms)) == pdTRUE)
+                   ? ESP_OK
+                   : ESP_ERR_TIMEOUT;
 }
 
-void i2c_bus_unlock(void)
-{
-    if (bus.mutex) xSemaphoreGive(bus.mutex);
+void i2c_bus_unlock(void) {
+        if (bus.mutex) xSemaphoreGive(bus.mutex);
 }
 
 /* =========================
  * Public: probe / scan
  * ========================= */
 
-esp_err_t i2c_bus_probe(uint8_t addr, uint32_t timeout_ms)
-{
-    if (!bus.initialized) return ESP_ERR_INVALID_STATE;
+esp_err_t i2c_bus_probe(uint8_t addr, uint32_t timeout_ms) {
+        if (!bus.initialized) return ESP_ERR_INVALID_STATE;
 
-    esp_err_t err = i2c_bus_lock(timeout_ms);
-    if (err != ESP_OK) return err;
+        esp_err_t err = i2c_bus_lock(timeout_ms);
+        if (err != ESP_OK) return err;
 
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    if (!cmd) {
+        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+        if (!cmd) {
+                i2c_bus_unlock();
+                return ESP_ERR_NO_MEM;
+        }
+
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
+        i2c_master_stop(cmd);
+
+        err = i2c_master_cmd_begin(bus.port, cmd, pdMS_TO_TICKS(timeout_ms));
+        i2c_cmd_link_delete(cmd);
+
         i2c_bus_unlock();
-        return ESP_ERR_NO_MEM;
-    }
-
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
-    i2c_master_stop(cmd);
-
-    err = i2c_master_cmd_begin(bus.port, cmd, pdMS_TO_TICKS(timeout_ms));
-    i2c_cmd_link_delete(cmd);
-
-    i2c_bus_unlock();
-    return err;
+        return err;
 }
 
-void i2c_bus_scan(uint32_t timeout_ms)
-{
-    if (!bus.initialized) {
-        ESP_LOGW(TAG, "scan requested but bus not initialized");
-        return;
-    }
-
-    ESP_LOGI(TAG, "scan start (port %d)...", (int)bus.port);
-
-    int found = 0;
-    for (uint8_t addr = 0x08; addr < 0x78; addr++) {
-        esp_err_t err = i2c_bus_probe(addr, timeout_ms);
-        if (err == ESP_OK) {
-            ESP_LOGI(TAG, "ACK at 0x%02X", addr);
-            found++;
+void i2c_bus_scan(uint32_t timeout_ms) {
+        if (!bus.initialized) {
+                ESP_LOGW(TAG, "scan requested but bus not initialized");
+                return;
         }
-    }
 
-    if (!found) ESP_LOGW(TAG, "no I2C devices ACKed");
-    ESP_LOGI(TAG, "scan done");
+        ESP_LOGI(TAG, "scan start (port %d)...", (int)bus.port);
+
+        int found = 0;
+        for (uint8_t addr = 0x08; addr < 0x78; addr++) {
+                esp_err_t err = i2c_bus_probe(addr, timeout_ms);
+                if (err == ESP_OK) {
+                        ESP_LOGI(TAG, "ACK at 0x%02X", addr);
+                        found++;
+                }
+        }
+
+        if (!found) ESP_LOGW(TAG, "no I2C devices ACKed");
+        ESP_LOGI(TAG, "scan done");
 }
 
 /* =========================
  * Public: write / read / write_read
  * ========================= */
 
-esp_err_t i2c_bus_write(uint8_t addr, const uint8_t *data,
-                        size_t len, uint32_t timeout_ms)
-{
-    if (!bus.initialized) return ESP_ERR_INVALID_STATE;
-    if (len > 0 && !data) return ESP_ERR_INVALID_ARG;
+esp_err_t i2c_bus_write(uint8_t addr, const uint8_t *data, size_t len,
+                        uint32_t timeout_ms) {
+        if (!bus.initialized) return ESP_ERR_INVALID_STATE;
+        if (len > 0 && !data) return ESP_ERR_INVALID_ARG;
 
-    esp_err_t err = i2c_bus_lock(timeout_ms);
-    if (err != ESP_OK) return err;
+        esp_err_t err = i2c_bus_lock(timeout_ms);
+        if (err != ESP_OK) return err;
 
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    if (!cmd) {
+        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+        if (!cmd) {
+                i2c_bus_unlock();
+                return ESP_ERR_NO_MEM;
+        }
+
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
+        if (len > 0) i2c_master_write(cmd, data, len, true);
+        i2c_master_stop(cmd);
+
+        err = i2c_master_cmd_begin(bus.port, cmd, pdMS_TO_TICKS(timeout_ms));
+        i2c_cmd_link_delete(cmd);
+
+        if (err == ESP_ERR_TIMEOUT) bus_recover();
+
         i2c_bus_unlock();
-        return ESP_ERR_NO_MEM;
-    }
-
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
-    if (len > 0) i2c_master_write(cmd, data, len, true);
-    i2c_master_stop(cmd);
-
-    err = i2c_master_cmd_begin(bus.port, cmd, pdMS_TO_TICKS(timeout_ms));
-    i2c_cmd_link_delete(cmd);
-
-    if (err == ESP_ERR_TIMEOUT) bus_recover();
-
-    i2c_bus_unlock();
-    return err;
+        return err;
 }
 
-esp_err_t i2c_bus_read(uint8_t addr, uint8_t *data,
-                       size_t len, uint32_t timeout_ms)
-{
-    if (!bus.initialized) return ESP_ERR_INVALID_STATE;
-    if (!data || len == 0) return ESP_ERR_INVALID_ARG;
+esp_err_t i2c_bus_read(uint8_t addr, uint8_t *data, size_t len,
+                       uint32_t timeout_ms) {
+        if (!bus.initialized) return ESP_ERR_INVALID_STATE;
+        if (!data || len == 0) return ESP_ERR_INVALID_ARG;
 
-    esp_err_t err = i2c_bus_lock(timeout_ms);
-    if (err != ESP_OK) return err;
+        esp_err_t err = i2c_bus_lock(timeout_ms);
+        if (err != ESP_OK) return err;
 
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    if (!cmd) {
+        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+        if (!cmd) {
+                i2c_bus_unlock();
+                return ESP_ERR_NO_MEM;
+        }
+
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_READ, true);
+
+        if (len > 1) i2c_master_read(cmd, data, len - 1, I2C_MASTER_ACK);
+        i2c_master_read_byte(cmd, &data[len - 1], I2C_MASTER_NACK);
+
+        i2c_master_stop(cmd);
+
+        err = i2c_master_cmd_begin(bus.port, cmd, pdMS_TO_TICKS(timeout_ms));
+        i2c_cmd_link_delete(cmd);
+
+        if (err == ESP_ERR_TIMEOUT) bus_recover();
+
         i2c_bus_unlock();
-        return ESP_ERR_NO_MEM;
-    }
-
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_READ, true);
-
-    if (len > 1) i2c_master_read(cmd, data, len - 1, I2C_MASTER_ACK);
-    i2c_master_read_byte(cmd, &data[len - 1], I2C_MASTER_NACK);
-
-    i2c_master_stop(cmd);
-
-    err = i2c_master_cmd_begin(bus.port, cmd, pdMS_TO_TICKS(timeout_ms));
-    i2c_cmd_link_delete(cmd);
-
-    if (err == ESP_ERR_TIMEOUT) bus_recover();
-
-    i2c_bus_unlock();
-    return err;
+        return err;
 }
 
-esp_err_t i2c_bus_write_read(uint8_t addr,
-                             const uint8_t *wr, size_t wr_len,
-                             uint8_t *rd, size_t rd_len,
-                             uint32_t timeout_ms)
-{
-    if (!bus.initialized) return ESP_ERR_INVALID_STATE;
-    if (!wr || wr_len == 0) return ESP_ERR_INVALID_ARG;
-    if (!rd || rd_len == 0) return ESP_ERR_INVALID_ARG;
+esp_err_t i2c_bus_write_read(uint8_t addr, const uint8_t *wr, size_t wr_len,
+                             uint8_t *rd, size_t rd_len, uint32_t timeout_ms) {
+        if (!bus.initialized) return ESP_ERR_INVALID_STATE;
+        if (!wr || wr_len == 0) return ESP_ERR_INVALID_ARG;
+        if (!rd || rd_len == 0) return ESP_ERR_INVALID_ARG;
 
-    esp_err_t err = i2c_bus_lock(timeout_ms);
-    if (err != ESP_OK) return err;
+        esp_err_t err = i2c_bus_lock(timeout_ms);
+        if (err != ESP_OK) return err;
 
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    if (!cmd) {
+        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+        if (!cmd) {
+                i2c_bus_unlock();
+                return ESP_ERR_NO_MEM;
+        }
+
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
+        i2c_master_write(cmd, wr, wr_len, true);
+
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_READ, true);
+
+        if (rd_len > 1) i2c_master_read(cmd, rd, rd_len - 1, I2C_MASTER_ACK);
+        i2c_master_read_byte(cmd, &rd[rd_len - 1], I2C_MASTER_NACK);
+
+        i2c_master_stop(cmd);
+
+        err = i2c_master_cmd_begin(bus.port, cmd, pdMS_TO_TICKS(timeout_ms));
+        i2c_cmd_link_delete(cmd);
+
+        if (err == ESP_ERR_TIMEOUT) bus_recover();
+
         i2c_bus_unlock();
-        return ESP_ERR_NO_MEM;
-    }
-
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
-    i2c_master_write(cmd, wr, wr_len, true);
-
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_READ, true);
-
-    if (rd_len > 1) i2c_master_read(cmd, rd, rd_len - 1, I2C_MASTER_ACK);
-    i2c_master_read_byte(cmd, &rd[rd_len - 1], I2C_MASTER_NACK);
-
-    i2c_master_stop(cmd);
-
-    err = i2c_master_cmd_begin(bus.port, cmd, pdMS_TO_TICKS(timeout_ms));
-    i2c_cmd_link_delete(cmd);
-
-    if (err == ESP_ERR_TIMEOUT) bus_recover();
-
-    i2c_bus_unlock();
-    return err;
+        return err;
 }
 
 /* =========================
  * Public: deinit
  * ========================= */
 
-esp_err_t i2c_bus_deinit(void)
-{
-    if (!bus.initialized) return ESP_OK;
+esp_err_t i2c_bus_deinit(void) {
+        if (!bus.initialized) return ESP_OK;
 
-    esp_err_t err = i2c_driver_delete(bus.port);
-    if (err != ESP_OK) return err;
+        esp_err_t err = i2c_driver_delete(bus.port);
+        if (err != ESP_OK) return err;
 
-    if (bus.mutex) {
-        vSemaphoreDelete(bus.mutex);
-        bus.mutex = NULL;
-    }
+        if (bus.mutex) {
+                vSemaphoreDelete(bus.mutex);
+                bus.mutex = NULL;
+        }
 
-    bus.initialized = false;
-    return ESP_OK;
+        bus.initialized = false;
+        return ESP_OK;
 }

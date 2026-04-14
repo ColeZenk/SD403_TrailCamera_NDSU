@@ -6,9 +6,10 @@
 #ifndef SD_STORAGE_H
 #define SD_STORAGE_H
 
-#include "esp_err.h"
 #include <stddef.h>
 #include <stdint.h>
+
+#include "esp_err.h"
 
 /* Debug flag - set to 1 to enable verbose logging */
 #ifndef UNIT_TEST_SD_STORAGE
@@ -18,7 +19,9 @@
 #if UNIT_TEST_SD_STORAGE
 #define LOG_DEBUG(fmt, ...) ESP_LOGI(TAG, fmt, ##__VA_ARGS__)
 #else
-#define LOG_DEBUG(fmt, ...) do {} while(0)
+#define LOG_DEBUG(fmt, ...)                                                    \
+        do {                                                                   \
+        } while (0)
 #endif
 
 /**
@@ -44,7 +47,8 @@ esp_err_t sd_save_raw(const uint8_t *buffer, size_t length);
 /**
  * Save image buffer to SD card with specific filename
  */
-esp_err_t sd_save_image_named(const uint8_t *buffer, size_t length, const char *filename);
+esp_err_t sd_save_image_named(const uint8_t *buffer, size_t length,
+                              const char *filename);
 
 /**
  * Get current image counter value

@@ -4,27 +4,28 @@
  * Single-clock dual-port RAM for reliable BSRAM inference
  */
 
-module bram_image_buffer (
-    // Write port (SPI side)
-    input  wire        clk_wr,
-    input  wire        we,
-    input  wire [14:0] addr_wr,
-    input  wire [7:0]  data_wr,
-    // Read port (LCD side)
-    input  wire        clk_rd,      // Ignored - using clk_wr for both
-    input  wire [14:0] addr_rd,
-    output reg  [7:0]  data_rd
+module bram_image_buffer
+    (
+        // Write port (SPI side)
+        input wire clk_wr,
+        input wire we,
+        input wire [14 : 0] addr_wr,
+        input wire [7 : 0] data_wr,
+        // Read port (LCD side)
+        input wire clk_rd,
+        // Ignored - using clk_wr for both
+        input wire [14 : 0] addr_rd,
+        output reg [7 : 0] data_rd
 
-);
+    );
 
-    // 32KB RAM — 14.6x Tang Nano 9K BSRAMs, fits in 26 available
-    reg [7:0] mem [0:32767];
-    // Single clock for both ports
-    always @(posedge clk_wr) begin
-        if (we) begin
-            mem[addr_wr[14:0]] <= data_wr;
+        // 32KB RAM — 14.6x Tang Nano 9K BSRAMs, fits in 26 available
+        reg [7 : 0] mem[0 : 32767];
+        // Single clock for both ports
+        always @(posedge clk_wr) begin
+                if (we) begin
+                        mem[addr_wr[14 : 0]] <= data_wr;
+                end
+                data_rd <= mem[addr_rd[14 : 0]];
         end
-        data_rd <= mem[addr_rd[14:0]];
-    end
 endmodule
-

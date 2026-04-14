@@ -1,3 +1,6 @@
+# Set up language as verilog
+Language: Verilog
+
 # Base the style on LLVM but override with our "Unix-ish" rules
 BasedOnStyle: LLVM
 

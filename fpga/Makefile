@@ -80,7 +80,12 @@ clean:
 	@echo "=== Cleaning Build Directory ==="
 	rm -rf $(BUILD_DIR)
 
-# Help
+# Format all verilog
+format:
+	@echo "=== Formatting all SRC files ==="
+	find ./ -type f \( -name "*.v" \) -exec clang-format -i {} \; 2>/dev/null
+      								      
+# Help								      
 help:
 	@echo "Trail Camera FPGA Build System"
 	@echo ""
