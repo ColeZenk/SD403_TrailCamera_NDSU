@@ -101,10 +101,13 @@ static void module_init(void) {
                  BENCH_BW, BENCH_CR, BENCH_PREAMBLE);
         at_cmd(cmd, "+OK", LORA_AT_TIMEOUT_MS);
 
+        at_cmd("AT+CRFOP=7\r\n", "+OK", LORA_AT_TIMEOUT_MS);
+
         at_cmd("AT+ADDRESS?\r\n", "+ADDRESS=", LORA_AT_TIMEOUT_MS);
         at_cmd("AT+NETWORKID?\r\n", "+NETWORKID=", LORA_AT_TIMEOUT_MS);
         at_cmd("AT+PARAMETER?\r\n", "+PARAMETER=", LORA_AT_TIMEOUT_MS);
         at_cmd("AT+BAND?\r\n", "+BAND=", LORA_AT_TIMEOUT_MS);
+        at_cmd("AT+CRFOP?\r\n", "+CRFOP=", LORA_AT_TIMEOUT_MS);
 }
 
 /* ------------------------------------------------------------------ */
@@ -162,9 +165,49 @@ static void send_echo(int dest, const char *data, int len) {
         uart_write_bytes(LORA_UART_NUM, "\r\n", 2);
 }
 
+static bool wait_for_start(char *line, int line_size)
+{
+	static const int listen_ms = 1000;
+
+	static const bool ready = 0x0;
+	static const bool wait  = 0x1;
+	bool status = wait;
+
+	int src, len;
+	char *data;
+
+	static int beacon_count = 0;
+	beacon_count++;
+	ESP_LOGW(TAG, "beacon #%d sending READY", beacon_count);
+
+	const char *cmd = "AT+SEND=2,5,READY\r\n";
+	uart_write_bytes(LORA_UART_NUM, cmd, strlen(cmd));
+
+	int64_t deadline = esp_timer_get_time() + (int64_t)listen_ms * 1000;
+	while (esp_timer_get_time() < deadline) {
+		if (!readline(line, line_size, 200))
+			continue;
+
+		ESP_LOGW(TAG, "handshake rx: %s", line);
+
+		bool valid_rcvp = parse_rcv(line, &src, &data, &len);
+		bool valid_size = valid_rcvp && (len == 5);
+		bool valid_ascii = valid_size && !(bool)memcmp(data, "START", 5);
+
+		if (valid_ascii) {
+			status = ready;
+			break;
+		}
+	}
+
+	return status;
+
+}
+
 /* ------------------------------------------------------------------ */
 
-void lora_bench_task(void *arg) {
+void lora_bench_task(void *arg)
+{
         (void)arg;
 
         ESP_LOGI(TAG, "=== S3 echo slave ===");
@@ -177,9 +220,16 @@ void lora_bench_task(void *arg) {
         module_init();
         vTaskDelay(pdMS_TO_TICKS(500));
 
-        ESP_LOGI(TAG, "listening...");
+	ESP_LOGI(TAG, "waiting for handshake...");
+
+	uart_flush_input(LORA_UART_NUM);
+	vTaskDelay(pdMS_TO_TICKS(200));
 
         char line[300];
+	while (wait_for_start(line, sizeof(line)));
+
+	ESP_LOGI(TAG, "handshake complete — listening...");
+
 
         for (;;) {
                 // --- STATE: LISTENING ---
@@ -210,7 +260,6 @@ void lora_bench_task(void *arg) {
 
                 // --- STATE: ECHOING ---
                 // We have a valid packet. Now we will echo it.
-
                 // To prevent the UART driver from getting into a bad state,
                 // we will completely reinstall it. This is the software
                 // equivalent of "resetting the slave" for the communication

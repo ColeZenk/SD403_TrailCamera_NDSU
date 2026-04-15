@@ -35,7 +35,7 @@
 /*******************************************************************************
  * LoRa UART
  ******************************************************************************/
-#define LORA_UART_NUM       UART_NUM_1
+#define LORA_UART_NUM       UART_NUM_2
 #define LORA_PIN_TX         GPIO_NUM_17
 #define LORA_PIN_RX         GPIO_NUM_18
 #define LORA_BAUD_RATE           115200

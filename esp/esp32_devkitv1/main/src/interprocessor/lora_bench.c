@@ -85,13 +85,54 @@ static void module_init(void) {
                  BENCH_BW, BENCH_CR, BENCH_PREAMBLE);
         at_cmd(cmd, "+OK", LORA_AT_TIMEOUT_MS);
 
+        at_cmd("AT+CRFOP=7\r\n", "+OK", LORA_AT_TIMEOUT_MS);
+
         at_cmd("AT+ADDRESS?\r\n", "+ADDRESS=", LORA_AT_TIMEOUT_MS);
         at_cmd("AT+NETWORKID?\r\n", "+NETWORKID=", LORA_AT_TIMEOUT_MS);
         at_cmd("AT+PARAMETER?\r\n", "+PARAMETER=", LORA_AT_TIMEOUT_MS);
         at_cmd("AT+BAND?\r\n", "+BAND=", LORA_AT_TIMEOUT_MS);
+        at_cmd("AT+CRFOP?\r\n", "+CRFOP=", LORA_AT_TIMEOUT_MS);
 }
 
 /* ------------------------------------------------------------------ */
+
+static bool parse_rcv(char *line, int *src, char **data, int *len) {
+	static const uint LORA_MAX_PAYLOAD = 240;
+        if (strncmp(line, "+RCV=", 5) != 0) return false;
+
+        char *p = line + 5;
+
+        // src
+        char *c1 = strchr(p, ',');
+        if (!c1) return false;
+        *c1 = '\0';
+        *src = atoi(p);
+
+        // len
+        char *p_len = c1 + 1;
+        char *c2 = strchr(p_len, ',');
+        if (!c2) return false;
+        *c2 = '\0';
+
+        *len = atoi(p_len);
+        if (*len <= 0 || *len > LORA_MAX_PAYLOAD) return false;
+
+        // payload start
+        *data = c2 + 1;
+
+        // validate payload is fully present in this line buffer
+        char *end = *data + *len;
+        if (*end == ',') {
+                *end = '\0'; // isolate payload; safe for debug logging
+        } else if (*end == '\0') {
+                // ok: firmware omitted rssi/snr
+        } else {
+                // partial line or malformed
+                return false;
+        }
+
+        return true;
+}
 
 /**
  * Send one packet.
@@ -186,6 +227,34 @@ static int64_t wait_echo(int timeout_ms, int *rssi_out, int *snr_out) {
         return -1; // Timeout
 }
 
+static bool wait_for_ready(char *line, int line_size)
+{
+	static const int handshake_listen_ms = 500;
+
+	static const bool ready = 0x0;
+	static const bool wait  = 0x1;
+	bool status = wait;
+
+
+	int src, len;
+	char *data;
+
+	
+	bool valid_line = readline(line, line_size, handshake_listen_ms);
+	bool valid_rcvp = valid_line && parse_rcv(line,&src,&data,&len);
+	bool valid_size = valid_rcvp && (len == 5);
+	bool valid_ascii = valid_size && !(bool)memcmp(data, "READY", 5);
+
+	if (valid_line)
+		ESP_LOGI(TAG, "handshake rx: %s (match=%d)", line, valid_ascii);
+
+	if(valid_ascii) status = ready;
+
+	return status;
+
+}
+
+
 /* ------------------------------------------------------------------ */
 void lora_bench_task(void *arg) {
         ESP_LOGI(TAG, "=== DevKit TX bench ===");
@@ -198,8 +267,22 @@ void lora_bench_task(void *arg) {
         module_init();
         vTaskDelay(pdMS_TO_TICKS(500));
 
+
+	ESP_LOGI(TAG, "waiting for handshake...");
+
+	char line[300];
+	while (wait_for_ready(line, sizeof(line)));
+	const char *cmd = "AT+SEND=1,5,START\r\n";
+	uart_write_bytes(LORA_UART_NUM, cmd, strlen(cmd));
+	readline(line, sizeof(line), 500);
+	ESP_LOGI(TAG, "START sent");
+
+	vTaskDelay(pdMS_TO_TICKS(100));  // settle
+
+
         int delivered = 0;
         int64_t rtt_sum = 0;
+
 
         ESP_LOGI(TAG, "echo trial: %d packets, %d bytes", BENCH_N,
                  BENCH_PKT_SIZE);
