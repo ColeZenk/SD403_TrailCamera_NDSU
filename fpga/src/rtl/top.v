@@ -57,6 +57,14 @@ module top
      input wire button_S,
      // Pin 85
 
+     // PSRAM (internal to GW1NR package -- no pin constraints needed)
+     output wire [1:0] O_psram_ck,
+     output wire [1:0] O_psram_ck_n,
+     inout wire [1:0] IO_psram_rwds,
+     inout wire [15:0] IO_psram_dq,
+     output wire [1:0] O_psram_reset_n,
+     output wire [1:0] O_psram_cs_n,
+
      // Debug LEDs
      output wire [5 : 0] led);
 
@@ -71,6 +79,51 @@ module top
                 reset_counter <= reset_counter + {7'd0, ~rst_done};
                 sys_rst_n <= rst_done;
         end
+
+        // ==========================================================
+        // PLL: 27 MHz -> 81 MHz + 81 MHz phase-shifted
+        // ==========================================================
+        wire clk_81m;
+        wire clk_81m_p;
+
+        Gowin_rPLL pll(
+            .clkout(clk_81m),
+            .clkoutp(clk_81m_p),
+            .clkin(sys_clk)
+        );
+
+        // ==========================================================
+        // PSRAM Controller (4 MB HyperRAM, internal to GW1NR)
+        // ==========================================================
+        localparam PSRAM_FREQ = 81_000_000;
+        localparam PSRAM_LATENCY = 3;
+
+        wire psram_read;
+        wire [21:0] psram_addr;
+        wire [15:0] psram_dout;
+        wire psram_busy;
+
+        assign O_psram_reset_n = {sys_rst_n, sys_rst_n};
+
+        PsramController #(
+            .FREQ(PSRAM_FREQ),
+            .LATENCY(PSRAM_LATENCY)
+        ) psram_ctrl(
+            .clk(clk_81m),
+            .clk_p(clk_81m_p),
+            .resetn(sys_rst_n),
+            .read(psram_read),
+            .write(1'b0),
+            .addr(psram_addr),
+            .din(16'd0),
+            .byte_write(1'b0),
+            .dout(psram_dout),
+            .busy(psram_busy),
+            .O_psram_ck(O_psram_ck),
+            .IO_psram_rwds(IO_psram_rwds),
+            .IO_psram_dq(IO_psram_dq),
+            .O_psram_cs_n(O_psram_cs_n)
+        );
 
         // ==========================================================
         // Parameters
@@ -235,6 +288,31 @@ module top
                         frame_ready <= next_frame_ready;
                 end
         end
+
+        // ==========================================================
+        // Block Scheduler (WHT compress pipeline)
+        // ==========================================================
+        wire sched_frame_done;
+        wire sched_tx_valid;
+        wire [7:0] sched_tx_data;
+
+        block_sched #(.W(16), .TOP_K(5)) sched(
+            .clk(sys_clk),
+            .rst_n(sys_rst_n),
+            .start(cs_end & receiving),
+            .frame_done(sched_frame_done),
+            .psram_read(psram_read),
+            .psram_addr(psram_addr),
+            .psram_rdata(psram_dout),
+            .psram_busy(psram_busy),
+            .tx_valid(sched_tx_valid),
+            .tx_data(sched_tx_data),
+            .tx_ready(1'b1),
+            .base_addr(22'd0),
+            .thresh(16'd400),
+            .q_shift(4'd3),
+            .seq_thresh(4'd6)
+        );
 
         // ==========================================================
         // LCD Controller
