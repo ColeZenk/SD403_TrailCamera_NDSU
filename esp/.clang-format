@@ -1,18 +1,30 @@
-# Base the style on LLVM but override with our "Unix-ish" rules
 BasedOnStyle: LLVM
 
-# Indentation Logic
 IndentWidth: 8
 TabWidth: 8
 UseTab: Never
 
-# Line Wrapping (The "Line Wraps" you requested)
 ColumnLimit: 79
 
-# The "Old School" Compactness Rules
 AllowShortBlocksOnASingleLine: Always
-AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
 AllowShortLoopsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: All
+AllowShortCaseLabelsOnASingleLine: true
 
-# Clean up the braces to look more K&R/Unix
-BreakBeforeBraces: Attach
+BreakBeforeBraces: Linux
+
+PointerAlignment: Right
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+SpaceAfterCStyleCast: false
+
+AlignConsecutiveMacros: true
+SortIncludes: false
+
+# Tighter spacing
+CompactNamespaces: true
+BinPackArguments: true
+BinPackParameters: true
+Cpp11BracedListStyle: true
+SpacesInContainerLiterals: false

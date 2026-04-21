@@ -22,3 +22,6 @@ Makefile
 
 # OS
 .DS_Store
+
+# Clang cache
+.cache

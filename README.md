@@ -55,6 +55,7 @@ flowchart LR
 - [Test Documents](./Documentation/TPD.md)
 - [BOM Summary](./Documentation/BOM/BOM000.md)
 - [Simulation](./sim/doc/SDD500.md)
+- [TODO](./TODO.md)
 ## Project Info
 - **Budget** <$300
 - **Goal Range** 2 miles
