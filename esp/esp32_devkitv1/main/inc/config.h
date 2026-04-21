@@ -14,7 +14,7 @@
  * Test mode configuration - similar to WarblingWire pattern
  * Uncomment ONE of these to enable specific test modes
  */
-/* #define TEST_MODE_FPGA_PATTERNS */
+#define TEST_MODE_FPGA_PATTERNS 
 /* #define TEST_MODE_LORA_LOOPBACK */
 /* #define TEST_MODE_CAMERA_INJECT */
 /* #define TEST_MODE_FPGA_GPIO */

@@ -146,7 +146,7 @@ static esp_err_t spi_receive_chunk(size_t *out_len, uint32_t timeout_ticks)
         return ret;
 }
 
-cam_spi_send_cmd(uint32_t cmd, uint32_t epoch) {}
+void cam_spi_send_cmd(uint32_t cmd, uint32_t epoch) {}
 /*******************************************************************************
  * Public Interface
  ******************************************************************************/
