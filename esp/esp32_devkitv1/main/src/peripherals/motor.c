@@ -26,14 +26,15 @@ static const uint8_t STEP[4][4] = {
  ******************************************************************************/
 
 #define RAMP_START_MS 14
-#define RAMP_MIN_MS 2
-#define RAMP_STEPS 600
+#define RAMP_MIN_MS   2
+#define RAMP_STEPS    600
 
 /*******************************************************************************
  * Internals
  ******************************************************************************/
 
-static void apply_phase(const motor_stepper_t *m) {
+static void apply_phase(const motor_stepper_t *m)
+{
         const uint8_t *s = STEP[m->phase & 3];
         int v[4] = {s[0], s[1], s[2], s[3]};
 
@@ -47,7 +48,8 @@ static void apply_phase(const motor_stepper_t *m) {
  * Public Interface
  ******************************************************************************/
 
-esp_err_t motor_stepper_init(motor_stepper_t *m) {
+esp_err_t motor_stepper_init(motor_stepper_t *m)
+{
         if (!m) return ESP_ERR_INVALID_ARG;
 
         gpio_config_t io = {
@@ -66,13 +68,15 @@ esp_err_t motor_stepper_init(motor_stepper_t *m) {
         return ESP_OK;
 }
 
-void motor_stepper_set_phase(motor_stepper_t *m, int phase) {
+void motor_stepper_set_phase(motor_stepper_t *m, int phase)
+{
         if (!m) return;
         m->phase = phase & 3;
         apply_phase(m);
 }
 
-void motor_stepper_release(motor_stepper_t *m) {
+void motor_stepper_release(motor_stepper_t *m)
+{
         if (!m) return;
         gpio_set_level((gpio_num_t)m->in1_gpio, 0);
         gpio_set_level((gpio_num_t)m->in2_gpio, 0);
@@ -81,7 +85,8 @@ void motor_stepper_release(motor_stepper_t *m) {
 }
 
 void motor_stepper_move_ramped(motor_stepper_t *m, int steps, int dir,
-                               int start_ms, int min_ms, int ramp) {
+                               int start_ms, int min_ms, int ramp)
+{
         if (!m || steps <= 0) return;
 
         dir = (dir < 0) ? -1 : 1;
@@ -95,20 +100,19 @@ void motor_stepper_move_ramped(motor_stepper_t *m, int steps, int dir,
                 apply_phase(m);
 
                 int d;
-                if (i < ramp)
-                        d = start_ms - ((start_ms - min_ms) * i) / ramp;
+                if (i < ramp) d = start_ms - ((start_ms - min_ms) * i) / ramp;
                 else if (i >= steps - ramp)
                         d = start_ms -
                             ((start_ms - min_ms) * (steps - 1 - i)) / ramp;
-                else
-                        d = min_ms;
+                else d = min_ms;
 
                 vTaskDelay(pdMS_TO_TICKS(d));
         }
 }
 
 void motor_stepper_swing_and_release(motor_stepper_t *m, int steps, int dir,
-                                     int hold_ms) {
+                                     int hold_ms)
+{
         if (!m || steps <= 0) return;
 
         motor_stepper_move_ramped(m, steps, dir, RAMP_START_MS, RAMP_MIN_MS,
@@ -119,10 +123,12 @@ void motor_stepper_swing_and_release(motor_stepper_t *m, int steps, int dir,
         motor_stepper_release(m);
 }
 
-void motor_stepper_swing_cw(motor_stepper_t *m, int steps, int hold_ms) {
+void motor_stepper_swing_cw(motor_stepper_t *m, int steps, int hold_ms)
+{
         motor_stepper_swing_and_release(m, steps, +1, hold_ms);
 }
 
-void motor_stepper_swing_ccw(motor_stepper_t *m, int steps, int hold_ms) {
+void motor_stepper_swing_ccw(motor_stepper_t *m, int steps, int hold_ms)
+{
         motor_stepper_swing_and_release(m, steps, -1, hold_ms);
 }

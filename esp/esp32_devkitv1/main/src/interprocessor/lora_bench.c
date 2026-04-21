@@ -19,7 +19,8 @@ static const char *TAG = "BENCH";
 static const uint16_t LORA_BUF_SIZE = (1 << 9); // 10 bits (512)
 
 /* ----------------------------------------------------- */
-static void uart_init_bench(void) {
+static void uart_init_bench(void)
+{
         uart_config_t cfg = {
             .baud_rate = LORA_BAUD_RATE,
             .data_bits = UART_DATA_8_BITS,
@@ -35,7 +36,8 @@ static void uart_init_bench(void) {
         vTaskDelay(pdMS_TO_TICKS(LORA_INIT_DELAY_MS));
 }
 
-static bool readline(char *buf, int lenmax, int timeout_ms) {
+static bool readline(char *buf, int lenmax, int timeout_ms)
+{
         int pos = 0;
         int64_t deadline = esp_timer_get_time() + (int64_t)timeout_ms * 1000;
         while (esp_timer_get_time() < deadline) {
@@ -54,7 +56,8 @@ static bool readline(char *buf, int lenmax, int timeout_ms) {
         return false;
 }
 
-static bool at_cmd(const char *cmd, const char *expect, int timeout_ms) {
+static bool at_cmd(const char *cmd, const char *expect, int timeout_ms)
+{
         static const int POLL_MS = 50;
         uart_flush_input(LORA_UART_NUM);
         uart_write_bytes(LORA_UART_NUM, cmd, strlen(cmd));
@@ -70,7 +73,8 @@ static bool at_cmd(const char *cmd, const char *expect, int timeout_ms) {
         return false;
 }
 /* ------------------------------------------------------------------ */
-static void module_init(void) {
+static void module_init(void)
+{
         at_cmd("AT+RESET\r\n", "+RESET", 1000);
         vTaskDelay(pdMS_TO_TICKS(1500));
 
@@ -96,8 +100,9 @@ static void module_init(void) {
 
 /* ------------------------------------------------------------------ */
 
-static bool parse_rcv(char *line, int *src, char **data, int *len) {
-	static const uint LORA_MAX_PAYLOAD = 240;
+static bool parse_rcv(char *line, int *src, char **data, int *len)
+{
+        static const uint LORA_MAX_PAYLOAD = 240;
         if (strncmp(line, "+RCV=", 5) != 0) return false;
 
         char *p = line + 5;
@@ -137,19 +142,19 @@ static bool parse_rcv(char *line, int *src, char **data, int *len) {
 /**
  * Send one packet.
  */
-static void send_msg(uint32_t seq, int size) 
+static void send_msg(uint32_t seq, int size)
 {
         static const int IDEAL_PAYLOAD = 0xF0;
         static const int MAX_HDR = 0x20;
-	static const int num_hold = 9;
+        static const int num_hold = 9;
         uint8_t payload[IDEAL_PAYLOAD + 1];
         /* size = (size > IDEAL_PAYLOAD) ? IDEAL_PAYLOAD : size; */
         int mask = -(size > IDEAL_PAYLOAD);
         size = size ^ (mask & (IDEAL_PAYLOAD ^ size));
         memset(payload, 'A', size);
         char seq_str[num_hold];
-	 snprintf(seq_str, num_hold, "%08lx", (unsigned long)seq);
-	memcpy(payload, seq_str, num_hold-1);
+        snprintf(seq_str, num_hold, "%08lx", (unsigned long)seq);
+        memcpy(payload, seq_str, num_hold - 1);
         /* AT+SEND=<dest>,<len>,<data>\r\n */
         char hdr[MAX_HDR];
         int hdr_len = snprintf(hdr, sizeof(hdr), "AT+SEND=%d,%d,",
@@ -161,7 +166,8 @@ static void send_msg(uint32_t seq, int size)
         uart_write_bytes(LORA_UART_NUM, "\r\n", 2);
 }
 
-static int64_t wait_echo(int timeout_ms, int *rssi_out, int *snr_out) {
+static int64_t wait_echo(int timeout_ms, int *rssi_out, int *snr_out)
+{
         int64_t t0 = esp_timer_get_time() >> 10;
         char line[300];
         bool ok_received = false;
@@ -229,34 +235,32 @@ static int64_t wait_echo(int timeout_ms, int *rssi_out, int *snr_out) {
 
 static bool wait_for_ready(char *line, int line_size)
 {
-	static const int handshake_listen_ms = 500;
+        static const int handshake_listen_ms = 500;
 
-	static const bool ready = 0x0;
-	static const bool wait  = 0x1;
-	bool status = wait;
+        static const bool ready = 0x0;
+        static const bool wait = 0x1;
+        bool status = wait;
 
+        int src, len;
+        char *data;
 
-	int src, len;
-	char *data;
+        bool valid_line = readline(line, line_size, handshake_listen_ms);
+        bool valid_rcvp = valid_line && parse_rcv(line, &src, &data, &len);
+        bool valid_size = valid_rcvp && (len == 5);
+        bool valid_ascii = valid_size && !(bool)memcmp(data, "READY", 5);
 
-	
-	bool valid_line = readline(line, line_size, handshake_listen_ms);
-	bool valid_rcvp = valid_line && parse_rcv(line,&src,&data,&len);
-	bool valid_size = valid_rcvp && (len == 5);
-	bool valid_ascii = valid_size && !(bool)memcmp(data, "READY", 5);
+        if (valid_line)
+                ESP_LOGI(TAG, "handshake rx: %s (match=%d)", line,
+                         valid_ascii);
 
-	if (valid_line)
-		ESP_LOGI(TAG, "handshake rx: %s (match=%d)", line, valid_ascii);
+        if (valid_ascii) status = ready;
 
-	if(valid_ascii) status = ready;
-
-	return status;
-
+        return status;
 }
 
-
 /* ------------------------------------------------------------------ */
-void lora_bench_task(void *arg) {
+void lora_bench_task(void *arg)
+{
         ESP_LOGI(TAG, "=== DevKit TX bench ===");
         ESP_LOGI(TAG, "addr=%d dest=%d net=%d SF=%d BW=%d",
                  LORA_ADDRESS_SENDER, BENCH_DEST_ADDR, LORA_NETWORK_ID,
@@ -267,22 +271,19 @@ void lora_bench_task(void *arg) {
         module_init();
         vTaskDelay(pdMS_TO_TICKS(500));
 
+        ESP_LOGI(TAG, "waiting for handshake...");
 
-	ESP_LOGI(TAG, "waiting for handshake...");
+        char line[300];
+        while (wait_for_ready(line, sizeof(line)));
+        const char *cmd = "AT+SEND=1,5,START\r\n";
+        uart_write_bytes(LORA_UART_NUM, cmd, strlen(cmd));
+        readline(line, sizeof(line), 500);
+        ESP_LOGI(TAG, "START sent");
 
-	char line[300];
-	while (wait_for_ready(line, sizeof(line)));
-	const char *cmd = "AT+SEND=1,5,START\r\n";
-	uart_write_bytes(LORA_UART_NUM, cmd, strlen(cmd));
-	readline(line, sizeof(line), 500);
-	ESP_LOGI(TAG, "START sent");
-
-	vTaskDelay(pdMS_TO_TICKS(100));  // settle
-
+        vTaskDelay(pdMS_TO_TICKS(100)); // settle
 
         int delivered = 0;
         int64_t rtt_sum = 0;
-
 
         ESP_LOGI(TAG, "echo trial: %d packets, %d bytes", BENCH_N,
                  BENCH_PKT_SIZE);

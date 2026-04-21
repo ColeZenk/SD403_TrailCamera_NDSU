@@ -21,22 +21,22 @@ static const char *TAG = "LORA";
  ******************************************************************************/
 
 #define LORA_UART UART_NUM_2
-#define LORA_TX GPIO_NUM_17
-#define LORA_RX GPIO_NUM_16
+#define LORA_TX   GPIO_NUM_17
+#define LORA_RX   GPIO_NUM_16
 #define LORA_BAUD 115200
 
-#define AT_BUF_SIZE 64
-#define RX_BUF_SIZE 1 << 11
-#define TX_BUF_SIZE 1 << 11
+#define AT_BUF_SIZE   64
+#define RX_BUF_SIZE   1 << 11
+#define TX_BUF_SIZE   1 << 11
 #define AT_TIMEOUT_MS 500
-#define AT_DELAY_MS 300
+#define AT_DELAY_MS   300
 
 #define DEV_TEST_LORA 1
 
 #ifdef DEV_TEST_LORA
-#define LED_PIN GPIO_NUM_2
-#define BLINK_COUNT 3
-#define BLINK_ON_MS 200
+#define LED_PIN      GPIO_NUM_2
+#define BLINK_COUNT  3
+#define BLINK_ON_MS  200
 #define BLINK_OFF_MS 200
 #endif
 
@@ -44,7 +44,8 @@ static const char *TAG = "LORA";
  * AT Commands
  ******************************************************************************/
 
-static void at_send(const char *cmd, const char *label) {
+static void at_send(const char *cmd, const char *label)
+{
         uint8_t buf[AT_BUF_SIZE];
 
         uart_flush(LORA_UART);
@@ -67,7 +68,8 @@ static void at_send(const char *cmd, const char *label) {
 
 #ifdef DEV_TEST_LORA
 
-static void led_init(void) {
+static void led_init(void)
+{
         gpio_config_t cfg = {
             .pin_bit_mask = (1ULL << LED_PIN),
             .mode = GPIO_MODE_OUTPUT,
@@ -79,7 +81,8 @@ static void led_init(void) {
         gpio_set_level(LED_PIN, 0);
 }
 
-static void led_blink(void) {
+static void led_blink(void)
+{
         for (int i = 0; i < BLINK_COUNT; i++) {
                 gpio_set_level(LED_PIN, 1);
                 vTaskDelay(pdMS_TO_TICKS(BLINK_ON_MS));
@@ -94,7 +97,8 @@ static void led_blink(void) {
  * Public Interface
  ******************************************************************************/
 
-esp_err_t lora_init(void) {
+esp_err_t lora_init(void)
+{
 #ifdef DEV_TEST_LORA
         led_init();
 #endif
@@ -135,13 +139,15 @@ esp_err_t lora_init(void) {
         return ESP_OK;
 }
 
-void lora_send_trigger(void) {
+void lora_send_trigger(void)
+{
         const char *cmd = "AT+SEND=1,1,T\r\n";
         uart_write_bytes(LORA_UART, cmd, strlen(cmd));
         ESP_LOGI(TAG, "trigger sent");
 }
 
-void lora_receive_task(void *arg) {
+void lora_receive_task(void *arg)
+{
         uint8_t buf[256];
         int polls = 0;
 

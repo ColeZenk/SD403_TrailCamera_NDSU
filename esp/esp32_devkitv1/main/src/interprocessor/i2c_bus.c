@@ -40,7 +40,8 @@ static struct {
  * Toggles SCL up to 9 times (advances any slave state machine), then
  * generates a STOP condition so the bus is clean before reinstalling
  * the driver. Must be called with bus.mutex already held. */
-static void bus_recover(void) {
+static void bus_recover(void)
+{
         ESP_LOGW(TAG, "I2C timeout — recovering bus (port %d)", bus.port);
         i2c_driver_delete(bus.port);
 
@@ -83,15 +84,15 @@ static void bus_recover(void) {
         esp_err_t err = i2c_driver_install(bus.port, I2C_MODE_MASTER, 0, 0, 0);
         if (err != ESP_OK)
                 ESP_LOGE(TAG, "bus recovery failed: %s", esp_err_to_name(err));
-        else
-                ESP_LOGI(TAG, "bus recovered");
+        else ESP_LOGI(TAG, "bus recovered");
 }
 
 /* =========================
  * Public: init / state
  * ========================= */
 
-esp_err_t i2c_bus_init(const i2c_bus_config_t *cfg) {
+esp_err_t i2c_bus_init(const i2c_bus_config_t *cfg)
+{
         if (!cfg) return ESP_ERR_INVALID_ARG;
         if (bus.initialized) return ESP_ERR_INVALID_STATE;
 
@@ -140,14 +141,16 @@ bool i2c_bus_is_init(void) { return bus.initialized; }
  * Public: lock / unlock
  * ========================= */
 
-esp_err_t i2c_bus_lock(uint32_t timeout_ms) {
+esp_err_t i2c_bus_lock(uint32_t timeout_ms)
+{
         if (!bus.initialized) return ESP_ERR_INVALID_STATE;
         return (xSemaphoreTake(bus.mutex, pdMS_TO_TICKS(timeout_ms)) == pdTRUE)
                    ? ESP_OK
                    : ESP_ERR_TIMEOUT;
 }
 
-void i2c_bus_unlock(void) {
+void i2c_bus_unlock(void)
+{
         if (bus.mutex) xSemaphoreGive(bus.mutex);
 }
 
@@ -155,7 +158,8 @@ void i2c_bus_unlock(void) {
  * Public: probe / scan
  * ========================= */
 
-esp_err_t i2c_bus_probe(uint8_t addr, uint32_t timeout_ms) {
+esp_err_t i2c_bus_probe(uint8_t addr, uint32_t timeout_ms)
+{
         if (!bus.initialized) return ESP_ERR_INVALID_STATE;
 
         esp_err_t err = i2c_bus_lock(timeout_ms);
@@ -178,7 +182,8 @@ esp_err_t i2c_bus_probe(uint8_t addr, uint32_t timeout_ms) {
         return err;
 }
 
-void i2c_bus_scan(uint32_t timeout_ms) {
+void i2c_bus_scan(uint32_t timeout_ms)
+{
         if (!bus.initialized) {
                 ESP_LOGW(TAG, "scan requested but bus not initialized");
                 return;
@@ -204,7 +209,8 @@ void i2c_bus_scan(uint32_t timeout_ms) {
  * ========================= */
 
 esp_err_t i2c_bus_write(uint8_t addr, const uint8_t *data, size_t len,
-                        uint32_t timeout_ms) {
+                        uint32_t timeout_ms)
+{
         if (!bus.initialized) return ESP_ERR_INVALID_STATE;
         if (len > 0 && !data) return ESP_ERR_INVALID_ARG;
 
@@ -232,7 +238,8 @@ esp_err_t i2c_bus_write(uint8_t addr, const uint8_t *data, size_t len,
 }
 
 esp_err_t i2c_bus_read(uint8_t addr, uint8_t *data, size_t len,
-                       uint32_t timeout_ms) {
+                       uint32_t timeout_ms)
+{
         if (!bus.initialized) return ESP_ERR_INVALID_STATE;
         if (!data || len == 0) return ESP_ERR_INVALID_ARG;
 
@@ -263,7 +270,8 @@ esp_err_t i2c_bus_read(uint8_t addr, uint8_t *data, size_t len,
 }
 
 esp_err_t i2c_bus_write_read(uint8_t addr, const uint8_t *wr, size_t wr_len,
-                             uint8_t *rd, size_t rd_len, uint32_t timeout_ms) {
+                             uint8_t *rd, size_t rd_len, uint32_t timeout_ms)
+{
         if (!bus.initialized) return ESP_ERR_INVALID_STATE;
         if (!wr || wr_len == 0) return ESP_ERR_INVALID_ARG;
         if (!rd || rd_len == 0) return ESP_ERR_INVALID_ARG;
@@ -302,7 +310,8 @@ esp_err_t i2c_bus_write_read(uint8_t addr, const uint8_t *wr, size_t wr_len,
  * Public: deinit
  * ========================= */
 
-esp_err_t i2c_bus_deinit(void) {
+esp_err_t i2c_bus_deinit(void)
+{
         if (!bus.initialized) return ESP_OK;
 
         esp_err_t err = i2c_driver_delete(bus.port);

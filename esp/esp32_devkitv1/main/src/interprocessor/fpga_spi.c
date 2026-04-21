@@ -44,16 +44,13 @@ typedef enum {
         PAT_COUNT
 } test_pattern_t;
 
-static void generate_pattern(uint8_t *buf, size_t size, test_pattern_t pat) {
+static void generate_pattern(uint8_t *buf, size_t size, test_pattern_t pat)
+{
         static const int W = 480; /* LCD active width */
 
         switch (pat) {
-        case PAT_WHITE:
-                memset(buf, 0xFF, size);
-                break;
-        case PAT_BLACK:
-                memset(buf, 0x00, size);
-                break;
+        case PAT_WHITE: memset(buf, 0xFF, size); break;
+        case PAT_BLACK: memset(buf, 0x00, size); break;
         case PAT_GRADIENT:
                 /* Horizontal gradient: left=black,
                  *                      right=white,
@@ -69,13 +66,12 @@ static void generate_pattern(uint8_t *buf, size_t size, test_pattern_t pat) {
                         buf[i] = (((col / 32) + (row / 32)) & 1) ? 0xFF : 0x00;
                 }
                 break;
-        default:
-                memset(buf, 0xFF, size);
-                break;
+        default: memset(buf, 0xFF, size); break;
         }
 }
 
-static esp_err_t setup_test_button(void) {
+static esp_err_t setup_test_button(void)
+{
         gpio_config_t cfg = {
             .pin_bit_mask = (1ULL << TEST_BUTTON_PIN),
             .mode = GPIO_MODE_INPUT,
@@ -99,7 +95,8 @@ static esp_err_t setup_test_button(void) {
  * Transmit — async queue/get keeps DMA fed
  ***********************************************************/
 
-esp_err_t fpga_spi_transmit(const uint8_t *data, size_t size) {
+esp_err_t fpga_spi_transmit(const uint8_t *data, size_t size)
+{
         if (!ctx.initialized) return ESP_ERR_INVALID_STATE;
 
         if (!data || size == 0) return ESP_ERR_INVALID_ARG;
@@ -167,7 +164,8 @@ done:
  * Init / Deinit
  ***********************************************************/
 
-esp_err_t fpga_spi_init(void) {
+esp_err_t fpga_spi_init(void)
+{
         if (ctx.initialized) return ESP_OK;
 
         ctx.mutex = xSemaphoreCreateMutex();
@@ -212,7 +210,8 @@ esp_err_t fpga_spi_init(void) {
         return ESP_OK;
 }
 
-void fpga_spi_deinit(void) {
+void fpga_spi_deinit(void)
+{
         if (!ctx.initialized) return;
 
 #ifdef TEST_MODE_FPGA_PATTERNS
@@ -233,7 +232,8 @@ void fpga_spi_deinit(void) {
 
 #ifdef TEST_MODE_FPGA_PATTERNS
 
-void fpga_test_task(void *pvParameters) {
+void fpga_test_task(void *pvParameters)
+{
         if (!g_button_sem) {
                 vTaskDelete(NULL);
                 return;

@@ -16,12 +16,14 @@
 
 static const char *TAG = "IMG_PROC";
 
-esp_err_t image_processor_init(void) {
+esp_err_t image_processor_init(void)
+{
         ESP_LOGI(TAG, "initialized");
         return ESP_OK;
 }
 
-void image_processor_task(void *pvParameters) {
+void image_processor_task(void *pvParameters)
+{
         QueueHandle_t queue = cam_spi_get_queue();
         image_data_t img;
 

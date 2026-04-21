@@ -18,7 +18,7 @@
 /* #define TEST_MODE_LORA_LOOPBACK */
 /* #define TEST_MODE_CAMERA_INJECT */
 /* #define TEST_MODE_FPGA_GPIO */
-#define TEST_MODE_LORA_BENCH
+// #define TEST_MODE_LORA_BENCH
 
 // Verify only one test mode is active
 #if defined(TEST_MODE_FPGA_PATTERNS) && defined(TEST_MODE_LORA_LOOPBACK)

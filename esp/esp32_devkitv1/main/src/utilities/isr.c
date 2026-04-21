@@ -25,7 +25,8 @@ SemaphoreHandle_t g_timer_capture_sem = NULL; /* timer → capture */
  * Init
  ******************************************************************************/
 
-esp_err_t isr_init(void) {
+esp_err_t isr_init(void)
+{
         g_trigger_sem = xSemaphoreCreateBinary();
         g_button_sem = xSemaphoreCreateBinary();
         g_timer_capture_sem = xSemaphoreCreateBinary();
@@ -47,7 +48,8 @@ esp_err_t isr_init(void) {
 void ISR_OnLoRaTrigger(void) { xSemaphoreGive(g_trigger_sem); }
 
 /* True ISR — GPIO falling edge on test button */
-void IRAM_ATTR ISR_OnButtonPress(void *arg) {
+void IRAM_ATTR ISR_OnButtonPress(void *arg)
+{
         BaseType_t woken = pdFALSE;
         xSemaphoreGiveFromISR(g_button_sem, &woken);
         portYIELD_FROM_ISR(woken);
@@ -56,7 +58,8 @@ void IRAM_ATTR ISR_OnButtonPress(void *arg) {
 /* True ISR — GPTimer alarm callback */
 bool IRAM_ATTR ISR_OnTimerAlarm(gptimer_handle_t timer,
                                 const gptimer_alarm_event_data_t *event_data,
-                                void *user_ctx) {
+                                void *user_ctx)
+{
         BaseType_t woken = pdFALSE;
         xSemaphoreGiveFromISR(g_timer_capture_sem, &woken);
         return woken == pdTRUE;

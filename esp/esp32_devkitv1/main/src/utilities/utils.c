@@ -16,7 +16,8 @@ static const char *TAG = "UTILS";
  * Checksum
  ******************************************************************************/
 
-bool checksum_verify_xor(const uint8_t *data, size_t size, uint32_t expected) {
+bool checksum_verify_xor(const uint8_t *data, size_t size, uint32_t expected)
+{
         uint32_t calc = checksum_calculate_xor(data, size);
 
         if (calc != expected) {
@@ -33,7 +34,8 @@ bool checksum_verify_xor(const uint8_t *data, size_t size, uint32_t expected) {
  * Memory
  ******************************************************************************/
 
-void *dma_malloc(size_t size) {
+void *dma_malloc(size_t size)
+{
         if (size == 0) return NULL;
 
         size = align_4(size);
@@ -48,7 +50,8 @@ void *dma_malloc(size_t size) {
  * Validation
  ******************************************************************************/
 
-bool validate_image_header(const image_header_t *header) {
+bool validate_image_header(const image_header_t *header)
+{
         if (!header) return false;
 
         if (header->magic != IMAGE_HEADER_MAGIC) {
@@ -65,7 +68,8 @@ bool validate_image_header(const image_header_t *header) {
         return true;
 }
 
-bool validate_size(size_t size, size_t max_size) {
+bool validate_size(size_t size, size_t max_size)
+{
         if (size == 0 || size > max_size) {
                 ESP_LOGW(TAG, "size %zu exceeds max %zu", size, max_size);
                 return false;

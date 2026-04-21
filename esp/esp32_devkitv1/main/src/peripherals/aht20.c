@@ -14,12 +14,13 @@
 
 static const char *TAG = "AHT20";
 
-#define CMD_RESET 0xBA
-#define CMD_INIT 0xBE
+#define CMD_RESET   0xBA
+#define CMD_INIT    0xBE
 #define CMD_MEASURE 0xAC
-#define READ_LEN 6
+#define READ_LEN    6
 
-static esp_err_t soft_reset(aht20_t *dev) {
+static esp_err_t soft_reset(aht20_t *dev)
+{
         uint8_t cmd = CMD_RESET;
         esp_err_t err = i2c_bus_write(dev->addr, &cmd, 1, dev->timeout_ms);
         if (err != ESP_OK) return err;
@@ -27,7 +28,8 @@ static esp_err_t soft_reset(aht20_t *dev) {
         return ESP_OK;
 }
 
-static esp_err_t send_init(aht20_t *dev) {
+static esp_err_t send_init(aht20_t *dev)
+{
         uint8_t cmd[3] = {CMD_INIT, 0x08, 0x00};
         esp_err_t err =
             i2c_bus_write(dev->addr, cmd, sizeof(cmd), dev->timeout_ms);
@@ -36,7 +38,8 @@ static esp_err_t send_init(aht20_t *dev) {
         return ESP_OK;
 }
 
-esp_err_t aht20_init(aht20_t *dev, uint8_t addr) {
+esp_err_t aht20_init(aht20_t *dev, uint8_t addr)
+{
         if (!dev) return ESP_ERR_INVALID_ARG;
 
         memset(dev, 0, sizeof(*dev));
@@ -63,7 +66,8 @@ esp_err_t aht20_init(aht20_t *dev, uint8_t addr) {
         return err;
 }
 
-esp_err_t aht20_read(aht20_t *dev, float *temp_c, float *rh_pct) {
+esp_err_t aht20_read(aht20_t *dev, float *temp_c, float *rh_pct)
+{
         if (!dev || !temp_c || !rh_pct) return ESP_ERR_INVALID_ARG;
 
         uint8_t cmd[3] = {CMD_MEASURE, 0x33, 0x00};

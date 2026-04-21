@@ -36,18 +36,19 @@ static const char *TAG = "sensors";
 
 // FPGA + camera enable pins
 #define FPGA_EN_GPIO 2
-#define CAM_EN_GPIO 15
+#define CAM_EN_GPIO  15
 
-#define STEPS_90 1024
-#define HOLD_MS 3000
+#define STEPS_90              1024
+#define HOLD_MS               3000
 #define PIR_SETTLE_TIMEOUT_MS 30000
-#define PIR3_ACTIVE_MS (HOLD_MS + 2000)
+#define PIR3_ACTIVE_MS        (HOLD_MS + 2000)
 
 static aht20_t s_aht20;
 static bool s_sensor_ok;
 static motor_stepper_t s_motor;
 
-static void pir_init_pin(gpio_num_t pin, bool input_only) {
+static void pir_init_pin(gpio_num_t pin, bool input_only)
+{
         gpio_config_t io = {
             .pin_bit_mask = (1ULL << pin),
             .mode = GPIO_MODE_INPUT,
@@ -59,7 +60,8 @@ static void pir_init_pin(gpio_num_t pin, bool input_only) {
         ESP_ERROR_CHECK(gpio_config(&io));
 }
 
-static void enable_outputs_init(void) {
+static void enable_outputs_init(void)
+{
         gpio_config_t io = {
             .pin_bit_mask = (1ULL << FPGA_EN_GPIO) | (1ULL << CAM_EN_GPIO),
             .mode = GPIO_MODE_OUTPUT,
@@ -73,20 +75,23 @@ static void enable_outputs_init(void) {
         gpio_set_level((gpio_num_t)CAM_EN_GPIO, 0);
 }
 
-static inline void enable_outputs_set(bool on) {
+static inline void enable_outputs_set(bool on)
+{
         int level = on ? 1 : 0;
         gpio_set_level((gpio_num_t)FPGA_EN_GPIO, level);
         gpio_set_level((gpio_num_t)CAM_EN_GPIO, level);
 }
 
-static int detect_triggered_pir(void) {
+static int detect_triggered_pir(void)
+{
         if (gpio_get_level((gpio_num_t)PIR1_GPIO)) return 1;
         if (gpio_get_level((gpio_num_t)PIR2_GPIO)) return 2;
         if (gpio_get_level((gpio_num_t)PIR3_GPIO)) return 3;
         return 0;
 }
 
-static void wait_for_all_pirs_low(void) {
+static void wait_for_all_pirs_low(void)
+{
         int elapsed = 0;
 
         while (gpio_get_level((gpio_num_t)PIR1_GPIO) ||
@@ -103,7 +108,8 @@ static void wait_for_all_pirs_low(void) {
 
 static inline float c_to_f(float c) { return c * 9.0f / 5.0f + 32.0f; }
 
-esp_err_t sensors_init(void) {
+esp_err_t sensors_init(void)
+{
         // PIR pins
         pir_init_pin((gpio_num_t)PIR1_GPIO, true);
         pir_init_pin((gpio_num_t)PIR2_GPIO, true);
@@ -161,7 +167,8 @@ esp_err_t sensors_init(void) {
         return ESP_OK;
 }
 
-void sensors_task(void *pvParameters) {
+void sensors_task(void *pvParameters)
+{
         (void)pvParameters;
 
         ESP_LOGI(TAG, "sensor task started — polling PIRs");
@@ -207,8 +214,7 @@ void sensors_task(void *pvParameters) {
                         vTaskDelay(pdMS_TO_TICKS(PIR3_ACTIVE_MS));
                         break;
 
-                default:
-                        break;
+                default: break;
                 }
 
                 motor_stepper_release(&s_motor);

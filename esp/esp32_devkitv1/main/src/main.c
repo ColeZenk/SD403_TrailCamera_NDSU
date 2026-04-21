@@ -25,7 +25,8 @@
 
 static const char *TAG = "MAIN";
 
-static esp_err_t init_system(void) {
+static esp_err_t init_system(void)
+{
         ESP_LOGI(TAG, "=== Trail Camera IV — ESP32 DevKitV1 ===");
         ESP_LOGI(TAG, "IDF %s | heap %lu bytes", esp_get_idf_version(),
                  esp_get_free_heap_size());
@@ -69,7 +70,8 @@ static esp_err_t init_system(void) {
         return ESP_OK;
 }
 
-static void create_tasks(void) {
+static void create_tasks(void)
+{
         xTaskCreate(cam_spi_receive_task, "cam_rx", STACK_SIZE_MEDIUM, NULL,
                     TASK_PRIORITY_HIGH, NULL);
         xTaskCreate(image_processor_task, "img_proc", STACK_SIZE_LARGE, NULL,
@@ -89,7 +91,8 @@ static void create_tasks(void) {
 #endif
 }
 
-static void monitor_heap(void) {
+static void monitor_heap(void)
+{
         uint32_t prev = esp_get_free_heap_size();
 
         for (;;) {
@@ -100,7 +103,8 @@ static void monitor_heap(void) {
         }
 }
 
-void app_main(void) {
+void app_main(void)
+{
 #ifdef TEST_MODE_LORA_BENCH
         /* Bench mode: only LoRa bench task runs — no camera/FPGA/sensor init
          */

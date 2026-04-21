@@ -7,7 +7,8 @@
 
 static int pins[3] = {-1, -1, -1};
 
-esp_err_t pir_init(int pir1, int pir2, int pir3) {
+esp_err_t pir_init(int pir1, int pir2, int pir3)
+{
         pins[0] = pir1;
         pins[1] = pir2;
         pins[2] = pir3;
@@ -23,7 +24,8 @@ esp_err_t pir_init(int pir1, int pir2, int pir3) {
         return gpio_config(&io);
 }
 
-bool pir_read(pir_id_t pir) {
+bool pir_read(pir_id_t pir)
+{
         int idx = (int)pir;
         if (idx < 0 || idx > 2 || pins[idx] < 0) return 0;
         return gpio_get_level((gpio_num_t)pins[idx]);

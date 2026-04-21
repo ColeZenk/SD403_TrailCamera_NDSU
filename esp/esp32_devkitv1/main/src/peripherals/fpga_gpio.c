@@ -20,13 +20,15 @@ static const char *TAG = "FPGA_GPIO";
  * Internal helpers
  ******************************************************************************/
 
-static esp_err_t write_reg(uint8_t reg, uint8_t value) {
+static esp_err_t write_reg(uint8_t reg, uint8_t value)
+{
         uint8_t buf[2] = {reg, value};
         return i2c_bus_write(FPGA_I2C_ADDR, buf, sizeof(buf),
                              FPGA_I2C_TIMEOUT_MS);
 }
 
-static esp_err_t read_reg(uint8_t reg, uint8_t *value) {
+static esp_err_t read_reg(uint8_t reg, uint8_t *value)
+{
         return i2c_bus_write_read(FPGA_I2C_ADDR, &reg, 1, value, 1,
                                   FPGA_I2C_TIMEOUT_MS);
 }
@@ -35,7 +37,8 @@ static esp_err_t read_reg(uint8_t reg, uint8_t *value) {
  * Public API
  ******************************************************************************/
 
-esp_err_t fpga_gpio_init(void) {
+esp_err_t fpga_gpio_init(void)
+{
         esp_err_t err;
 
         /* Direction: bits[7:4]=inputs(unused), bits[3:0]=outputs(steppers) */
@@ -68,11 +71,13 @@ esp_err_t fpga_gpio_init(void) {
         return ESP_OK;
 }
 
-esp_err_t fpga_gpio_set_steppers(uint8_t pattern) {
+esp_err_t fpga_gpio_set_steppers(uint8_t pattern)
+{
         return write_reg(FPGA_GPIO_REG_OUT, pattern & 0x0F);
 }
 
-esp_err_t fpga_gpio_read_buttons(uint8_t *buttons) {
+esp_err_t fpga_gpio_read_buttons(uint8_t *buttons)
+{
         if (!buttons) return ESP_ERR_INVALID_ARG;
         uint8_t raw;
         esp_err_t err = read_reg(FPGA_GPIO_REG_IN, &raw);
@@ -101,7 +106,8 @@ typedef enum {
 
 static const char *bpat_names[] = {"gradient", "checker", "white", "black"};
 
-static void fill_bpat(uint8_t *buf, bpat_t pat) {
+static void fill_bpat(uint8_t *buf, bpat_t pat)
+{
         switch (pat) {
         case BPAT_GRADIENT:
                 for (int i = 0; i < TEST_IMAGE_SIZE; i++) buf[i] = (uint8_t)i;
@@ -110,19 +116,14 @@ static void fill_bpat(uint8_t *buf, bpat_t pat) {
                 for (int i = 0; i < TEST_IMAGE_SIZE; i++)
                         buf[i] = (i & 0x10) ? 0xFF : 0x00;
                 break;
-        case BPAT_WHITE:
-                memset(buf, 0xFF, TEST_IMAGE_SIZE);
-                break;
-        case BPAT_BLACK:
-                memset(buf, 0x00, TEST_IMAGE_SIZE);
-                break;
-        default:
-                memset(buf, 0x80, TEST_IMAGE_SIZE);
-                break;
+        case BPAT_WHITE: memset(buf, 0xFF, TEST_IMAGE_SIZE); break;
+        case BPAT_BLACK: memset(buf, 0x00, TEST_IMAGE_SIZE); break;
+        default: memset(buf, 0x80, TEST_IMAGE_SIZE); break;
         }
 }
 
-void fpga_gpio_test_task(void *pvParameters) {
+void fpga_gpio_test_task(void *pvParameters)
+{
         (void)pvParameters;
 
         uint8_t *buf = dma_malloc(TEST_IMAGE_SIZE);
@@ -180,12 +181,9 @@ void fpga_gpio_test_task(void *pvParameters) {
 
                         /* Mirror to steppers */
                         uint8_t step_pattern = 0x00;
-                        if (btn_s)
-                                step_pattern = 0x0F;
-                        else if (btn_l)
-                                step_pattern = 0x01;
-                        else if (btn_r)
-                                step_pattern = 0x02;
+                        if (btn_s) step_pattern = 0x0F;
+                        else if (btn_l) step_pattern = 0x01;
+                        else if (btn_r) step_pattern = 0x02;
                         fpga_gpio_set_steppers(step_pattern);
 
                         prev_buttons = buttons;

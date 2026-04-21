@@ -38,14 +38,16 @@ static DMA_ALIGNED uint8_t tx_buf[SPI_BUFFER_SIZE];
  * Receive State Machine
  ******************************************************************************/
 
-static void rx_reset(void) {
+static void rx_reset(void)
+{
         safe_free((void **)&ctx.buffer);
         ctx.bytes_received = 0;
         ctx.state = RX_IDLE;
         memset(&ctx.header, 0, sizeof(ctx.header));
 }
 
-static bool rx_process_header(const uint8_t *data, size_t len) {
+static bool rx_process_header(const uint8_t *data, size_t len)
+{
         if (len < sizeof(image_header_t)) return false;
 
         memcpy(&ctx.header, data, sizeof(image_header_t));
@@ -74,7 +76,8 @@ static bool rx_process_header(const uint8_t *data, size_t len) {
         return true;
 }
 
-static void rx_process_data(const uint8_t *data, size_t len) {
+static void rx_process_data(const uint8_t *data, size_t len)
+{
         size_t remaining = ctx.header.size - ctx.bytes_received;
         size_t n = min_size(len, remaining);
 
@@ -84,7 +87,8 @@ static void rx_process_data(const uint8_t *data, size_t len) {
         if (ctx.bytes_received >= ctx.header.size) { ctx.state = RX_COMPLETE; }
 }
 
-static void rx_finalize(void) {
+static void rx_finalize(void)
+{
         ESP_LOGI(TAG, "received: %zu bytes", ctx.bytes_received);
 
         if (!checksum_verify_xor_fast(ctx.buffer, ctx.header.size,
@@ -110,18 +114,15 @@ static void rx_finalize(void) {
         ctx.state = RX_IDLE;
 }
 
-static void rx_handle_chunk(const uint8_t *data, size_t len) {
+static void rx_handle_chunk(const uint8_t *data, size_t len)
+{
         switch (ctx.state) {
-        case RX_IDLE:
-                rx_process_header(data, len);
-                break;
+        case RX_IDLE: rx_process_header(data, len); break;
         case RX_DATA:
                 rx_process_data(data, len);
                 if (ctx.state == RX_COMPLETE) rx_finalize();
                 break;
-        default:
-                rx_reset();
-                break;
+        default: rx_reset(); break;
         }
 }
 
@@ -129,7 +130,8 @@ static void rx_handle_chunk(const uint8_t *data, size_t len) {
  * SPI DMA
  ******************************************************************************/
 
-static esp_err_t spi_receive_chunk(size_t *out_len, uint32_t timeout_ticks) {
+static esp_err_t spi_receive_chunk(size_t *out_len, uint32_t timeout_ticks)
+{
         spi_slave_transaction_t trans = {
             .length = SPI_BUFFER_SIZE * 8,
             .rx_buffer = rx_buf,
@@ -144,11 +146,13 @@ static esp_err_t spi_receive_chunk(size_t *out_len, uint32_t timeout_ticks) {
         return ret;
 }
 
+cam_spi_send_cmd(uint32_t cmd, uint32_t epoch) {}
 /*******************************************************************************
  * Public Interface
  ******************************************************************************/
 
-esp_err_t cam_spi_init(void) {
+esp_err_t cam_spi_init(void)
+{
         ESP_LOGI(TAG, "Initializing camera SPI slave");
 
         ctx.queue = xQueueCreate(IMAGE_QUEUE_LENGTH, sizeof(image_data_t));
@@ -185,7 +189,8 @@ esp_err_t cam_spi_init(void) {
         return ESP_OK;
 }
 
-void cam_spi_deinit(void) {
+void cam_spi_deinit(void)
+{
         rx_reset();
         spi_slave_free(CAM_SPI_HOST);
         if (ctx.queue) {
@@ -200,7 +205,8 @@ QueueHandle_t cam_spi_get_queue(void) { return ctx.queue; }
  * Receive Task
  ******************************************************************************/
 
-void cam_spi_receive_task(void *pvParameters) {
+void cam_spi_receive_task(void *pvParameters)
+{
         ESP_LOGI(TAG, "receive task started");
 
         for (;;) {
