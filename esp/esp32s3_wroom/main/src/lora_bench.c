@@ -23,7 +23,8 @@
 static const char *TAG = "ECHO";
 
 /* ------------------------------------------------------------------ */
-static void uart_init_bench(void) {
+static void uart_init_bench(void)
+{
         uart_config_t cfg = {
             .baud_rate = LORA_BAUD_RATE,
             .data_bits = UART_DATA_8_BITS,
@@ -40,7 +41,8 @@ static void uart_init_bench(void) {
         vTaskDelay(pdMS_TO_TICKS(LORA_INIT_DELAY_MS));
 }
 
-static bool readline(char *buf, int lenmax, int timeout_ms) {
+static bool readline(char *buf, int lenmax, int timeout_ms)
+{
         int pos = 0;
         int64_t deadline = esp_timer_get_time() + (int64_t)timeout_ms * 1000;
 
@@ -65,7 +67,8 @@ static bool readline(char *buf, int lenmax, int timeout_ms) {
         return false;
 }
 
-static bool at_cmd(const char *cmd, const char *expect, int timeout_ms) {
+static bool at_cmd(const char *cmd, const char *expect, int timeout_ms)
+{
         static const int POLL_MS = 50;
 
         uart_flush_input(LORA_UART_NUM);
@@ -85,7 +88,8 @@ static bool at_cmd(const char *cmd, const char *expect, int timeout_ms) {
 }
 
 /* ------------------------------------------------------------------ */
-static void module_init(void) {
+static void module_init(void)
+{
         at_cmd("AT+RESET\r\n", "+RESET", 1000);
         vTaskDelay(pdMS_TO_TICKS(1500));
 
@@ -118,7 +122,8 @@ static void module_init(void) {
  * This function also isolates payload by inserting a '\0' at data[len]
  * when the next char is a comma.
  */
-static bool parse_rcv(char *line, int *src, char **data, int *len) {
+static bool parse_rcv(char *line, int *src, char **data, int *len)
+{
         if (strncmp(line, "+RCV=", 5) != 0) return false;
 
         char *p = line + 5;
@@ -155,7 +160,8 @@ static bool parse_rcv(char *line, int *src, char **data, int *len) {
         return true;
 }
 
-static void send_echo(int dest, const char *data, int len) {
+static void send_echo(int dest, const char *data, int len)
+{
         static const int MAX_HDR = 0x20;
         char hdr[MAX_HDR];
         int hdr_len = snprintf(hdr, sizeof(hdr), "AT+SEND=%d,%d,", dest, len);
@@ -167,41 +173,40 @@ static void send_echo(int dest, const char *data, int len) {
 
 static bool wait_for_start(char *line, int line_size)
 {
-	static const int listen_ms = 1000;
+        static const int listen_ms = 1000;
 
-	static const bool ready = 0x0;
-	static const bool wait  = 0x1;
-	bool status = wait;
+        static const bool ready = 0x0;
+        static const bool wait = 0x1;
+        bool status = wait;
 
-	int src, len;
-	char *data;
+        int src, len;
+        char *data;
 
-	static int beacon_count = 0;
-	beacon_count++;
-	ESP_LOGW(TAG, "beacon #%d sending READY", beacon_count);
+        static int beacon_count = 0;
+        beacon_count++;
+        ESP_LOGW(TAG, "beacon #%d sending READY", beacon_count);
 
-	const char *cmd = "AT+SEND=2,5,READY\r\n";
-	uart_write_bytes(LORA_UART_NUM, cmd, strlen(cmd));
+        const char *cmd = "AT+SEND=2,5,READY\r\n";
+        uart_write_bytes(LORA_UART_NUM, cmd, strlen(cmd));
 
-	int64_t deadline = esp_timer_get_time() + (int64_t)listen_ms * 1000;
-	while (esp_timer_get_time() < deadline) {
-		if (!readline(line, line_size, 200))
-			continue;
+        int64_t deadline = esp_timer_get_time() + (int64_t)listen_ms * 1000;
+        while (esp_timer_get_time() < deadline) {
+                if (!readline(line, line_size, 200)) continue;
 
-		ESP_LOGW(TAG, "handshake rx: %s", line);
+                ESP_LOGW(TAG, "handshake rx: %s", line);
 
-		bool valid_rcvp = parse_rcv(line, &src, &data, &len);
-		bool valid_size = valid_rcvp && (len == 5);
-		bool valid_ascii = valid_size && !(bool)memcmp(data, "START", 5);
+                bool valid_rcvp = parse_rcv(line, &src, &data, &len);
+                bool valid_size = valid_rcvp && (len == 5);
+                bool valid_ascii =
+                    valid_size && !(bool)memcmp(data, "START", 5);
 
-		if (valid_ascii) {
-			status = ready;
-			break;
-		}
-	}
+                if (valid_ascii) {
+                        status = ready;
+                        break;
+                }
+        }
 
-	return status;
-
+        return status;
 }
 
 /* ------------------------------------------------------------------ */
@@ -220,16 +225,15 @@ void lora_bench_task(void *arg)
         module_init();
         vTaskDelay(pdMS_TO_TICKS(500));
 
-	ESP_LOGI(TAG, "waiting for handshake...");
+        ESP_LOGI(TAG, "waiting for handshake...");
 
-	uart_flush_input(LORA_UART_NUM);
-	vTaskDelay(pdMS_TO_TICKS(200));
+        uart_flush_input(LORA_UART_NUM);
+        vTaskDelay(pdMS_TO_TICKS(200));
 
         char line[300];
-	while (wait_for_start(line, sizeof(line)));
+        while (wait_for_start(line, sizeof(line)));
 
-	ESP_LOGI(TAG, "handshake complete — listening...");
-
+        ESP_LOGI(TAG, "handshake complete — listening...");
 
         for (;;) {
                 // --- STATE: LISTENING ---
@@ -265,10 +269,9 @@ void lora_bench_task(void *arg)
                 // equivalent of "resetting the slave" for the communication
                 // part.
 
-		vTaskDelay(pdMS_TO_TICKS(15));
+                vTaskDelay(pdMS_TO_TICKS(15));
                 // Now, with a pristine driver state, send the echo.
                 send_echo(src, data, len);
-
         }
 }
 

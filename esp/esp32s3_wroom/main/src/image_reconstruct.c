@@ -9,7 +9,8 @@ static uint8_t *ref_frames[NUM_POSITIONS];
 /* I2C bus must be up before any I2C peripheral (AHT20, FPGA GPIO) */
 uint32_t frame_seq = 0;
 
-static esp_err_t alloc_reference_frames(void) {
+static esp_err_t alloc_reference_frames(void)
+{
         for (int i = 0; i < NUM_POSITIONS; i++) {
                 ref_frames[i] =
                     heap_caps_calloc(FRAME_BYTES, 1, MALLOC_CAP_SPIRAM);
@@ -38,7 +39,8 @@ typedef struct {
 } active_block_t;
 
 uint8_t *reconstruct(const uint8_t *packet, size_t pkt_len,
-                     uint8_t *position_out) {
+                     uint8_t *position_out)
+{
         if (pkt_len < 7) return NULL;
 
         /* --- Parse header --- */

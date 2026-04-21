@@ -19,20 +19,21 @@ static const char *TAG = "LORA";
  * Config
  ******************************************************************************/
 
-#define LORA_UART UART_NUM_2
-#define LORA_TX GPIO_NUM_17
-#define LORA_RX GPIO_NUM_18
+#define LORA_UART      UART_NUM_2
+#define LORA_TX        GPIO_NUM_17
+#define LORA_RX        GPIO_NUM_18
 #define LORA_BAUD_RATE 115200
 
-#define AT_BUF_SIZE 64
+#define AT_BUF_SIZE   64
 #define AT_TIMEOUT_MS 500
-#define AT_DELAY_MS 300
+#define AT_DELAY_MS   300
 
 /*******************************************************************************
  * AT Commands
  ******************************************************************************/
 
-static void at_send(const char *cmd, const char *label) {
+static void at_send(const char *cmd, const char *label)
+{
         uint8_t buf[AT_BUF_SIZE];
 
         uart_flush(LORA_UART);
@@ -52,7 +53,8 @@ static void at_send(const char *cmd, const char *label) {
  * Public Interface
  ******************************************************************************/
 
-esp_err_t lora_init(void) {
+esp_err_t lora_init(void)
+{
         uart_config_t cfg = {
             .baud_rate = LORA_BAUD_RATE,
             .data_bits = UART_DATA_8_BITS,
@@ -89,13 +91,15 @@ esp_err_t lora_init(void) {
         return ESP_OK;
 }
 
-void lora_send_trigger(void) {
+void lora_send_trigger(void)
+{
         const char *cmd = "AT+SEND=1,1,T\r\n";
         uart_write_bytes(LORA_UART, cmd, strlen(cmd));
         ESP_LOGI(TAG, "trigger sent");
 }
 
-void lora_receive_task(void *arg) {
+void lora_receive_task(void *arg)
+{
         uint8_t buf[UINT8_MAX + 1];
         int polls = 0;
 

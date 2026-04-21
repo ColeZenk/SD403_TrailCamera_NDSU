@@ -24,13 +24,15 @@ static int client_count = 0;
 
 /* ------------------------------------------------------------------ */
 
-static void add_client(int fd) {
+static void add_client(int fd)
+{
         if (client_count >= WS_MAX_CLIENTS) return;
         client_fds[client_count++] = fd;
         ESP_LOGI(TAG, "client connected fd=%d (%d total)", fd, client_count);
 }
 
-static void remove_client(int fd) {
+static void remove_client(int fd)
+{
         for (int i = 0; i < client_count; i++) {
                 if (client_fds[i] == fd) {
                         client_fds[i] = client_fds[--client_count];
@@ -43,7 +45,8 @@ static void remove_client(int fd) {
 
 /* ------------------------------------------------------------------ */
 
-static esp_err_t ws_handler(httpd_req_t *req) {
+static esp_err_t ws_handler(httpd_req_t *req)
+{
         if (req->method == HTTP_GET) {
                 /* Handshake */
                 add_client(httpd_req_to_sockfd(req));
@@ -77,7 +80,8 @@ static const httpd_uri_t ws_uri = {
 
 /* ------------------------------------------------------------------ */
 
-esp_err_t ws_server_init(void) {
+esp_err_t ws_server_init(void)
+{
         memset(client_fds, -1, sizeof(client_fds));
 
         httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
@@ -101,7 +105,8 @@ esp_err_t ws_server_init(void) {
 /* ------------------------------------------------------------------ */
 
 esp_err_t ws_broadcast(uint8_t position, uint32_t seq, const uint8_t *pixels,
-                       size_t len) {
+                       size_t len)
+{
         if (client_count == 0) return ESP_OK;
 
         /* Build header: 1 byte position + 4 bytes seq */

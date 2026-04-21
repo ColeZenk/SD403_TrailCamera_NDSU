@@ -16,7 +16,8 @@
 static const char *TAG = "WIFI_AP";
 
 static void event_handler(void *arg, esp_event_base_t base, int32_t id,
-                          void *data) {
+                          void *data)
+{
         if (base == WIFI_EVENT && id == WIFI_EVENT_AP_STACONNECTED) {
                 wifi_event_ap_staconnected_t *e = data;
                 ESP_LOGI(
@@ -34,7 +35,8 @@ static void event_handler(void *arg, esp_event_base_t base, int32_t id,
         }
 }
 
-esp_err_t wifi_ap_init(void) {
+esp_err_t wifi_ap_init(void)
+{
         esp_err_t ret = nvs_flash_init();
         if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
             ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
