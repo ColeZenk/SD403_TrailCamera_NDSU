@@ -1,0 +1,13 @@
+#ifndef IMAGE_DATA_H
+#define IMAGE_DATA_H
+
+#include <stddef.h>
+#include <stdint.h>
+
+// Image data structure for passing between tasks
+typedef struct {
+        uint8_t *buffer;
+        size_t size;
+} img_data_t;
+
+#endif // IMAGE_DATA_H
