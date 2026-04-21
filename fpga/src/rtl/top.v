@@ -98,8 +98,17 @@ module top
         localparam PSRAM_FREQ = 81_000_000;
         localparam PSRAM_LATENCY = 3;
 
-        wire psram_read;
-        wire [21:0] psram_addr;
+        // PSRAM signals — muxed between SPI write and scheduler read
+        wire sched_psram_read;
+        wire [21:0] sched_psram_addr;
+        reg spi_psram_write;
+        reg [21:0] spi_psram_addr;
+        reg [15:0] spi_psram_din;
+
+        wire psram_read_mux  = sched_psram_read & ~spi_psram_write;
+        wire psram_write_mux = spi_psram_write;
+        wire [21:0] psram_addr_mux = spi_psram_write ? spi_psram_addr
+                                                      : sched_psram_addr;
         wire [15:0] psram_dout;
         wire psram_busy;
 
@@ -112,10 +121,10 @@ module top
             .clk(clk_81m),
             .clk_p(clk_81m_p),
             .resetn(sys_rst_n),
-            .read(psram_read),
-            .write(1'b0),
-            .addr(psram_addr),
-            .din(16'd0),
+            .read(psram_read_mux),
+            .write(psram_write_mux),
+            .addr(psram_addr_mux),
+            .din(spi_psram_din),
             .byte_write(1'b0),
             .dout(psram_dout),
             .busy(psram_busy),
@@ -215,6 +224,19 @@ module top
         assign step_4 = i2c_gpio_out[3] & ~i2c_gpio_dir[3];
 
         // ==========================================================
+        // TX output buffer (compressed data from scheduler)
+        //   Scheduler writes -> buffer -> ESP reads on MISO
+        //   Max compressed frame ~200 bytes, 512 depth is plenty
+        // ==========================================================
+        reg [7:0] tx_buf [0:511];
+        reg [8:0] tx_wr_ptr;
+        reg [8:0] tx_rd_ptr;
+        reg [8:0] tx_len;
+        wire [7:0] tx_cur_byte = (tx_rd_ptr < tx_len) ? tx_buf[tx_rd_ptr]
+                                                        : 8'd0;
+        wire esp_tx_next;
+
+        // ==========================================================
         // ESP SPI Interface
         // ==========================================================
         esp_interface esp_slave(.clk(sys_clk),
@@ -226,6 +248,8 @@ module top
                                 .rx_data(esp_rx_data),
                                 .rx_valid(esp_rx_valid),
                                 .rx_ready(esp_rx_ready),
+                                .tx_data(tx_cur_byte),
+                                .tx_next(esp_tx_next),
                                 .cs_active_sync(esp_cs_active));
 
         // ==========================================================
@@ -290,6 +314,98 @@ module top
         end
 
         // ==========================================================
+        // SPI -> PSRAM write path
+        //   Buffer byte pairs, issue word writes.
+        //   Runs during SPI receive (receiving == 1).
+        // ==========================================================
+        reg [7:0] byte_hold;
+        reg byte_phase;
+
+        always @(posedge sys_clk or negedge sys_rst_n) begin
+                if (!sys_rst_n) begin
+                        spi_psram_write <= 1'b0;
+                        spi_psram_addr <= 22'd0;
+                        spi_psram_din <= 16'd0;
+                        byte_hold <= 8'd0;
+                        byte_phase <= 1'b0;
+                end else begin
+                        spi_psram_write <= 1'b0;
+
+                        if (cs_start) begin
+                                spi_psram_addr <= cur_base;
+                                byte_phase <= 1'b0;
+                        end
+
+                        if (esp_rx_valid & receiving & ~psram_busy) begin
+                                if (~byte_phase) begin
+                                        byte_hold <= esp_rx_data;
+                                        byte_phase <= 1'b1;
+                                end else begin
+                                        spi_psram_din <= {esp_rx_data, byte_hold};
+                                        spi_psram_write <= 1'b1;
+                                        spi_psram_addr <= spi_psram_addr + 22'd2;
+                                        byte_phase <= 1'b0;
+                                end
+                        end
+                end
+        end
+
+        // ==========================================================
+        // TX buffer write (scheduler -> buffer) and read (MISO out)
+        // ==========================================================
+        always @(posedge sys_clk or negedge sys_rst_n) begin
+                if (!sys_rst_n) begin
+                        tx_wr_ptr <= 9'd0;
+                        tx_rd_ptr <= 9'd0;
+                        tx_len <= 9'd0;
+                end else begin
+                        // Scheduler start: reset write pointer
+                        if (cs_end & receiving) begin
+                                tx_wr_ptr <= 9'd0;
+                        end
+
+                        // Scheduler writes compressed bytes
+                        if (sched_tx_valid) begin
+                                tx_buf[tx_wr_ptr] <= sched_tx_data;
+                                tx_wr_ptr <= tx_wr_ptr + 9'd1;
+                        end
+
+                        // Latch length when scheduler finishes
+                        if (sched_frame_done)
+                                tx_len <= tx_wr_ptr;
+
+                        // Reset read pointer on new SPI transaction
+                        if (cs_start)
+                                tx_rd_ptr <= 9'd0;
+
+                        // Advance read pointer on each MISO byte sent
+                        if (esp_tx_next & esp_cs_active)
+                                tx_rd_ptr <= tx_rd_ptr + 9'd1;
+                end
+        end
+
+        // ==========================================================
+        // PSRAM ping-pong frame regions
+        //   Region A: 0x000000  (76800 bytes = 320*240)
+        //   Region B: 0x012C00
+        //   SPI writes to cur_base, scheduler diffs cur vs prev.
+        //   Swap after each frame.
+        // ==========================================================
+        localparam [21:0] REGION_A = 22'h000000;
+        localparam [21:0] REGION_B = 22'h012C00;
+
+        reg frame_sel;
+        wire [21:0] cur_base  = frame_sel ? REGION_B : REGION_A;
+        wire [21:0] prev_base = frame_sel ? REGION_A : REGION_B;
+
+        always @(posedge sys_clk or negedge sys_rst_n) begin
+                if (!sys_rst_n)
+                        frame_sel <= 1'b0;
+                else if (sched_frame_done)
+                        frame_sel <= ~frame_sel;
+        end
+
+        // ==========================================================
         // Block Scheduler (WHT compress pipeline)
         // ==========================================================
         wire sched_frame_done;
@@ -301,14 +417,15 @@ module top
             .rst_n(sys_rst_n),
             .start(cs_end & receiving),
             .frame_done(sched_frame_done),
-            .psram_read(psram_read),
-            .psram_addr(psram_addr),
+            .psram_read(sched_psram_read),
+            .psram_addr(sched_psram_addr),
             .psram_rdata(psram_dout),
             .psram_busy(psram_busy),
             .tx_valid(sched_tx_valid),
             .tx_data(sched_tx_data),
             .tx_ready(1'b1),
-            .base_addr(22'd0),
+            .cur_base(cur_base),
+            .prev_base(prev_base),
             .thresh(16'd400),
             .q_shift(4'd3),
             .seq_thresh(4'd6)

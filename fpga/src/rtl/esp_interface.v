@@ -18,6 +18,9 @@ module esp_interface
      output reg rx_valid,
      input wire rx_ready,
 
+     input wire [7 : 0] tx_data,
+     output wire tx_next,
+
      output wire cs_active_sync // synchronized CS active level for top.v
     );
 
@@ -114,12 +117,28 @@ module esp_interface
         end
 
         // ==========================================================
-        // MISO — dummy for now, zeroed when CS inactive
-        // TODO: shift out actual response for bidirectional SPI
+        // MISO TX — shift out tx_data, MSB first on falling SCLK
+        //
+        // tx_next pulses on byte_done so top.v advances to next byte
+        // Preload from tx_data on CS assert and each byte boundary
         // ==========================================================
-        always @(posedge clk or negedge rst_n)
-                if (!rst_n)
+        reg [7 : 0] tx_sr;
+
+        assign tx_next = byte_done;
+
+        wire tx_reload = byte_done | (~cs_active);
+
+        always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
+                        tx_sr <= 8'd0;
                         esp_miso <= 1'b0;
-                else
-                        esp_miso <= 1'b0; // placeholder
+                end else begin
+                        if (tx_reload)
+                                tx_sr <= tx_data;
+                        else if (sclk_fall & cs_active)
+                                tx_sr <= {tx_sr[6 : 0], 1'b0};
+
+                        esp_miso <= cs_active ? tx_sr[7] : 1'b0;
+                end
+        end
 endmodule

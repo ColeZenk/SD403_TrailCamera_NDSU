@@ -1,8 +1,10 @@
 /*
  * blk_schd.v -- Block scheduler FSM
  *
- * Iterates 40x30 blocks over a 320x240 diff frame in PSRAM.
- * Per block: LOAD 64 bytes -> wht2d -> seq_msk -> coeff -> EMIT.
+ * Iterates 40x30 blocks over a 320x240 frame pair in PSRAM.
+ * Per block: LOAD current + previous pixels, diff, WHT, coeff, EMIT.
+ * Two PSRAM regions: SPI writes to cur_base, scheduler reads both.
+ * top.v swaps cur_base/prev_base each frame.
  *
  * Flat bus convention: element [r][c] = flat[(r*8+c)*W +: W]
  */
@@ -23,7 +25,8 @@ module block_sched
      output reg [7:0] tx_data,
      input wire tx_ready,
 
-     input wire [21:0] base_addr,
+     input wire [21:0] cur_base,
+     input wire [21:0] prev_base,
      input wire [W-1:0] thresh,
      input wire [3:0] q_shift,
      input wire [3:0] seq_thresh);
@@ -31,12 +34,12 @@ module block_sched
         // ==========================================================
         // FSM states
         // ==========================================================
-        localparam [2:0] IDLE = 3'd0,
-                         LOAD = 3'd1,
-                         WAIT = 3'd2,
-                         RUN  = 3'd3,
-                         EMIT = 3'd4,
-                         NEXT = 3'd5;
+        localparam [2:0] IDLE  = 3'd0,
+                         LOAD  = 3'd1,
+                         WAIT  = 3'd2,
+                         RUN   = 3'd3,
+                         EMIT  = 3'd4,
+                         NEXT  = 3'd5;
         reg [2:0] state;
 
         // ==========================================================
@@ -46,14 +49,18 @@ module block_sched
         reg [4:0] by;
 
         // ==========================================================
-        // LOAD counters
+        // LOAD counters + diff logic
+        //   Two-pass per word position: read current, read previous, diff.
+        //   load_pass: 0 = read current, 1 = read previous + compute diff
         // ==========================================================
         reg [2:0] load_row;
         reg [1:0] load_col;
+        reg load_pass;
         reg psram_pending;
+        reg [15:0] cur_word;
 
         // ==========================================================
-        // 8x8 pixel register array -- flat packed bus
+        // 8x8 diff register array -- flat packed bus
         // ==========================================================
         reg signed [W*64-1:0] pixels;
 
@@ -69,8 +76,16 @@ module block_sched
         wire [21:0] row_offset = ({19'b0, load_row} << 8)
                                + ({19'b0, load_row} << 6);
         wire [21:0] col_offset = {20'b0, load_col, 1'b0};
-        wire [21:0] pixel_addr = base_addr + by_offset + bx_offset
-                               + row_offset + col_offset;
+        wire [21:0] block_offset = by_offset + bx_offset
+                                 + row_offset + col_offset;
+        wire [21:0] cur_pixel_addr  = cur_base  + block_offset;
+        wire [21:0] prev_pixel_addr = prev_base + block_offset;
+
+        // Diff: current - previous (sign-extended to W bits)
+        wire signed [W-1:0] diff_lo = {{(W-8){cur_word[7]}},  cur_word[7:0]}
+                                    - {{(W-8){psram_rdata[7]}},  psram_rdata[7:0]};
+        wire signed [W-1:0] diff_hi = {{(W-8){cur_word[15]}}, cur_word[15:8]}
+                                    - {{(W-8){psram_rdata[15]}}, psram_rdata[15:8]};
 
         // ==========================================================
         // Combinational chain: wht2d -> seq_msk
@@ -150,9 +165,11 @@ module block_sched
                         by <= 5'd0;
                         load_row <= 3'd0;
                         load_col <= 2'd0;
+                        load_pass <= 1'b0;
                         psram_read <= 1'b0;
                         psram_addr <= 22'd0;
                         psram_pending <= 1'b0;
+                        cur_word <= 16'd0;
                         coeff_bgn <= 1'b0;
                         tx_valid <= 1'b0;
                         tx_data <= 8'd0;
@@ -174,33 +191,47 @@ module block_sched
                         bx <= 6'd0;
                         by <= 5'd0;
                         state <= state | ({3{start}} & LOAD);
+                        load_pass <= 1'b0;
                 end
 
                 // --------------------------------------------------
+                // LOAD: two reads per word position
+                //   pass 0: read current frame word, stash in cur_word
+                //   pass 1: read previous frame word, compute diff, store
+                // --------------------------------------------------
                 LOAD: begin
                         if (~psram_busy & ~psram_pending) begin
-                                psram_addr <= pixel_addr;
+                                psram_addr <= load_pass ? prev_pixel_addr
+                                                        : cur_pixel_addr;
                                 psram_read <= 1'b1;
                                 psram_pending <= 1'b1;
                         end
 
                         if (psram_pending & ~psram_busy) begin
-                                pixels[pix_idx_lo*W +: W] <=
-                                    {{(W-8){psram_rdata[7]}}, psram_rdata[7:0]};
-                                pixels[pix_idx_hi*W +: W] <=
-                                    {{(W-8){psram_rdata[15]}}, psram_rdata[15:8]};
                                 psram_pending <= 1'b0;
 
-                                if (load_col == 2'd3) begin
-                                        load_col <= 2'd0;
-                                        if (load_row == 3'd7) begin
-                                                load_row <= 3'd0;
-                                                state <= RUN;
-                                        end else begin
-                                                load_row <= load_row + 3'd1;
-                                        end
+                                if (~load_pass) begin
+                                        // pass 0: stash current word
+                                        cur_word <= psram_rdata;
+                                        load_pass <= 1'b1;
                                 end else begin
-                                        load_col <= load_col + 2'd1;
+                                        // pass 1: diff and store
+                                        pixels[pix_idx_lo*W +: W] <= diff_lo;
+                                        pixels[pix_idx_hi*W +: W] <= diff_hi;
+                                        load_pass <= 1'b0;
+
+                                        // advance to next column pair
+                                        if (load_col == 2'd3) begin
+                                                load_col <= 2'd0;
+                                                if (load_row == 3'd7) begin
+                                                        load_row <= 3'd0;
+                                                        state <= RUN;
+                                                end else begin
+                                                        load_row <= load_row + 3'd1;
+                                                end
+                                        end else begin
+                                                load_col <= load_col + 2'd1;
+                                        end
                                 end
                         end
                 end
