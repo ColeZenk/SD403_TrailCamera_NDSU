@@ -1,0 +1,88 @@
+JavaScript error: moz-extension://516b61c0-5177-40c1-8d61-5f1387fea4d2/background.js, line 1: ReferenceError: importScripts is not defined
+JavaScript error: resource://gre/modules/ConduitsChild.sys.mjs, line 199: Error: CallResult for closed conduit {d7742d87-e61d-4b78-b8a1-b469842139fa}.962072674323: ({childId:"{d7742d87-e61d-4b78-b8a1-b469842139fa}.962072674323", callId:962072674326, path:"storage.sync.get", result:{}})
+JavaScript error: undefined, line 0: Error: An unexpected error occurred
+JavaScript error: undefined, line 0: Error: An unexpected error occurred
+JavaScript error: undefined, line 20: Error: An unexpected error occurred
+JavaScript warning: https://s-cdn.anthropic.com/s.js, line 25: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript error: undefined, line 0: Error: An unexpected error occurred
+JavaScript error: undefined, line 20: Error: An unexpected error occurred
+JavaScript warning: https://s-cdn.anthropic.com/s.js, line 25: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+[Parent 23382, Main Thread] WARNING: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding': 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+(Firefox:23382): GLib-GObject-CRITICAL **: 15:21:45.680: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding'
+[Parent 23382, Main Thread] WARNING: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding': 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+(Firefox:23382): GLib-GObject-CRITICAL **: 15:22:11.824: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding'
+[Parent 23382, Main Thread] WARNING: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding': 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+(Firefox:23382): GLib-GObject-CRITICAL **: 15:22:14.021: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding'
+[Parent 23382, Main Thread] WARNING: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding': 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+(Firefox:23382): GLib-GObject-CRITICAL **: 15:22:30.781: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding'
+[Parent 23382, Main Thread] WARNING: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding': 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+(Firefox:23382): GLib-GObject-CRITICAL **: 15:22:31.971: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding'
+[Parent 23382, Main Thread] WARNING: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding': 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+(Firefox:23382): GLib-GObject-CRITICAL **: 15:22:32.926: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding'
+[Parent 23382, Main Thread] WARNING: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding': 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+(Firefox:23382): GLib-GObject-CRITICAL **: 15:22:35.613: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding'
+[Parent 23382, Main Thread] WARNING: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding': 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+(Firefox:23382): GLib-GObject-CRITICAL **: 15:22:37.098: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding'
+[Parent 23382, Main Thread] WARNING: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding': 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+(Firefox:23382): GLib-GObject-CRITICAL **: 15:22:37.696: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding'
+[Parent 23382, Main Thread] WARNING: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding': 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+(Firefox:23382): GLib-GObject-CRITICAL **: 15:22:38.677: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding'
+[Parent 23382, Main Thread] WARNING: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding': 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+(Firefox:23382): GLib-GObject-CRITICAL **: 15:22:40.239: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding'
+[Parent 23382, Main Thread] WARNING: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding': 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+(Firefox:23382): GLib-GObject-CRITICAL **: 15:22:40.619: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding'
+[Parent 23382, Main Thread] WARNING: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding': 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+(Firefox:23382): GLib-GObject-CRITICAL **: 15:23:30.775: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding'
+[Parent 23382, Main Thread] WARNING: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding': 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+(Firefox:23382): GLib-GObject-CRITICAL **: 15:23:46.978: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding'
+[Parent 23382, Main Thread] WARNING: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding': 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+(Firefox:23382): GLib-GObject-CRITICAL **: 15:23:48.208: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding'
+[Parent 23382, Main Thread] WARNING: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding': 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+(Firefox:23382): GLib-GObject-CRITICAL **: 15:24:12.515: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding'
+[Parent 23382, Main Thread] WARNING: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding': 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+(Firefox:23382): GLib-GObject-CRITICAL **: 15:24:14.268: g_object_set_is_valid_property: object class 'GtkImage' has no property named 'padding'
+JavaScript error: undefined, line 0: Error: An unexpected error occurred
+JavaScript error: undefined, line 20: Error: An unexpected error occurred
+JavaScript error: undefined, line 0: Error: An unexpected error occurred
+JavaScript error: undefined, line 20: Error: An unexpected error occurred
+JavaScript warning: https://s-cdn.anthropic.com/s.js, line 25: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript error: undefined, line 0: Error: An unexpected error occurred
+JavaScript error: undefined, line 20: Error: An unexpected error occurred
+console.error: Region.sys.mjs: "Error fetching region" (new Error("TIMEOUT", "resource://gre/modules/Region.sys.mjs", 752))
+console.error: Region.sys.mjs: "Failed to fetch region" (new Error("TIMEOUT", "resource://gre/modules/Region.sys.mjs", 396))
+console.error: Region.sys.mjs: "Error fetching region" (new Error("TIMEOUT", "resource://gre/modules/Region.sys.mjs", 752))
+console.error: Region.sys.mjs: "Failed to fetch region" (new Error("TIMEOUT", "resource://gre/modules/Region.sys.mjs", 396))
+JavaScript warning: https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/index-DUEk0qNq.js, line 2: Script terminated by timeout at:
+@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/index-DUEk0qNq.js:2:124874
+@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/index-DUEk0qNq.js:2:124983
+lu/o<@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/index-DUEk0qNq.js:2:32345
+ll@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/index-DUEk0qNq.js:2:7845
+ol/<@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/index-DUEk0qNq.js:2:7799
+
+JavaScript warning: https://www.gstatic.com/og/_/js/k=og.asy.en_US.7NLpafgNJ_w.2019.O/rt=j/m=_ac,_awd,adrc,ada,lldp,qads/exm=/d=1/ed=1/rs=AA2YrTte-Kkrvd5vMX3FQPa0YvYR8eRgwg, line 106: Script terminated by timeout at:
+_.Vc@https://www.gstatic.com/og/_/js/k=og.asy.en_US.7NLpafgNJ_w.2019.O/rt=j/m=_ac,_awd,adrc,ada,lldp,qads/exm=/d=1/ed=1/rs=AA2YrTte-Kkrvd5vMX3FQPa0YvYR8eRgwg:106:1200
+_.Wc@https://www.gstatic.com/og/_/js/k=og.asy.en_US.7NLpafgNJ_w.2019.O/rt=j/m=_ac,_awd,adrc,ada,lldp,qads/exm=/d=1/ed=1/rs=AA2YrTte-Kkrvd5vMX3FQPa0YvYR8eRgwg:62:176
+fh@https://www.gstatic.com/og/_/js/k=og.asy.en_US.7NLpafgNJ_w.2019.O/rt=j/m=_ac,_awd,adrc,ada,lldp,qads/exm=/d=1/ed=1/rs=AA2YrTte-Kkrvd5vMX3FQPa0YvYR8eRgwg:115:38
+b@https://www.gstatic.com/og/_/js/k=og.asy.en_US.7NLpafgNJ_w.2019.O/rt=j/m=_ac,_awd,adrc,ada,lldp,qads/exm=/d=1/ed=1/rs=AA2YrTte-Kkrvd5vMX3FQPa0YvYR8eRgwg:112:471
+
+JavaScript warning: https://cdn2.editmysite.com/js/site/main.js?buildTime=1774552889, line 4: unreachable code after return statement
+console.error: [Exception... "Component returned failure code: 0x80040111 (NS_ERROR_NOT_AVAILABLE) [nsIContentSniffer.getMIMETypeFromContent]"  nsresult: "0x80040111 (NS_ERROR_NOT_AVAILABLE)"  location: "JS frame :: resource:///modules/FaviconLoader.sys.mjs :: onStopRequest :: line 348"  data: no]
+console.error: Region.sys.mjs: "Error fetching region" (new Error("TIMEOUT", "resource://gre/modules/Region.sys.mjs", 752))
+console.error: Region.sys.mjs: "Failed to fetch region" (new Error("TIMEOUT", "resource://gre/modules/Region.sys.mjs", 396))

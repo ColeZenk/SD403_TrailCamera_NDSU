@@ -1,0 +1,35 @@
+[Parent 17949, Main Thread] WARNING: Failed to create DBus proxy for org.a11y.Bus: Cannot autolaunch D-Bus without X11 $DISPLAY
+: 'glib warning', file /topsrcdir/toolkit/xre/nsSigHandlers.cpp:201
+
+** (Firefox:17949): WARNING **: 02:01:32.992: Failed to create DBus proxy for org.a11y.Bus: Cannot autolaunch D-Bus without X11 $DISPLAY
+
+JavaScript error: moz-extension://516b61c0-5177-40c1-8d61-5f1387fea4d2/background.js, line 1: ReferenceError: importScripts is not defined
+console.error: "SearchSuggestionController found an unexpected string value:" "HTTP request timeout"
+JavaScript error: , line 0: AbortError: Actor 'Conduits' destroyed before query 'RunListener' was resolved
+JavaScript error: undefined, line 0: Error: An unexpected error occurred
+JavaScript error: undefined, line 20: Error: An unexpected error occurred
+JavaScript error: undefined, line 0: Error: An unexpected error occurred
+JavaScript error: undefined, line 20: Error: An unexpected error occurred
+JavaScript error: undefined, line 0: Error: An unexpected error occurred
+JavaScript error: undefined, line 20: Error: An unexpected error occurred
+JavaScript warning: https://s-cdn.anthropic.com/s.js, line 25: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://s-cdn.anthropic.com/s.js, line 25: WEBGL_debug_renderer_info is deprecated in Firefox and will be removed. Please use RENDERER.
+JavaScript warning: https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/vendor-BGCjnHf-.js, line 20: Script terminated by timeout at:
+trackResult/<@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/vendor-BGCjnHf-.js:20:112958
+trackResult@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/vendor-BGCjnHf-.js:20:112939
+_u@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/vendor-BGCjnHf-.js:20:127020
+Cu@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/vendor-BGCjnHf-.js:20:127059
+Rj@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/index-BL8bstaL.js:3:74252
+aY@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/index-BL8bstaL.js:17:100502
+ome@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/index-BL8bstaL.js:23:207078
+G$t<@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/index-BL8bstaL.js:29:1290796
+ni@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/vendor-BGCjnHf-.js:11:52298
+Rs@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/vendor-BGCjnHf-.js:11:70554
+ll@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/vendor-BGCjnHf-.js:11:86308
+du@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/vendor-BGCjnHf-.js:11:123585
+uu@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/vendor-BGCjnHf-.js:11:123513
+cu@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/vendor-BGCjnHf-.js:11:123353
+Qc@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/vendor-BGCjnHf-.js:11:118779
+Du@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/vendor-BGCjnHf-.js:11:134637
+x@https://assets-proxy.anthropic.com/claude-ai/v2/assets/v1/vendor-BGCjnHf-.js:2:70227
+
