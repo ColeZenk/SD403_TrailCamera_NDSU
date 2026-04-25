@@ -161,6 +161,40 @@ done:
 }
 
 /************************************************************
+ * Receive logic
+ ************************************************************/
+
+esp_err_t fpga_spi_receive(uint8_t *data, size_t size)
+{
+        if (!ctx.initialized) return ESP_ERR_INVALID_STATE;
+        if (!data || size == 0) return ESP_ERR_INVALID_ARG;
+        if (xSemaphoreTake(ctx.mutex, portMAX_DELAY) != pdTRUE)
+                return ESP_ERR_TIMEOUT;
+
+	spi_transaction_t *t = &trans_pool[0];
+
+	t->length = size * 8;
+	t->rxlength = 0;
+	t->tx_buffer = NULL;
+	t->rx_buffer = data;
+	t->flags = 0;
+
+        esp_err_t ret = ESP_OK;
+
+	ret = spi_device_queue_trans(ctx.device, t, portMAX_DELAY);
+
+        /* Collect one completed transfer */
+        spi_transaction_t *result;
+  	if (ret == ESP_OK)
+        	ret = spi_device_get_trans_result(ctx.device,
+		                                  &result,portMAX_DELAY);
+
+        xSemaphoreGive(ctx.mutex);
+        return ret;
+}
+
+
+/************************************************************
  * Init / Deinit
  ***********************************************************/
 
@@ -200,8 +234,8 @@ esp_err_t fpga_spi_init(void)
         }
 
         ctx.initialized = true;
-        ESP_LOGI(TAG, "ready — %d MHz, queue depth %d", FPGA_SPI_CLOCK_MHZ,
-                 FPGA_SPI_QUEUE_SIZE);
+        ESP_LOGI(TAG, "ready — %.1f MHz, queue depth %d",
+                 (double)FPGA_SPI_CLOCK_MHZ, FPGA_SPI_QUEUE_SIZE);
 
 #ifdef TEST_MODE_FPGA_PATTERNS
         setup_test_button();

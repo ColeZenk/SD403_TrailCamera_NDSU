@@ -28,7 +28,7 @@
 #define CMD_STOP      2
 
 // SPI Configuration
-#define SPI_CLOCK_SPEED (10 * 1000 * 1000) // 10MHz
+#define SPI_CLOCK_SPEED (9 * 1000 * 1000) // 9MHz
 #define MAX_TRANSFER_SIZE (4092)
 
 esp_err_t spi_dma_init(void);

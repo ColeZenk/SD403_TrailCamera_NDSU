@@ -144,7 +144,8 @@ static void check_miso_cmd(const uint8_t *rx)
         else if (cmd == CMD_STOP) ctx.stop_flag = true;
 }
 
-static esp_err_t spi_dma_transmit(const uint8_t *data, size_t length)
+static esp_err_t spi_dma_transmit(const uint8_t *data, size_t length,
+                                  uint8_t *rx, size_t rx_len)
 {
         if (data == NULL || length == 0 || length > MAX_TRANSFER_SIZE)
                 return ESP_ERR_INVALID_ARG;
@@ -152,11 +153,10 @@ static esp_err_t spi_dma_transmit(const uint8_t *data, size_t length)
         spi_transaction_t trans = {
             .length = length * 8,
             .tx_buffer = data,
-            .rx_buffer = ctx.rx_buf,
+            .rx_buffer = rx,
+            .rxlength = rx ? rx_len * 8 : 0,
         };
 
-        /* spi_device_transmit = queue_trans + get_trans_result.
-         * No transaction remains "pending" after this returns. */
         return spi_device_transmit(ctx.spi, &trans);
 }
 
@@ -180,15 +180,23 @@ esp_err_t spi_dma_send_img(const uint8_t *img_data, size_t img_size)
                 uint32_t magic;
                 uint32_t size;
                 uint32_t checksum;
-        } __attribute__((packed)) header;
+                uint32_t timestamp;
+                uint16_t width;
+                uint16_t height;
+                uint8_t  format;
+                uint8_t  reserved[7];
+        } __attribute__((packed)) header = {0};
 
         header.magic = 0xCAFEBEEF;
         header.size = img_size;
+        header.width = 320;
+        header.height = 240;
 
         header.checksum = 0;
         for (size_t i = 0; i < img_size; i++) header.checksum ^= img_data[i];
 
-        esp_err_t ret = spi_dma_transmit((uint8_t *)&header, sizeof(header));
+        esp_err_t ret = spi_dma_transmit((uint8_t *)&header, sizeof(header),
+                                        ctx.rx_buf, sizeof(ctx.rx_buf));
         if (ret != ESP_OK) {
                 xSemaphoreGive(ctx.bus_mutex);
                 return ret;
@@ -200,7 +208,7 @@ esp_err_t spi_dma_send_img(const uint8_t *img_data, size_t img_size)
                                    ? MAX_TRANSFER_SIZE
                                    : (img_size - offset);
 
-                ret = spi_dma_transmit(img_data + offset, chunk);
+                ret = spi_dma_transmit(img_data + offset, chunk, NULL, 0);
                 if (ret != ESP_OK) {
                         xSemaphoreGive(ctx.bus_mutex);
                         return ret;

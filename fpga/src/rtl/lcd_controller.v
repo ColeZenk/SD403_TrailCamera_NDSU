@@ -95,12 +95,12 @@ module lcd_controller
 
         // ==========================================================
         // BRAM address
-        //   +visible increments only in active region
-        //   & ~frame_start zeros at frame boundary
-        //   & pclk / ~pclk selects new vs hold
+        //   Increment only within the 320x240 source image.
+        //   Outside that region bram_addr holds, LCD outputs black.
         // ==========================================================
+        wire in_src = (h_count < 10'd320) & (v_count < 10'd240);
         wire [14 : 0] addr_inc =
-                          (bram_addr + {14'd0, visible}) & {15{~frame_start}};
+                          (bram_addr + {14'd0, in_src}) & {15{~frame_start}};
         wire [14 : 0] next_addr =
                           (addr_inc & {15{pclk}}) | (bram_addr & {15{~pclk}});
 
@@ -219,10 +219,11 @@ module lcd_controller
         wire [5 : 0] p6_g = {6{chk & sel[6]}};
         wire [4 : 0] p6_b = {5{chk & sel[6]}};
 
-        // --- p7: BRAM grayscale ---
-        wire [4 : 0] p7_r = bram_data[7 : 3] & {5{sel[7]}};
-        wire [5 : 0] p7_g = bram_data[7 : 2] & {6{sel[7]}};
-        wire [4 : 0] p7_b = bram_data[7 : 3] & {5{sel[7]}};
+        // --- p7: BRAM grayscale (320x240 region only) ---
+        wire p7_en = sel[7] & in_src;
+        wire [4 : 0] p7_r = bram_data[7 : 3] & {5{p7_en}};
+        wire [5 : 0] p7_g = bram_data[7 : 2] & {6{p7_en}};
+        wire [4 : 0] p7_b = bram_data[7 : 3] & {5{p7_en}};
 
         // --- OR-combine all patterns, AND with visibility ---
         wire [4 : 0] raw_r = (p0_r | p1_r | p2_r | p3_r | p4_r | p5_r | p6_r |

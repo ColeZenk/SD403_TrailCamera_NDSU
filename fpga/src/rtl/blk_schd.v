@@ -26,20 +26,17 @@ module block_sched
      input wire tx_ready,
 
      input wire [21:0] cur_base,
-     input wire [21:0] prev_base,
-     input wire [W-1:0] thresh,
-     input wire [3:0] q_shift,
-     input wire [3:0] seq_thresh);
+     input wire [21:0] prev_base);
 
         // ==========================================================
         // FSM states
         // ==========================================================
-        localparam [2:0] IDLE  = 3'd0,
-                         LOAD  = 3'd1,
-                         WAIT  = 3'd2,
-                         RUN   = 3'd3,
-                         EMIT  = 3'd4,
-                         NEXT  = 3'd5;
+        localparam [2:0] IDLE = 3'd0,
+                         LOAD = 3'd1,
+                         WHT  = 3'd2,
+                         WAIT = 3'd3,
+                         EMIT = 3'd4,
+                         NEXT = 3'd5;
         reg [2:0] state;
 
         // ==========================================================
@@ -50,8 +47,6 @@ module block_sched
 
         // ==========================================================
         // LOAD counters + diff logic
-        //   Two-pass per word position: read current, read previous, diff.
-        //   load_pass: 0 = read current, 1 = read previous + compute diff
         // ==========================================================
         reg [2:0] load_row;
         reg [1:0] load_col;
@@ -60,16 +55,12 @@ module block_sched
         reg [15:0] cur_word;
 
         // ==========================================================
-        // 8x8 diff register array -- flat packed bus
+        // 8x8 pixel register array -- flat packed bus
         // ==========================================================
         reg signed [W*64-1:0] pixels;
 
         // ==========================================================
         // Address calculation
-        //   by * 2560 = (by << 11) + (by << 9)
-        //   bx * 8    = bx << 3
-        //   load_row * 320 = (load_row << 8) + (load_row << 6)
-        //   load_col * 2
         // ==========================================================
         wire [21:0] by_offset  = ({17'b0, by} << 11) + ({17'b0, by} << 9);
         wire [21:0] bx_offset  = {16'b0, bx} << 3;
@@ -81,26 +72,55 @@ module block_sched
         wire [21:0] cur_pixel_addr  = cur_base  + block_offset;
         wire [21:0] prev_pixel_addr = prev_base + block_offset;
 
-        // Diff: current - previous (sign-extended to W bits)
-        wire signed [W-1:0] diff_lo = {{(W-8){cur_word[7]}},  cur_word[7:0]}
-                                    - {{(W-8){psram_rdata[7]}},  psram_rdata[7:0]};
-        wire signed [W-1:0] diff_hi = {{(W-8){cur_word[15]}}, cur_word[15:8]}
-                                    - {{(W-8){psram_rdata[15]}}, psram_rdata[15:8]};
+        wire signed [W-1:0] diff_lo = {{(W-8){1'b0}}, cur_word[7:0]}
+                                    - {{(W-8){1'b0}}, psram_rdata[7:0]};
+        wire signed [W-1:0] diff_hi = {{(W-8){1'b0}}, cur_word[15:8]}
+                                    - {{(W-8){1'b0}}, psram_rdata[15:8]};
+
+        wire [4:0] pix_pair = {load_row, load_col};
 
         // ==========================================================
-        // Combinational chain: wht2d -> seq_msk
+        // WHT -- single wht8, 4-bit pass counter
+        //   pass 0-7: rows 0-7     pass 8-15: cols 0-7
         // ==========================================================
-        wire signed [W*64-1:0] wht_out;
-        wire signed [W*64-1:0] masked;
+        reg [3:0] wht_pass;
+        reg signed [W*8-1:0] wht_in;
+        wire signed [W*8-1:0] wht_out;
+
+        integer m;
+        always @(*) begin
+                case (wht_pass)
+                4'd0:  for(m=0;m<8;m=m+1) wht_in[m*W+:W] = pixels[(0*8+m)*W+:W];
+                4'd1:  for(m=0;m<8;m=m+1) wht_in[m*W+:W] = pixels[(1*8+m)*W+:W];
+                4'd2:  for(m=0;m<8;m=m+1) wht_in[m*W+:W] = pixels[(2*8+m)*W+:W];
+                4'd3:  for(m=0;m<8;m=m+1) wht_in[m*W+:W] = pixels[(3*8+m)*W+:W];
+                4'd4:  for(m=0;m<8;m=m+1) wht_in[m*W+:W] = pixels[(4*8+m)*W+:W];
+                4'd5:  for(m=0;m<8;m=m+1) wht_in[m*W+:W] = pixels[(5*8+m)*W+:W];
+                4'd6:  for(m=0;m<8;m=m+1) wht_in[m*W+:W] = pixels[(6*8+m)*W+:W];
+                4'd7:  for(m=0;m<8;m=m+1) wht_in[m*W+:W] = pixels[(7*8+m)*W+:W];
+                4'd8:  for(m=0;m<8;m=m+1) wht_in[m*W+:W] = pixels[(m*8+0)*W+:W];
+                4'd9:  for(m=0;m<8;m=m+1) wht_in[m*W+:W] = pixels[(m*8+1)*W+:W];
+                4'd10: for(m=0;m<8;m=m+1) wht_in[m*W+:W] = pixels[(m*8+2)*W+:W];
+                4'd11: for(m=0;m<8;m=m+1) wht_in[m*W+:W] = pixels[(m*8+3)*W+:W];
+                4'd12: for(m=0;m<8;m=m+1) wht_in[m*W+:W] = pixels[(m*8+4)*W+:W];
+                4'd13: for(m=0;m<8;m=m+1) wht_in[m*W+:W] = pixels[(m*8+5)*W+:W];
+                4'd14: for(m=0;m<8;m=m+1) wht_in[m*W+:W] = pixels[(m*8+6)*W+:W];
+                4'd15: for(m=0;m<8;m=m+1) wht_in[m*W+:W] = pixels[(m*8+7)*W+:W];
+                endcase
+        end
 
         wht2d #(.W(W)) wht_inst(
-            .b_i(pixels),
-            .b_o(wht_out)
+            .x(wht_in),
+            .y(wht_out)
         );
 
+        // ==========================================================
+        // Sequency mask (combinational, reads pixels after WHT done)
+        // ==========================================================
+        wire signed [W*64-1:0] masked;
+
         seq_msk #(.W(W)) msk_inst(
-            .T(seq_thresh),
-            .c_i(wht_out),
+            .c_i(pixels),
             .c_o(masked)
         );
 
@@ -119,9 +139,6 @@ module block_sched
             .rst(~rst_n),
             .bgn(coeff_bgn),
             .c_i(masked),
-            .thresh(thresh),
-            .q_shift(q_shift),
-            .seq_thresh(seq_thresh),
             .r_o(coeff_r),
             .c_o(coeff_c),
             .q_o(coeff_q),
@@ -131,15 +148,10 @@ module block_sched
 
         // ==========================================================
         // EMIT sub-counter
-        //   Packet: [header_hi][header_lo] then per coeff [rc][q_hi][q_lo]
-        //   header_hi = {2'b0, by[4:0], bx[5]}
-        //   header_lo = {bx[4:0], coeff_n[2:0]}
-        //   rc        = {0, 0, r[2:0], c[2:0]}
-        //   q_hi      = q[W-1:8]
-        //   q_lo      = q[7:0]
         // ==========================================================
         reg [2:0] emit_idx;
-        reg [3:0] emit_byte;
+        reg [4:0] emit_byte;
+        reg [1:0] emit_sub;
         reg emit_active;
 
         wire [7:0] header_hi = {2'b0, by, bx[5]};
@@ -151,13 +163,11 @@ module block_sched
         wire [7:0] q_hi = emit_q[W-1:8];
         wire [7:0] q_lo = emit_q[7:0];
 
-        // pixel index for LOAD writes
-        wire [5:0] pix_idx_lo = load_row * 8 + {load_col, 1'b0};
-        wire [5:0] pix_idx_hi = load_row * 8 + {load_col, 1'b1};
-
         // ==========================================================
         // Main FSM
         // ==========================================================
+        integer j;
+
         always @(posedge clk or negedge rst_n) begin
                 if (!rst_n) begin
                         state <= IDLE;
@@ -171,11 +181,13 @@ module block_sched
                         psram_pending <= 1'b0;
                         cur_word <= 16'd0;
                         coeff_bgn <= 1'b0;
+                        wht_pass <= 4'd0;
                         tx_valid <= 1'b0;
                         tx_data <= 8'd0;
                         frame_done <= 1'b0;
                         emit_idx <= 3'd0;
                         emit_byte <= 4'd0;
+                        emit_sub <= 2'd0;
                         emit_active <= 1'b0;
                         pixels <= {(W*64){1'b0}};
                 end else begin
@@ -190,14 +202,10 @@ module block_sched
                 IDLE: begin
                         bx <= 6'd0;
                         by <= 5'd0;
-                        state <= state | ({3{start}} & LOAD);
+                        state <= start ? LOAD : IDLE;
                         load_pass <= 1'b0;
                 end
 
-                // --------------------------------------------------
-                // LOAD: two reads per word position
-                //   pass 0: read current frame word, stash in cur_word
-                //   pass 1: read previous frame word, compute diff, store
                 // --------------------------------------------------
                 LOAD: begin
                         if (~psram_busy & ~psram_pending) begin
@@ -211,21 +219,51 @@ module block_sched
                                 psram_pending <= 1'b0;
 
                                 if (~load_pass) begin
-                                        // pass 0: stash current word
                                         cur_word <= psram_rdata;
                                         load_pass <= 1'b1;
                                 end else begin
-                                        // pass 1: diff and store
-                                        pixels[pix_idx_lo*W +: W] <= diff_lo;
-                                        pixels[pix_idx_hi*W +: W] <= diff_hi;
+                                        case (pix_pair)
+                                        5'd0:  begin pixels[ 0*W+:W]<=diff_lo; pixels[ 1*W+:W]<=diff_hi; end
+                                        5'd1:  begin pixels[ 2*W+:W]<=diff_lo; pixels[ 3*W+:W]<=diff_hi; end
+                                        5'd2:  begin pixels[ 4*W+:W]<=diff_lo; pixels[ 5*W+:W]<=diff_hi; end
+                                        5'd3:  begin pixels[ 6*W+:W]<=diff_lo; pixels[ 7*W+:W]<=diff_hi; end
+                                        5'd4:  begin pixels[ 8*W+:W]<=diff_lo; pixels[ 9*W+:W]<=diff_hi; end
+                                        5'd5:  begin pixels[10*W+:W]<=diff_lo; pixels[11*W+:W]<=diff_hi; end
+                                        5'd6:  begin pixels[12*W+:W]<=diff_lo; pixels[13*W+:W]<=diff_hi; end
+                                        5'd7:  begin pixels[14*W+:W]<=diff_lo; pixels[15*W+:W]<=diff_hi; end
+                                        5'd8:  begin pixels[16*W+:W]<=diff_lo; pixels[17*W+:W]<=diff_hi; end
+                                        5'd9:  begin pixels[18*W+:W]<=diff_lo; pixels[19*W+:W]<=diff_hi; end
+                                        5'd10: begin pixels[20*W+:W]<=diff_lo; pixels[21*W+:W]<=diff_hi; end
+                                        5'd11: begin pixels[22*W+:W]<=diff_lo; pixels[23*W+:W]<=diff_hi; end
+                                        5'd12: begin pixels[24*W+:W]<=diff_lo; pixels[25*W+:W]<=diff_hi; end
+                                        5'd13: begin pixels[26*W+:W]<=diff_lo; pixels[27*W+:W]<=diff_hi; end
+                                        5'd14: begin pixels[28*W+:W]<=diff_lo; pixels[29*W+:W]<=diff_hi; end
+                                        5'd15: begin pixels[30*W+:W]<=diff_lo; pixels[31*W+:W]<=diff_hi; end
+                                        5'd16: begin pixels[32*W+:W]<=diff_lo; pixels[33*W+:W]<=diff_hi; end
+                                        5'd17: begin pixels[34*W+:W]<=diff_lo; pixels[35*W+:W]<=diff_hi; end
+                                        5'd18: begin pixels[36*W+:W]<=diff_lo; pixels[37*W+:W]<=diff_hi; end
+                                        5'd19: begin pixels[38*W+:W]<=diff_lo; pixels[39*W+:W]<=diff_hi; end
+                                        5'd20: begin pixels[40*W+:W]<=diff_lo; pixels[41*W+:W]<=diff_hi; end
+                                        5'd21: begin pixels[42*W+:W]<=diff_lo; pixels[43*W+:W]<=diff_hi; end
+                                        5'd22: begin pixels[44*W+:W]<=diff_lo; pixels[45*W+:W]<=diff_hi; end
+                                        5'd23: begin pixels[46*W+:W]<=diff_lo; pixels[47*W+:W]<=diff_hi; end
+                                        5'd24: begin pixels[48*W+:W]<=diff_lo; pixels[49*W+:W]<=diff_hi; end
+                                        5'd25: begin pixels[50*W+:W]<=diff_lo; pixels[51*W+:W]<=diff_hi; end
+                                        5'd26: begin pixels[52*W+:W]<=diff_lo; pixels[53*W+:W]<=diff_hi; end
+                                        5'd27: begin pixels[54*W+:W]<=diff_lo; pixels[55*W+:W]<=diff_hi; end
+                                        5'd28: begin pixels[56*W+:W]<=diff_lo; pixels[57*W+:W]<=diff_hi; end
+                                        5'd29: begin pixels[58*W+:W]<=diff_lo; pixels[59*W+:W]<=diff_hi; end
+                                        5'd30: begin pixels[60*W+:W]<=diff_lo; pixels[61*W+:W]<=diff_hi; end
+                                        5'd31: begin pixels[62*W+:W]<=diff_lo; pixels[63*W+:W]<=diff_hi; end
+                                        endcase
                                         load_pass <= 1'b0;
 
-                                        // advance to next column pair
                                         if (load_col == 2'd3) begin
                                                 load_col <= 2'd0;
                                                 if (load_row == 3'd7) begin
                                                         load_row <= 3'd0;
-                                                        state <= RUN;
+                                                        wht_pass <= 4'd0;
+                                                        state <= WHT;
                                                 end else begin
                                                         load_row <= load_row + 3'd1;
                                                 end
@@ -237,18 +275,46 @@ module block_sched
                 end
 
                 // --------------------------------------------------
-                RUN: begin
-                        coeff_bgn <= 1'b1;
-                        state <= WAIT;
+                WHT: begin
+                        case (wht_pass)
+                        4'd0:  for(j=0;j<8;j=j+1) pixels[(0*8+j)*W+:W] <= wht_out[j*W+:W];
+                        4'd1:  for(j=0;j<8;j=j+1) pixels[(1*8+j)*W+:W] <= wht_out[j*W+:W];
+                        4'd2:  for(j=0;j<8;j=j+1) pixels[(2*8+j)*W+:W] <= wht_out[j*W+:W];
+                        4'd3:  for(j=0;j<8;j=j+1) pixels[(3*8+j)*W+:W] <= wht_out[j*W+:W];
+                        4'd4:  for(j=0;j<8;j=j+1) pixels[(4*8+j)*W+:W] <= wht_out[j*W+:W];
+                        4'd5:  for(j=0;j<8;j=j+1) pixels[(5*8+j)*W+:W] <= wht_out[j*W+:W];
+                        4'd6:  for(j=0;j<8;j=j+1) pixels[(6*8+j)*W+:W] <= wht_out[j*W+:W];
+                        4'd7:  for(j=0;j<8;j=j+1) pixels[(7*8+j)*W+:W] <= wht_out[j*W+:W];
+                        4'd8:  for(j=0;j<8;j=j+1) pixels[(j*8+0)*W+:W] <= wht_out[j*W+:W];
+                        4'd9:  for(j=0;j<8;j=j+1) pixels[(j*8+1)*W+:W] <= wht_out[j*W+:W];
+                        4'd10: for(j=0;j<8;j=j+1) pixels[(j*8+2)*W+:W] <= wht_out[j*W+:W];
+                        4'd11: for(j=0;j<8;j=j+1) pixels[(j*8+3)*W+:W] <= wht_out[j*W+:W];
+                        4'd12: for(j=0;j<8;j=j+1) pixels[(j*8+4)*W+:W] <= wht_out[j*W+:W];
+                        4'd13: for(j=0;j<8;j=j+1) pixels[(j*8+5)*W+:W] <= wht_out[j*W+:W];
+                        4'd14: for(j=0;j<8;j=j+1) pixels[(j*8+6)*W+:W] <= wht_out[j*W+:W];
+                        4'd15: for(j=0;j<8;j=j+1) pixels[(j*8+7)*W+:W] <= wht_out[j*W+:W];
+                        endcase
+
+                        if (wht_pass == 4'd15) begin
+                                coeff_bgn <= 1'b1;
+                                state <= WAIT;
+                        end else begin
+                                wht_pass <= wht_pass + 4'd1;
+                        end
                 end
 
                 // --------------------------------------------------
                 WAIT: begin
                         if (coeff_done) begin
-                                emit_byte <= 4'd0;
-                                emit_idx <= 3'd0;
-                                emit_active <= 1'b1;
-                                state <= EMIT;
+                                if (coeff_n == 0) begin
+                                        state <= NEXT;
+                                end else begin
+                                        emit_byte <= 4'd0;
+                                        emit_idx <= 3'd0;
+                                        emit_sub <= 2'd0;
+                                        emit_active <= 1'b1;
+                                        state <= EMIT;
+                                end
                         end
                 end
 
@@ -261,15 +327,17 @@ module block_sched
                                 4'd0: tx_data <= header_hi;
                                 4'd1: tx_data <= header_lo;
                                 default: begin
-                                        case ((emit_byte - 4'd2) % 3)
-                                        0: tx_data <= rc_byte;
-                                        1: tx_data <= q_hi;
-                                        2: begin
+                                        case (emit_sub)
+                                        2'd0: tx_data <= rc_byte;
+                                        2'd1: tx_data <= q_hi;
+                                        2'd2: begin
                                                 tx_data <= q_lo;
                                                 emit_idx <= emit_idx + 3'd1;
                                         end
                                         default: tx_data <= 8'd0;
                                         endcase
+                                        emit_sub <= (emit_sub == 2'd2) ? 2'd0
+                                                                       : emit_sub + 2'd1;
                                 end
                                 endcase
 
@@ -279,11 +347,6 @@ module block_sched
                                         emit_active <= 1'b0;
                                         state <= NEXT;
                                 end
-                        end
-
-                        if (emit_active & coeff_n == 0 & emit_byte == 4'd1) begin
-                                emit_active <= 1'b0;
-                                state <= NEXT;
                         end
                 end
 

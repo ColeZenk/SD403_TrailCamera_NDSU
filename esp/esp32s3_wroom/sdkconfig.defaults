@@ -1,16 +1,24 @@
 # WebSocket support in esp_http_server
 CONFIG_HTTPD_WS_SUPPORT=y
 
+# 16MB flash, custom partition table
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# SPIFFS: 64-char filenames for Flutter web assets
+CONFIG_SPIFFS_OBJ_NAME_LEN=64
+
 # PSRAM (ESP32-S3 has 8MB octal PSRAM on WROOM module)
 CONFIG_SPIRAM=y
 CONFIG_SPIRAM_MODE_OCT=y
 CONFIG_SPIRAM_SPEED_80M=y
 
-# Unicore mode: required for bench (lora_task only, no WiFi).
-# Root cause of previous WDT crashes: SMP spinlock deadlock — Core 0 lora_task
+# Unicore mode: was required for bench (lora_task only, no WiFi).
+# Root cause of previous WDT crashes: SMP spinlock deadlock -- Core 0 lora_task
 # held a FreeRTOS lock inside uart_write_bytes while Core 1 tick ISR spun on it.
-# REMOVE before re-enabling WiFi/WebSocket in production (dual-core required).
-CONFIG_FREERTOS_UNICORE=y
+# Disabled for WiFi/WebSocket (dual-core required).
+# CONFIG_FREERTOS_UNICORE=y
 
 # ESP_LOGI calls esp_log_timestamp() -> esp_timer_get_time() -> SYSTIMER read.
 # On ESP32-S3, SYSTIMER stalls the CPU (no interrupts) when UART RX ISR fires

@@ -7,7 +7,7 @@
 #define CAMERA_CONTROL_H
 
 /* Uncomment for burst capture test mode */
-#define TEST_BURST_CAPTURE
+// #define TEST_BURST_CAPTURE
 
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"

@@ -21,15 +21,10 @@
 #include "esp_psram.h"
 
 #include "config.h"
-#include "lora_uart.h"
-#ifdef TEST_MODE_LORA_BENCH
-#include "lora_bench.h"
-#endif
-
-#ifndef TEST_MODE_LORA_BENCH
+#include "image_reconstruct.h"
+#include "lora.h"
 #include "wifi_ap.h"
 #include "ws_server.h"
-#endif
 
 static const char *TAG = "MAIN";
 
@@ -41,7 +36,12 @@ static esp_err_t init_system(void)
 
         esp_err_t ret;
 
-        /* ISR semaphores must exist before any tasks */
+        ret = wifi_ap_init();
+        if (ret != ESP_OK) return ret;
+        ret = ws_server_init();
+        if (ret != ESP_OK) return ret;
+        ret = alloc_reference_frames();
+        if (ret != ESP_OK) return ret;
         ret = lora_init();
         if (ret != ESP_OK) return ret;
 
@@ -52,6 +52,10 @@ static void create_tasks(void)
 {
         xTaskCreate(lora_receive_task, "lora_rx", STACK_SIZE_MEDIUM, NULL,
                     TASK_PRIORITY_MEDIUM, NULL);
+#ifdef TEST_MODE_WS_PATTERNS
+        xTaskCreate(ws_test_task, "ws_test", STACK_SIZE_LARGE, NULL,
+                    TASK_PRIORITY_LOW, NULL);
+#endif
 }
 
 static void monitor_heap(void)

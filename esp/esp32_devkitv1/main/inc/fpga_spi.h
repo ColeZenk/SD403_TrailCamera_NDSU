@@ -33,6 +33,16 @@ void fpga_spi_deinit(void);
  */
 HOT_FUNCTION esp_err_t fpga_spi_transmit(const uint8_t *data, size_t size);
 
+/**
+ * Receive data from FPGA
+ * Hot function - optimized for throughput
+ *
+ * @param data      Pointer to image data
+ * @param size      Size of data in bytes
+ * @return ESP_OK on success, error code otherwise
+ */
+HOT_FUNCTION esp_err_t fpga_spi_receive(uint8_t *data, size_t size);
+
 #ifdef TEST_MODE_FPGA_PATTERNS
 /**
  * Test task for FPGA interface

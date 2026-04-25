@@ -57,11 +57,13 @@ void app_main(void)
                 return;
         }
 
+
         /* PSRAM save ring for post-capture JPEG batch */
         if (save_ring_init() != ESP_OK) {
                 ESP_LOGE(TAG, "Save ring init failed — halting");
                 return;
         }
+
 
         /* SPI DMA master — GPIO 13 shared with SD, no conflict:
          * SD only accessed in post-capture phase when SPI is idle */
@@ -70,11 +72,13 @@ void app_main(void)
                 return;
         }
 
+
         /* Camera — 320x240 grayscale, locked exposure */
         if (camera_init() != ESP_OK) {
                 ESP_LOGE(TAG, "Camera init failed — halting");
                 return;
         }
+
 
         /* Image queue: capture task → SPI transmit task */
         QueueHandle_t img_queue =

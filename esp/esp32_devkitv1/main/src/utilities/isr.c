@@ -20,6 +20,7 @@ static const char *TAG = "ISR";
 SemaphoreHandle_t g_trigger_sem = NULL;       /* LoRa → capture */
 SemaphoreHandle_t g_button_sem = NULL;        /* button → FPGA test */
 SemaphoreHandle_t g_timer_capture_sem = NULL; /* timer → capture */
+SemaphoreHandle_t g_motion_sem = NULL;        /* PIR → image processor */
 
 /*******************************************************************************
  * Init
@@ -30,8 +31,10 @@ esp_err_t isr_init(void)
         g_trigger_sem = xSemaphoreCreateBinary();
         g_button_sem = xSemaphoreCreateBinary();
         g_timer_capture_sem = xSemaphoreCreateBinary();
+        g_motion_sem = xSemaphoreCreateBinary();
 
-        if (!g_trigger_sem || !g_button_sem || !g_timer_capture_sem) {
+        if (!g_trigger_sem || !g_button_sem || !g_timer_capture_sem
+            || !g_motion_sem) {
                 ESP_LOGE(TAG, "semaphore creation failed");
                 return ESP_FAIL;
         }

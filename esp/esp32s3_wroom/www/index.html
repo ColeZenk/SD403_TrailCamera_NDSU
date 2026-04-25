@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trail Camera</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a1a1a;color:#fff;font-family:system-ui,sans-serif;display:flex;flex-direction:column;height:100vh}
+header{background:#2a2a2a;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+header h1{font-size:18px;font-weight:600}
+#dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px}
+.on{background:#4caf50}.off{background:#f44336}
+#status-row{display:flex;align-items:center;font-size:14px}
+#view{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden}
+canvas{max-width:100%;max-height:100%;object-fit:contain}
+#bar{background:#2a2a2a;padding:10px;display:flex;justify-content:space-around;text-align:center}
+.stat-val{font-size:18px;font-weight:bold}
+.stat-lbl{font-size:11px;color:#999}
+#msg{font-size:16px;color:#aaa}
+</style>
+</head>
+<body>
+<header>
+  <h1>Trail Camera</h1>
+  <div id="status-row"><span id="dot" class="off"></span><span id="stxt">Disconnected</span></div>
+</header>
+<div id="view"><canvas id="c" width="640" height="480"></canvas><span id="msg">Connecting...</span></div>
+<div id="bar">
+  <div><div class="stat-val" id="v-pos">--</div><div class="stat-lbl">Position</div></div>
+  <div><div class="stat-val" id="v-seq">--</div><div class="stat-lbl">Sequence</div></div>
+  <div><div class="stat-val" id="v-frm">0</div><div class="stat-lbl">Frames</div></div>
+  <div><div class="stat-val" id="v-fps">--</div><div class="stat-lbl">FPS</div></div>
+</div>
+<script>
+var W=640,H=480,HDR=5;
+var cv=document.getElementById("c"),ctx=cv.getContext("2d");
+var img=ctx.createImageData(W,H);
+var dot=document.getElementById("dot"),stxt=document.getElementById("stxt"),msg=document.getElementById("msg");
+var vpos=document.getElementById("v-pos"),vseq=document.getElementById("v-seq");
+var vfrm=document.getElementById("v-frm"),vfps=document.getElementById("v-fps");
+var pos_names=["Left","Center","Right"];
+var frames=0,fps=0,last=0,ws=null;
+
+function connect(){
+  stxt.textContent="Connecting...";
+  dot.className="off";
+  ws=new WebSocket("ws://"+location.host+"/stream");
+  ws.binaryType="arraybuffer";
+  ws.onopen=function(){dot.className="on";stxt.textContent="Connected";msg.style.display="none";cv.style.display="block"};
+  ws.onclose=function(){dot.className="off";stxt.textContent="Disconnected";setTimeout(connect,2000)};
+  ws.onerror=function(){ws.close()};
+  ws.onmessage=function(e){
+    var d=new Uint8Array(e.data);
+    if(d.length<HDR+W*H)return;
+    var p=d[0],seq=(d[1]<<24)|(d[2]<<16)|(d[3]<<8)|d[4];
+    var px=img.data;
+    for(var i=0;i<W*H;i++){var g=d[HDR+i];var o=i*4;px[o]=g;px[o+1]=g;px[o+2]=g;px[o+3]=255}
+    ctx.putImageData(img,0,0);
+    frames++;
+    var now=performance.now();
+    if(last>0){var dt=now-last;if(dt>0)fps=fps*0.8+(1000/dt)*0.2}
+    last=now;
+    vpos.textContent=p<pos_names.length?pos_names[p]:p;
+    vseq.textContent=seq;
+    vfrm.textContent=frames;
+    vfps.textContent=fps>0?fps.toFixed(1):"--";
+  };
+}
+cv.style.display="none";
+connect();
+</script>
+</body>
+</html>

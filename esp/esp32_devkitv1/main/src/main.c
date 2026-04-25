@@ -15,13 +15,10 @@
 #include "fpga_spi.h"
 #include "image_processor.h"
 #include "isr_signals.h"
-#include "lora_uart.h"
+#include "lora.h"
 #include "peripherals/fpga_gpio.h"
 #include "peripherals/i2c_bus.h"
 #include "peripherals/sensors_temp_humidity.h"
-#ifdef TEST_MODE_LORA_BENCH
-#include "lora_bench.h"
-#endif
 
 static const char *TAG = "MAIN";
 
@@ -75,8 +72,6 @@ static void create_tasks(void)
         xTaskCreate(cam_spi_receive_task, "cam_rx", STACK_SIZE_MEDIUM, NULL,
                     TASK_PRIORITY_HIGH, NULL);
         xTaskCreate(image_processor_task, "img_proc", STACK_SIZE_LARGE, NULL,
-                    TASK_PRIORITY_MEDIUM, NULL);
-        xTaskCreate(lora_receive_task, "lora_rx", STACK_SIZE_MEDIUM, NULL,
                     TASK_PRIORITY_MEDIUM, NULL);
         xTaskCreate(sensors_task, "sensors", STACK_SIZE_MEDIUM, NULL,
                     TASK_PRIORITY_LOW, NULL);

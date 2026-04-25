@@ -20,6 +20,7 @@ extern SemaphoreHandle_t g_trigger_sem;
 extern SemaphoreHandle_t g_button_sem;
 extern SemaphoreHandle_t g_spi_complete_sem;
 extern SemaphoreHandle_t g_timer_capture_sem;
+extern SemaphoreHandle_t g_motion_sem;
 
 /*************************************************************************
  HANDLERS

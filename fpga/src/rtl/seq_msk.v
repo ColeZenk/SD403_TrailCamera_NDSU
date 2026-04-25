@@ -1,16 +1,15 @@
 /*
- * seq_msk.v -- zero coeffs for r+c>thresh
- * single comparator in hardware
+ * seq_msk.v -- zero coeffs for r+c>T
+ *
+ * T is a parameter; yosys evaluates r+c<=T at elaboration time.
+ * No comparators in hardware.
  *
  * Ports flattened for yosys: element [r][c] = flat[(r*8+c)*W +: W]
- *
- * Author: Cole Zenk
  */
 
 module seq_msk
-    #(parameter W = 16)
-    (input wire [3:0] T,
-     input  wire signed [W*64-1:0] c_i,
+    #(parameter W = 16, T = 6)
+    (input  wire signed [W*64-1:0] c_i,
      output wire signed [W*64-1:0] c_o);
 
         genvar r, c;

@@ -123,10 +123,15 @@ module esp_interface
         // Preload from tx_data on CS assert and each byte boundary
         // ==========================================================
         reg [7 : 0] tx_sr;
+        reg byte_done_d, byte_done_dd;
+
+        always @(posedge clk or negedge rst_n)
+                if (!rst_n) begin byte_done_d <= 1'b0; byte_done_dd <= 1'b0; end
+                else        begin byte_done_d <= byte_done; byte_done_dd <= byte_done_d; end
 
         assign tx_next = byte_done;
 
-        wire tx_reload = byte_done | (~cs_active);
+        wire tx_reload = byte_done_dd | (~cs_active);
 
         always @(posedge clk or negedge rst_n) begin
                 if (!rst_n) begin
@@ -135,7 +140,7 @@ module esp_interface
                 end else begin
                         if (tx_reload)
                                 tx_sr <= tx_data;
-                        else if (sclk_fall & cs_active)
+                        else if (sclk_fall & cs_active & (bit_count != 3'd0))
                                 tx_sr <= {tx_sr[6 : 0], 1'b0};
 
                         esp_miso <= cs_active ? tx_sr[7] : 1'b0;

@@ -22,15 +22,20 @@
  * BENCH_SF and BENCH_BW MUST match the DevKitV1 config.h values.
  * In bench mode: WiFi/WebSocket disabled; LoRa packets are echoed back.
  ******************************************************************************/
-#define TEST_MODE_LORA_BENCH
+// #define TEST_MODE_LORA_BENCH
+// #define TEST_MODE_WS_PATTERNS
 
 #ifdef TEST_MODE_LORA_BENCH
-    #define BENCH_SF            7       /* must match DevKitV1 */
-    #define BENCH_BW            9       /* 7=125kHz 8=250kHz 9=500kHz */
-    #define BENCH_CR            1
-    #define BENCH_PREAMBLE      12
-    #warning "LoRa bench mode — S3 is echo slave, WiFi/WebSocket disabled"
+    #warning "LoRa bench mode -- S3 is echo slave, WiFi/WebSocket disabled"
 #endif
+
+/*******************************************************************************
+ * LoRa RF Parameters (must match DevKitV1)
+ ******************************************************************************/
+#define LORA_SF             7       /* spreading factor (7-12) */
+#define LORA_BW             9       /* 7=125kHz 8=250kHz 9=500kHz */
+#define LORA_CR             1       /* coding rate: 1=4/5 */
+#define LORA_PREAMBLE       12
 
 /*******************************************************************************
  * LoRa UART
@@ -58,10 +63,10 @@
 #define NUM_POSITIONS       3
 
 /*******************************************************************************
- * Gaussian Reconstruction
+ * WHT Reconstruction (must match FPGA and sim)
  ******************************************************************************/
-#define GAUSS_SIGMA         10.0f           /* ~1.25 block widths, insensitive */
-#define GAUSS_RADIUS_BLOCKS 4               /* only consider blocks within 4 blocks */
+#define Q_SHIFT             5               /* q_step = 2^5 = 32 */
+#define GAUSS_SIGMA         4.0f            /* matches sim */
 
 /*******************************************************************************
  * Task Config

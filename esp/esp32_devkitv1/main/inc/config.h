@@ -14,11 +14,12 @@
  * Test mode configuration - similar to WarblingWire pattern
  * Uncomment ONE of these to enable specific test modes
  */
-#define TEST_MODE_FPGA_PATTERNS 
+// #define TEST_MODE_FPGA_PATTERNS
 /* #define TEST_MODE_LORA_LOOPBACK */
 /* #define TEST_MODE_CAMERA_INJECT */
 /* #define TEST_MODE_FPGA_GPIO */
 // #define TEST_MODE_LORA_BENCH
+#define DEBUG_PIR_ALWAYS_ON
 
 // Verify only one test mode is active
 #if defined(TEST_MODE_FPGA_PATTERNS) && defined(TEST_MODE_LORA_LOOPBACK)
@@ -95,7 +96,7 @@
 #define FPGA_SPI_CLOCK_HZ           (FPGA_SPI_CLOCK_MHZ * 1000000)
 #define FPGA_SPI_MODE               0
 #define FPGA_SPI_QUEUE_SIZE         3
-#define FPGA_MAX_TRANSFER_SIZE      32768  /* full BRAM — single CS transaction, no mid-frame resets */
+#define FPGA_MAX_TRANSFER_SIZE      76800  /* full BRAM — single CS transaction, no mid-frame resets */
 
 /*******************************************************************************
  * FPGA I2C GPIO Expander Configuration (PCA9534-compatible at 0x27)
@@ -163,28 +164,29 @@
  * to test 6-FPS throughput target.  Both boards must be reflashed each time.
  ******************************************************************************/
 
+/*******************************************************************************
+ * LoRa RF Parameters (must match S3 config.h)
+ ******************************************************************************/
+#define LORA_SF                 7       /* spreading factor (7-12) */
+#define LORA_BW                 9       /* 7=125kHz 8=250kHz 9=500kHz */
+#define LORA_CR                 1       /* coding rate: 1=4/5 */
+#define LORA_PREAMBLE           12
+#define LORA_DEST_ADDR          1       /* S3 receiver address */
+#define LORA_MAX_PAYLOAD        240     /* RYLR998 max */
+
 #ifdef TEST_MODE_LORA_BENCH
-    /* RF parameters — set identically on S3 side */
-    #define BENCH_SF                7       /* spreading factor (7-12) */
-    #define BENCH_BW                9       /* 7=125kHz 8=250kHz 9=500kHz */
-    #define BENCH_CR                1       /* coding rate: 1=4/5 */
-    #define BENCH_PREAMBLE          12
-
-    /* Destination address (S3 receiver).
-     * Use 0 = factory default (AT+ADDRESS set commands fail with ERR=15 until resolved) */
-    #define BENCH_DEST_ADDR         1       /* S3 module address */
-
-    /* Packet parameters */
-    #define BENCH_PKT_SIZE          16     /* target SDD502 compressed frame */
-    #define BENCH_N                 50      /* packets per trial */
-    #define BENCH_TIMEOUT_MS        10000    /* per-packet echo timeout */
-    #define BENCH_INTER_PACKET_MS   10      /* gap between sends (ms) */
-
-    /* Burst test */
-    #define BENCH_BURST_SECS        10      /* duration of sustained burst */
-    #define BENCH_BURST_TIMEOUT_MS  500     /* shorter timeout for burst */
-
-    #warning "LoRa bench mode — DevKitV1 is TX master, S3 must be echo slave"
+    #define BENCH_SF                LORA_SF
+    #define BENCH_BW                LORA_BW
+    #define BENCH_CR                LORA_CR
+    #define BENCH_PREAMBLE          LORA_PREAMBLE
+    #define BENCH_DEST_ADDR         LORA_DEST_ADDR
+    #define BENCH_PKT_SIZE          16
+    #define BENCH_N                 50
+    #define BENCH_TIMEOUT_MS        10000
+    #define BENCH_INTER_PACKET_MS   10
+    #define BENCH_BURST_SECS        10
+    #define BENCH_BURST_TIMEOUT_MS  500
+    #warning "LoRa bench mode -- DevKitV1 is TX master, S3 must be echo slave"
 #endif
 
 /*******************************************************************************

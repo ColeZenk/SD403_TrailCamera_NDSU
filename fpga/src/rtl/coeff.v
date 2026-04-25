@@ -3,8 +3,6 @@
  *
  * Ports flattened for yosys: element [r][c] = flat[(r*8+c)*W +: W]
  * Output arrays flattened: slot k = flat[k*N +: N]
- *
- * Author: Cole Zenk
  */
 
 module coeff
@@ -15,15 +13,15 @@ module coeff
 
      input wire signed [W*64-1:0] c_i,
 
-     input wire [W-1:0] thresh,
-     input wire [3:0] q_shift,
-     input wire [3:0] seq_thresh,
-
      output reg [3*TOP_K-1:0] r_o,
      output reg [3*TOP_K-1:0] c_o,
      output reg signed [W*TOP_K-1:0] q_o,
      output reg [2:0] n_out,
      output reg done);
+
+        localparam [W-1:0] thresh = 16'd400;
+        localparam [3:0] q_shift = 4'd3;
+        localparam [3:0] seq_thresh = 4'd6;
 
         reg [1:0] state;
         localparam IDLE = 2'd0, SCAN = 2'd1, DONE = 2'd2;
@@ -65,44 +63,42 @@ module coeff
         integer k;
 
         always @(posedge clk) begin
-                // reset
-                state <= rst ? IDLE : state;
-                n_out <= rst ? 0 : n_out;
                 done <= (state == DONE);
 
-                // IDLE -> SCAN on bgn
-                state <= clr ? SCAN : state;
-                r_cnt <= r_cnt & {3{~clr}};
-                c_cnt <= c_cnt & {3{~clr}};
-                n_out <= n_out & {3{~clr}};
+                if (rst) begin
+                        state <= IDLE;
+                        n_out <= 3'd0;
+                        r_cnt <= 3'd0;
+                        c_cnt <= 3'd0;
+                end else if (clr) begin
+                        state <= SCAN;
+                        r_cnt <= 3'd0;
+                        c_cnt <= 3'd0;
+                        n_out <= 3'd0;
+                end else begin
+                        c_cnt <= c_cnt + state_scan;
+                        r_cnt <= r_cnt + (state_scan & c_cnt == 7);
 
-                // SCAN: advance counters
-                c_cnt <= c_cnt + state_scan;
-                r_cnt <= r_cnt + (state_scan & c_cnt == 7);
+                        if (state_scan & r_cnt == 7 & c_cnt == 7)
+                                state <= DONE;
 
-                // SCAN -> DONE
-                state <= (state_scan & r_cnt == 7 & c_cnt == 7) ? DONE : state;
+                        if (state == DONE)
+                                state <= IDLE;
 
-                // DONE -> IDLE
-                state <= (state == DONE) ? IDLE : state;
+                        slot_r[n_out]   <= fill ? r_cnt : slot_r[n_out];
+                        slot_c[n_out]   <= fill ? c_cnt : slot_c[n_out];
+                        slot_q[n_out]   <= fill ? q_sgn : slot_q[n_out];
+                        slot_abs[n_out] <= fill ? mag : slot_abs[n_out];
+                        n_out           <= fill ? n_out + 1 : n_out;
 
-                // top-K: fill empty slot
-                slot_r[n_out]   <= fill ? r_cnt : slot_r[n_out];
-                slot_c[n_out]   <= fill ? c_cnt : slot_c[n_out];
-                slot_q[n_out]   <= fill ? q_sgn : slot_q[n_out];
-                slot_abs[n_out] <= fill ? mag : slot_abs[n_out];
-                n_out           <= fill ? n_out + 1 : n_out;
+                        slot_r[min_idx]   <= repl ? r_cnt : slot_r[min_idx];
+                        slot_c[min_idx]   <= repl ? c_cnt : slot_c[min_idx];
+                        slot_q[min_idx]   <= repl ? q_sgn : slot_q[min_idx];
+                        slot_abs[min_idx] <= repl ? mag : slot_abs[min_idx];
 
-                // top-K: replace min slot
-                slot_r[min_idx]   <= repl ? r_cnt : slot_r[min_idx];
-                slot_c[min_idx]   <= repl ? c_cnt : slot_c[min_idx];
-                slot_q[min_idx]   <= repl ? q_sgn : slot_q[min_idx];
-                slot_abs[min_idx] <= repl ? mag : slot_abs[min_idx];
+                        min_idx <= (fill | repl) ? nmin : min_idx;
+                end
 
-                // update min_idx after any write
-                min_idx <= (fill | repl) ? nmin : min_idx;
-
-                // copy slots to flattened outputs in DONE
                 if (state == DONE) begin
                         for (k = 0; k < TOP_K; k = k + 1) begin
                                 r_o[k*3 +: 3] <= slot_r[k];

@@ -59,7 +59,7 @@ $(SYNTH_JSON): $(VERILOG_SOURCES) | dirs
 # Place and Route
 $(PNR_JSON): $(SYNTH_JSON) $(CONSTRAINTS)
 	@echo "=== Place and Route ==="
-	$(NEXTPNR) --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(CONSTRAINTS)
+	$(NEXTPNR) --json $< --write $@ --device $(DEVICE) --vopt family=$(FAMILY) --vopt cst=$(CONSTRAINTS) --threads 8
 
 # Pack bitstream
 $(BITSTREAM): $(PNR_JSON)

@@ -12,9 +12,15 @@
 
 #include "ws_server.h"
 #include "config.h"
+#include "esp_heap_caps.h"
 #include "esp_http_server.h"
 #include "esp_log.h"
+#include "esp_spiffs.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 
 static const char *TAG = "WS";
 
@@ -80,29 +86,134 @@ static const httpd_uri_t ws_uri = {
 
 /* ------------------------------------------------------------------ */
 
+static esp_err_t spiffs_mount(void)
+{
+        esp_vfs_spiffs_conf_t cfg = {
+            .base_path = "/www",
+            .partition_label = "www",
+            .max_files = 8,
+            .format_if_mount_failed = false,
+        };
+
+        esp_err_t ret = esp_vfs_spiffs_register(&cfg);
+        if (ret != ESP_OK) {
+                ESP_LOGE(TAG, "SPIFFS mount failed: %s", esp_err_to_name(ret));
+                return ret;
+        }
+
+        size_t total = 0, used = 0;
+        esp_spiffs_info("www", &total, &used);
+        ESP_LOGI(TAG, "SPIFFS: %u KB used / %u KB total",
+                 (unsigned)(used / 1024), (unsigned)(total / 1024));
+        return ESP_OK;
+}
+
+static const char *mime_type(const char *path)
+{
+        const char *dot = strrchr(path, '.');
+        if (!dot) return "application/octet-stream";
+        if (!strcmp(dot, ".html")) return "text/html";
+        if (!strcmp(dot, ".js"))   return "application/javascript";
+        if (!strcmp(dot, ".json")) return "application/json";
+        if (!strcmp(dot, ".png"))  return "image/png";
+        if (!strcmp(dot, ".css"))  return "text/css";
+        if (!strcmp(dot, ".wasm")) return "application/wasm";
+        return "application/octet-stream";
+}
+
+static esp_err_t static_handler(httpd_req_t *req)
+{
+        char filepath[600];
+        const char *uri = req->uri;
+
+        if (!strcmp(uri, "/")) uri = "/index.html";
+
+        snprintf(filepath, sizeof(filepath), "/www%.590s", uri);
+
+        struct stat st;
+        if (stat(filepath, &st) != 0) {
+                httpd_resp_send_404(req);
+                return ESP_OK;
+        }
+
+        FILE *f = fopen(filepath, "r");
+        if (!f) {
+                httpd_resp_send_404(req);
+                return ESP_OK;
+        }
+
+        httpd_resp_set_type(req, mime_type(filepath));
+
+        char buf[1024];
+        size_t n;
+        while ((n = fread(buf, 1, sizeof(buf), f)) > 0)
+                httpd_resp_send_chunk(req, buf, n);
+        httpd_resp_send_chunk(req, NULL, 0);
+
+        fclose(f);
+        return ESP_OK;
+}
+
+/* ------------------------------------------------------------------ */
+
 esp_err_t ws_server_init(void)
 {
         memset(client_fds, -1, sizeof(client_fds));
 
+        esp_err_t ret = spiffs_mount();
+        if (ret != ESP_OK) return ret;
+
         httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
         cfg.server_port = WS_PORT;
         cfg.ctrl_port = WS_PORT + 1;
-        cfg.max_open_sockets =
-            WS_MAX_CLIENTS + 3; /* +3 for internal sockets */
+        cfg.max_open_sockets = WS_MAX_CLIENTS + 3;
+        cfg.uri_match_fn = httpd_uri_match_wildcard;
 
-        esp_err_t ret = httpd_start(&server, &cfg);
+        ret = httpd_start(&server, &cfg);
         if (ret != ESP_OK) {
                 ESP_LOGE(TAG, "start failed: %s", esp_err_to_name(ret));
                 return ret;
         }
 
         httpd_register_uri_handler(server, &ws_uri);
+
+        static const httpd_uri_t static_uri = {
+            .uri = "/*",
+            .method = HTTP_GET,
+            .handler = static_handler,
+        };
+        httpd_register_uri_handler(server, &static_uri);
+
         ESP_LOGI(TAG, "WebSocket server ready on ws://192.168.4.1:%d%s",
                  WS_PORT, WS_PATH);
         return ESP_OK;
 }
 
 /* ------------------------------------------------------------------ */
+
+#ifdef TEST_MODE_WS_PATTERNS
+void ws_test_task(void *arg)
+{
+        (void)arg;
+
+        uint8_t *buf = heap_caps_malloc(FRAME_BYTES, MALLOC_CAP_SPIRAM);
+        if (!buf) {
+                ESP_LOGE(TAG, "PSRAM alloc failed for test frame");
+                vTaskDelete(NULL);
+                return;
+        }
+
+        for (int i = 0; i < FRAME_BYTES; i++)
+                buf[i] = (uint8_t)((i % FRAME_W) * 255 / (FRAME_W - 1));
+
+        uint32_t seq = 0;
+
+        for (;;) {
+                ws_broadcast(1, ++seq, buf, FRAME_BYTES);
+                vTaskDelay(pdMS_TO_TICKS(1000));
+        }
+}
+#endif
 
 esp_err_t ws_broadcast(uint8_t position, uint32_t seq, const uint8_t *pixels,
                        size_t len)

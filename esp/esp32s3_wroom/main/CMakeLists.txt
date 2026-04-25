@@ -3,14 +3,15 @@ idf_component_register(
         "src/main.c"
         "src/wifi_ap.c"
         "src/ws_server.c"
-        "src/lora_bench.c"
-        "src/lora_uart.c"
+        "src/image_reconstruct.c"
+        "src/lora.c"
     INCLUDE_DIRS
         "inc"
     REQUIRES
         esp_wifi
         esp_http_server
         esp_psram
+        spiffs
         driver
         nvs_flash
         esp_event

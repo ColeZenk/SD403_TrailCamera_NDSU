@@ -4,6 +4,8 @@
  */
 
 #include "peripherals/sensors_temp_humidity.h"
+#include "config.h"
+#include "isr_signals.h"
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -46,6 +48,8 @@ static const char *TAG = "sensors";
 static aht20_t s_aht20;
 static bool s_sensor_ok;
 static motor_stepper_t s_motor;
+static float s_last_temp = 0.0f;
+static float s_last_hum  = 0.0f;
 
 static void pir_init_pin(gpio_num_t pin, bool input_only)
 {
@@ -71,8 +75,8 @@ static void enable_outputs_init(void)
         };
         ESP_ERROR_CHECK(gpio_config(&io));
 
-        gpio_set_level((gpio_num_t)FPGA_EN_GPIO, 0);
-        gpio_set_level((gpio_num_t)CAM_EN_GPIO, 0);
+        gpio_set_level((gpio_num_t)FPGA_EN_GPIO, 1);
+        gpio_set_level((gpio_num_t)CAM_EN_GPIO, 1);
 }
 
 static inline void enable_outputs_set(bool on)
@@ -82,12 +86,20 @@ static inline void enable_outputs_set(bool on)
         gpio_set_level((gpio_num_t)CAM_EN_GPIO, level);
 }
 
+#ifdef DEBUG_PIR_ALWAYS_ON
+#warning "DEBUG_PIR_ALWAYS_ON — PIR forced to center trigger"
+#endif
+
 static int detect_triggered_pir(void)
 {
+#ifdef DEBUG_PIR_ALWAYS_ON
+        return 3;
+#else
         if (gpio_get_level((gpio_num_t)PIR1_GPIO)) return 1;
         if (gpio_get_level((gpio_num_t)PIR2_GPIO)) return 2;
         if (gpio_get_level((gpio_num_t)PIR3_GPIO)) return 3;
         return 0;
+#endif
 }
 
 static void wait_for_all_pirs_low(void)
@@ -167,12 +179,25 @@ esp_err_t sensors_init(void)
         return ESP_OK;
 }
 
+int sensors_get_stepper_phase(void) { return s_motor.phase; }
+
+void sensors_get_last_readings(float *temp_c, float *humidity_pct)
+{
+        *temp_c       = s_last_temp;
+        *humidity_pct = s_last_hum;
+}
+
 void sensors_task(void *pvParameters)
 {
         (void)pvParameters;
 
         ESP_LOGI(TAG, "sensor task started — polling PIRs");
 
+#ifdef DEBUG_PIR_ALWAYS_ON
+        enable_outputs_set(true);
+        ESP_LOGW(TAG, "DEBUG_PIR_ALWAYS_ON — outputs held high");
+        for (;;) vTaskDelay(pdMS_TO_TICKS(10000));
+#else
         for (;;) {
                 int trig = detect_triggered_pir();
 
@@ -186,6 +211,8 @@ void sensors_task(void *pvParameters)
                         float rh = 0.0f;
 
                         if (aht20_read(&s_aht20, &t_c, &rh) == ESP_OK) {
+                                s_last_temp = t_c;
+                                s_last_hum  = rh;
                                 ESP_LOGI(TAG, "PIR%d | %.1f F | %.0f%% RH",
                                          trig, c_to_f(t_c), rh);
                         } else {
@@ -196,8 +223,8 @@ void sensors_task(void *pvParameters)
                         ESP_LOGI(TAG, "PIR%d | sensor unavailable", trig);
                 }
 
-                // Turn on FPGA and camera together
                 enable_outputs_set(true);
+                xSemaphoreGive(g_motion_sem);
 
                 switch (trig) {
                 case 1:
@@ -209,8 +236,6 @@ void sensors_task(void *pvParameters)
                         break;
 
                 case 3:
-                        // No motor motion; keep both outputs on for similar
-                        // action time
                         vTaskDelay(pdMS_TO_TICKS(PIR3_ACTIVE_MS));
                         break;
 
@@ -219,7 +244,7 @@ void sensors_task(void *pvParameters)
 
                 motor_stepper_release(&s_motor);
                 enable_outputs_set(false);
-
                 wait_for_all_pirs_low();
         }
+#endif
 }

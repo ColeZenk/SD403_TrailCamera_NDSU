@@ -113,6 +113,7 @@ module top
         wire psram_busy;
 
         assign O_psram_reset_n = {sys_rst_n, sys_rst_n};
+        assign O_psram_ck_n = 2'b00;
 
         PsramController #(
             .FREQ(PSRAM_FREQ),
@@ -229,11 +230,17 @@ module top
         //   Max compressed frame ~200 bytes, 512 depth is plenty
         // ==========================================================
         reg [7:0] tx_buf [0:511];
+        reg [7:0] tx_rd_data;
         reg [8:0] tx_wr_ptr;
         reg [8:0] tx_rd_ptr;
         reg [8:0] tx_len;
-        wire [7:0] tx_cur_byte = (tx_rd_ptr < tx_len) ? tx_buf[tx_rd_ptr]
-                                                        : 8'd0;
+        wire [7:0] tx_cur_byte = (tx_rd_ptr < tx_len) ? tx_rd_data : 8'd0;
+
+        always @(posedge sys_clk) begin
+                if (sched_tx_valid)
+                        tx_buf[tx_wr_ptr] <= sched_tx_data;
+                tx_rd_data <= tx_buf[tx_rd_ptr];
+        end
         wire esp_tx_next;
 
         // ==========================================================
@@ -366,13 +373,13 @@ module top
 
                         // Scheduler writes compressed bytes
                         if (sched_tx_valid) begin
-                                tx_buf[tx_wr_ptr] <= sched_tx_data;
                                 tx_wr_ptr <= tx_wr_ptr + 9'd1;
                         end
 
                         // Latch length when scheduler finishes
-                        if (sched_frame_done)
+                        if (sched_frame_done) begin
                                 tx_len <= tx_wr_ptr;
+                        end
 
                         // Reset read pointer on new SPI transaction
                         if (cs_start)
@@ -425,10 +432,7 @@ module top
             .tx_data(sched_tx_data),
             .tx_ready(1'b1),
             .cur_base(cur_base),
-            .prev_base(prev_base),
-            .thresh(16'd400),
-            .q_shift(4'd3),
-            .seq_thresh(4'd6)
+            .prev_base(prev_base)
         );
 
         // ==========================================================
@@ -450,10 +454,15 @@ module top
         // ==========================================================
         // Debug LEDs
         // ==========================================================
+        reg sched_ever_done;
+        always @(posedge sys_clk or negedge sys_rst_n)
+                if (!sys_rst_n) sched_ever_done <= 1'b0;
+                else if (sched_frame_done) sched_ever_done <= 1'b1;
+
         assign led[0] = receiving;
         assign led[1] = frame_ready;
         assign led[2] = esp_cs_active;
         assign led[3] = esp_rx_valid;
-        assign led[4] = |i2c_gpio_out[3 : 0]; // any stepper active
-        assign led[5] = |btn_sync_1[2 : 0];   // any button pressed
+        assign led[4] = sched_ever_done;
+        assign led[5] = |tx_len;
 endmodule
