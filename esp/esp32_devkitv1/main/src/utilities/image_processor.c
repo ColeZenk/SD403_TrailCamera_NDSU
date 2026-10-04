@@ -1,4 +1,4 @@
-/**
+﻿/**
  * image_processor.c -- Motion event pipeline
  *
  * Flow per event:
@@ -58,7 +58,10 @@ static size_t compressed_len(const uint8_t *buf, size_t buf_size)
 
 static uint32_t now_s(void)
 {
-        return (uint32_t)(esp_timer_get_time() / 1000000ULL);
+        uint32_t epoch = sensors_get_epoch(); /* DS3231 date/time, Unix epoch */
+        if (epoch != 0) return epoch;
+
+        return (uint32_t)(esp_timer_get_time() / 1000000ULL); /* fallback: uptime */
 }
 
 esp_err_t image_processor_init(void)
@@ -121,6 +124,8 @@ void image_processor_task(void *pvParameters)
                     .humidity_x10  = (uint16_t)(hum * 10.0f),
                 };
 
+                ESP_LOGI(TAG, "start meta: ts=%u T=%d H=%u", (unsigned)start.timestamp_s,
+                         (int)start.temp_x10, (unsigned)start.humidity_x10);
                 ret = lora_send_packet((uint8_t *)&start, sizeof(start));
                 if (ret != ESP_OK)
                         ESP_LOGW(TAG, "start meta LoRa failed: %s",

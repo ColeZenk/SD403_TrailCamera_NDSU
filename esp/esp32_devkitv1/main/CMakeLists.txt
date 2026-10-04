@@ -7,7 +7,7 @@ idf_component_register(
          "./src/interprocessor/fpga_spi.c"
          "./src/interprocessor/lora.c"
          "./src/interprocessor/i2c_bus.c"
-         "./src/peripherals/aht20.c"
+         "./src/peripherals/aht20.c" "./src/peripherals/rtc.c"
          "./src/peripherals/fpga_gpio.c"
          "./src/peripherals/motor.c"
          "./src/peripherals/pir.c"
